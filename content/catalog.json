@@ -1,0 +1,1609 @@
+{
+  "version": "0.6.0",
+  "language": "ja",
+  "defaultLanguage": "ja",
+  "languages": [
+    "ja",
+    "zh",
+    "en"
+  ],
+  "selection": {
+    "sheetUrl": "https://docs.google.com/spreadsheets/d/1E6j0l_dqVMttijLAn5mud7CvreEPOiTsKCHZV-zfaYI/edit",
+    "date": "2026-10-27",
+    "classicCount": 23,
+    "includedCount": 21,
+    "excluded": [
+      {
+        "id": "09-01",
+        "name": "Quiz-show role attribution",
+        "reason": "高｜真人互动；视频版中"
+      },
+      {
+        "id": "11-03",
+        "name": "Availability and English letter frequency",
+        "reason": "日本课堂不采用：任务依赖英语词汇经验，翻译说明不能解决测量混淆。"
+      }
+    ],
+    "rule": "Fourteen source-linked tasks are available, including clearly labeled published subsets and one conversation pilot. Seven require missing core stimuli or field conditions; recovery status is itemized rather than blanket-disabled.",
+    "replacements": [
+      {
+        "from": "01-01",
+        "to": "11-06",
+        "reason": "同属G01锚定组，日本课堂改用不依赖外国历史知识的五秒乘积估计。"
+      }
+    ],
+    "enabledCount": 14
+  },
+  "sources": {
+    "TK74": {
+      "citation": "Tversky & Kahneman (1974). Judgment under Uncertainty: Heuristics and Biases. Science, 185, 1124–1131.",
+      "url": "https://doi.org/10.1126/science.185.4157.1124",
+      "alternate": "https://cebma.org/assets/Uploads/Tversky_Kahneman_1974.pdf"
+    },
+    "KT72": {
+      "citation": "Kahneman & Tversky (1972). Subjective probability: A judgment of representativeness. Cognitive Psychology, 3, 430–454.",
+      "url": "https://api.pageplace.de/preview/DT0400.9781107266070_A23693425/preview-9781107266070_A23693425.pdf",
+      "alternate": "—"
+    },
+    "KT73": {
+      "citation": "Kahneman & Tversky (1973). On the psychology of prediction. Psychological Review, 80, 237–251.",
+      "url": "https://doi.org/10.1037/h0034747",
+      "alternate": "https://scholarsbank.uoregon.edu/items/098a706d-e32d-4d73-ba06-6dd92ae502a9/full"
+    },
+    "TK82R": {
+      "citation": "Tversky, A., & Kahneman, D. (1982). Judgments of and by representativeness. In D. Kahneman, P. Slovic, & A. Tversky (Eds.), Judgment under Uncertainty: Heuristics and Biases (pp. 84–98). Cambridge University Press.",
+      "url": "https://www.cambridge.org/core/books/abs/judgment-under-uncertainty/judgments-of-and-by-representativeness/7565F5DCBEC82B58C6428ABE8F7304AB",
+      "alternate": "—"
+    },
+    "TK80": {
+      "citation": "Tversky & Kahneman (1980). Causal schemas in judgments under uncertainty. In Fishbein (Ed.), Progress in Social Psychology, Vol. 1, 49–72.",
+      "url": "https://amsr.contentdm.oclc.org/digital/api/collection/p21050coll5/id/3872/download",
+      "alternate": "—"
+    },
+    "RLH75": {
+      "citation": "Ross, L., Lepper, M. R., & Hubbard, M. (1975). Perseverance in self-perception and social perception: Biased attributional processes in the debriefing paradigm. Journal of Personality and Social Psychology, 32(5), 880–892.",
+      "url": "https://doi.org/10.1037/0022-3514.32.5.880"
+    },
+    "LRL79": {
+      "citation": "Lord, Ross & Lepper (1979). Biased assimilation and attitude polarization: The effects of prior theories on subsequently considered evidence. Journal of Personality and Social Psychology, 37, 2098–2109.",
+      "url": "https://fbaum.unc.edu/teaching/articles/jpsp-1979-Lord-Ross-Lepper.pdf",
+      "alternate": "—"
+    },
+    "RGH77": {
+      "citation": "Ross, L., Greene, D., & House, P. (1977). The “false consensus effect”: An egocentric bias in social perception and attribution processes. Journal of Experimental Social Psychology, 13(3), 279–301.",
+      "url": "https://doi.org/10.1016/0022-1031(77)90049-X"
+    },
+    "TK73A": {
+      "citation": "Tversky & Kahneman (1973). Availability: A heuristic for judging frequency and probability. Cognitive Psychology, 5, 207–232.",
+      "url": "https://noorsiddiqui.com/papers/TverskyKahneman.pdf",
+      "alternate": "—"
+    },
+    "RS79": {
+      "citation": "Ross & Sicoly (1979). Egocentric biases in availability and attribution. Journal of Personality and Social Psychology, 37, 322–336.",
+      "url": "https://web.mit.edu/curhan/www/docs/Articles/15341_Readings/Negotiation_and_Conflict_Management/Ross_Sicoly_1979_Egocentric_biases.pdf",
+      "alternate": "—"
+    },
+    "TF75": {
+      "citation": "Taylor, S. E., & Fiske, S. T. (1975). Point of view and perceptions of causality. Journal of Personality and Social Psychology, 32(3), 439–445.",
+      "url": "https://doi.org/10.1037/h0077095"
+    },
+    "KT82S": {
+      "citation": "Kahneman, D., & Tversky, A. (1982). The simulation heuristic. In D. Kahneman, P. Slovic, & A. Tversky (Eds.), Judgment under Uncertainty: Heuristics and Biases (pp. 201–208). Cambridge University Press.",
+      "url": "https://www.cambridge.org/core/books/abs/judgment-under-uncertainty/simulation-heuristic/9C6ED91A6429A8443641641DC41A52FE",
+      "alternate": "—"
+    },
+    "L75": {
+      "citation": "Langer (1975). The illusion of control. Journal of Personality and Social Psychology, 32, 311–328.",
+      "url": "https://nuovoeutile.it/wp-content/uploads/2014/10/Langer1975_IllusionofControl.pdf",
+      "alternate": "—"
+    },
+    "CC67": {
+      "citation": "Chapman & Chapman (1967). Genesis of popular but erroneous psychodiagnostic observations. Journal of Abnormal Psychology, 72, 193–204.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/4859731/",
+      "alternate": "https://www.researchgate.net/publication/18308417_GENESIS_OF_POPULAR_BUT_ERRONEOUS_PSYCHODIAGNOSTIC_OBSERVATIONS"
+    },
+    "O65": {
+      "citation": "Oskamp (1965). Overconfidence in case-study judgments. Journal of Consulting Psychology, 29, 261–265.",
+      "url": "https://doi.org/10.1037/h0022125",
+      "alternate": "https://www.cambridge.org/core/books/abs/judgment-under-uncertainty/overconfidence-in-casestudy-judgments/A6D2401BCE9435B8C44A072170465F68"
+    },
+    "F75": {
+      "citation": "Fischhoff (1975). Hindsight ≠ foresight: The effect of outcome knowledge on judgment under uncertainty. Journal of Experimental Psychology: Human Perception and Performance, 1, 288–299.",
+      "url": "https://web.mit.edu/curhan/www/docs/Articles/15341_Readings/Behavioral_Decision_Theory/Fischhoff_1975_Hindsight_is_not_equal_to_foresight.pdf",
+      "alternate": "https://qualitysafety.bmj.com/content/12/4/304"
+    },
+    "ED68": {
+      "citation": "Edwards (1968). Conservatism in human information processing. In Formal Representation of Human Judgment, 17–52.",
+      "url": "https://pages.ucsd.edu/~mckenzie/Edwards1968excerpts.pdf",
+      "alternate": "—"
+    },
+    "GKP73": {
+      "citation": "Gettys, Kelly & Peterson (1973). The best guess hypothesis in multistage inference. Organizational Behavior and Human Performance, 10, 364–373.",
+      "url": "https://deepblue.lib.umich.edu/handle/2027.42/33759",
+      "alternate": "—"
+    },
+    "SFL82": {
+      "citation": "Slovic, P., Fischhoff, B., & Lichtenstein, S. (1982). Facts versus fears: Understanding perceived risk. In D. Kahneman, P. Slovic, & A. Tversky (Eds.), Judgment under Uncertainty: Heuristics and Biases (pp. 463–490). Cambridge University Press.",
+      "url": "https://www.cambridge.org/core/books/abs/judgment-under-uncertainty/facts-versus-fears-understanding-perceived-risk/F2E2E20E89E2121C7BCB43672D590EB8",
+      "alternate": "https://www.researchgate.net/publication/346646108_Facts_versus_fears_Understanding_perceived_risk"
+    },
+    "BH73": {
+      "citation": "Bar-Hillel, M. (1973). On the subjective probability of compound events. Organizational Behavior and Human Performance, 9(3), 396–406.",
+      "url": "https://doi.org/10.1016/0030-5073(73)90061-5"
+    },
+    "FSLRC78": {
+      "citation": "Fischhoff, B., Slovic, P., Lichtenstein, S., Read, S., & Combs, B. (1978). How safe is safe enough? A psychometric study of attitudes towards technological risks and benefits. Policy Sciences, 9, 127–152.",
+      "url": "https://doi.org/10.1007/BF00143739"
+    },
+    "FGW16": {
+      "citation": "Fox-Glassman, K. T., & Weber, E. U. (2016). What makes risk acceptable? Revisiting the 1978 psychological dimensions of perceptions of technological risks. Journal of Mathematical Psychology, 75, 157–169.",
+      "url": "https://elke-u-weber.com/media/2016_journal_of_mathematical_psychology_fox-glassman.pdf"
+    }
+  },
+  "studies": [
+    {
+      "id": "01-02",
+      "title": "合取・析取の賭け選択",
+      "participantTitle": "くじの選択",
+      "category": "判断と確率",
+      "minutes": 3,
+      "difficulty": "low",
+      "difficultyNote": "低｜成对选择",
+      "fidelity": "documented-source-restoration",
+      "evidence": "Source-linked scope and deviations are recorded.",
+      "chapter": 1,
+      "version": "published-bet-subset-1",
+      "sourceKeys": [
+        "BH73",
+        "TK74"
+      ],
+      "original": {
+        "ja": "一回の赤球抽出を、七回すべて赤・七回中少なくとも一回赤の出来事と比較し、賭けたい方を選びます。",
+        "zh": "将单次抽出红球，分别与七次全部抽到红球、七次至少一次抽到红球比较，选择愿意下注的事件。",
+        "en": "Choose a preferred bet by comparing a single red draw with seven red draws or at least one red in seven draws."
+      },
+      "changes": {
+        "ja": "書中の二つの比較を復元。第三の比較、勝率判断、架空の同額賞金を削除。同じ人に二問を固定順で示すのは実装上の選択です。",
+        "zh": "恢复书中两对比较，删除额外第三对、胜率判断和擅加的同额奖金。每人回答两题及固定题序是明确记录的实现选择。",
+        "en": "Restores the two chapter comparisons; removes the third pair, likelihood question and invented equal prizes. Giving both pairs in a fixed order is a documented implementation choice."
+      },
+      "names": {
+        "ja": "合取・析取の賭け選択",
+        "zh": "合取／析取事件：下注选择",
+        "en": "Conjunctive and disjunctive bets"
+      },
+      "conditionNote": "实施假想偏好判断，不执行真实下注。",
+      "classroomEnabled": true,
+      "audit": {
+        "status": "restored-defined-scope",
+        "pdfPages": [
+          28
+        ],
+        "reason": {
+          "ja": "書中の二つの比較を復元。第三の比較、勝率判断、架空の同額賞金を削除。同じ人に二問を固定順で示すのは実装上の選択です。",
+          "zh": "恢复书中两对比较，删除额外第三对、胜率判断和擅加的同额奖金。每人回答两题及固定题序是明确记录的实现选择。",
+          "en": "Restores the two chapter comparisons; removes the third pair, likelihood question and invented equal prizes. Giving both pairs in a fixed order is a documented implementation choice."
+        }
+      },
+      "restoration": {
+        "label": {
+          "ja": "掲載された二つの比較",
+          "zh": "书中两对比较",
+          "en": "Two published comparisons"
+        },
+        "missingMaterials": {
+          "ja": [
+            "研究全体の問題冊子・報酬・割付表は未取得。"
+          ],
+          "zh": [
+            "完整研究的题册、激励办法和分配表未取得。"
+          ],
+          "en": [
+            "The full study booklet, incentive procedure and allocation schedule remain unavailable."
+          ]
+        },
+        "conditions": {
+          "ja": [
+            "仮想の選好判断として実施。実際の金銭賭博は行いません。"
+          ],
+          "zh": [
+            "实施假想偏好判断，不执行真实下注。"
+          ],
+          "en": [
+            "Administer as hypothetical preferences, without real wagering."
+          ]
+        },
+        "nextStep": {
+          "ja": "",
+          "zh": "",
+          "en": ""
+        }
+      }
+    },
+    {
+      "id": "03-01",
+      "title": "標本サイズの無視",
+      "participantTitle": "二つの病院",
+      "category": "判断と確率",
+      "minutes": 2,
+      "difficulty": "low",
+      "difficultyNote": "低｜单选",
+      "fidelity": "translation",
+      "evidence": "A｜章节题型已核",
+      "chapter": 3,
+      "version": "source-restored-1",
+      "sourceKeys": [
+        "KT72"
+      ],
+      "original": {
+        "ja": "日平均45人／15人が生まれる病院で、1年間に男児が60%を超える日が多い方を三択で判断する。",
+        "zh": "日均45／15名新生儿的两所医院，判断一年中男婴超过60%的天数哪所更多，三选一。",
+        "en": "Compare which of two hospitals, averaging 45/15 births daily, records more days with over 60% boys in a year; three choices."
+      },
+      "changes": {
+        "ja": "60%超の原題を三言語で提示。日ごとの変動と「差5%以内」の選択肢を復元。画面で個別回答する。",
+        "zh": "三语采用超过60%的原题，恢复每日比例波动和“差在5%以内”选项，改为屏幕独立作答。",
+        "en": "The over-60% item retains daily variation and the “within 5%” option, translated for individual screen responses."
+      },
+      "names": {
+        "ja": "標本サイズの無視",
+        "zh": "大医院与小医院",
+        "en": "Insensitivity to sample size"
+      },
+      "conditionNote": "两个医院出生机制相同；保留“超过60%”及年度天数措辞。",
+      "classroomEnabled": true,
+      "audit": {
+        "status": "restored-core",
+        "pdfPages": [
+          18,
+          57
+        ],
+        "reason": {
+          "ja": "原典の当該課題を復元。翻訳・画面化・教師による順序設定は変更として記録。",
+          "zh": "已恢复原出处的所选题型；翻译、屏幕化及教师顺序设置另记为改动。",
+          "en": "The selected source task is restored; translation, screen administration and teacher ordering remain documented changes."
+        }
+      }
+    },
+    {
+      "id": "03-02",
+      "title": "局所的な代表性",
+      "participantTitle": "コインの並び",
+      "category": "判断と確率",
+      "minutes": 2,
+      "difficulty": "low",
+      "difficultyNote": "低｜单选或排序",
+      "fidelity": "adaptation",
+      "evidence": "A｜范式已核；原表两串不认定为逐字原题",
+      "chapter": 3,
+      "version": "source-restored-1",
+      "sourceKeys": [
+        "KT72"
+      ],
+      "original": {
+        "ja": "六人きょうだいの出生順序GBGBBGが72世帯と分かっているとき、BGBBBBの世帯数を推定する。Gは女子、Bは男子。",
+        "zh": "已知六孩家庭出生顺序GBGBBG有72户，估计BGBBBB有多少户；G女、B男。",
+        "en": "Given 72 six-child families with birth order GBGBBG, estimate how many have BGBBBB; G denotes girls and B boys."
+      },
+      "changes": {
+        "ja": "コイン選択を廃し、原題の世帯数推定を復元。独立・等確率の追加前提や72の入力上限はない。三言語・画面入力。",
+        "zh": "删除硬币三选一，恢复原家庭数量估计；不加独立、等概率前提，不将72设为上限。三语屏幕输入。",
+        "en": "Restores the original family-count estimate instead of coin choices. No added independence/equiprobability premise or cap at 72; translated screen input."
+      },
+      "names": {
+        "ja": "局所的な代表性",
+        "zh": "随机序列的局部代表性",
+        "en": "Local representativeness"
+      },
+      "conditionNote": "公平独立模型、序列长度、回答单位必须一致。",
+      "classroomEnabled": true,
+      "audit": {
+        "status": "restored-core",
+        "pdfPages": [
+          46
+        ],
+        "reason": {
+          "ja": "原典の当該課題を復元。翻訳・画面化・教師による順序設定は変更として記録。",
+          "zh": "已恢复原出处的所选题型；翻译、屏幕化及教师顺序设置另记为改动。",
+          "en": "The selected source task is restored; translation, screen administration and teacher ordering remain documented changes."
+        }
+      }
+    },
+    {
+      "id": "04-01",
+      "title": "エンジニア・弁護士の推定",
+      "participantTitle": "職業の推定",
+      "category": "判断と確率",
+      "minutes": 5,
+      "difficulty": "low",
+      "difficultyNote": "低｜分组问卷",
+      "fidelity": "documented-source-restoration",
+      "evidence": "Source-linked scope and deviations are recorded.",
+      "chapter": 4,
+      "version": "published-profile-subset-1",
+      "sourceKeys": [
+        "KT73"
+      ],
+      "original": {
+        "ja": "二種類の基準率のもとでJack・Dick・記述なしの人物がエンジニア／弁護士である確率を答えます。",
+        "zh": "在两种基准率下，判断Jack、Dick及无人物描述者是工程师／律师的概率。",
+        "en": "Estimate the probability that Jack, Dick and an undescribed person are engineers or lawyers under one of two base rates."
+      },
+      "changes": {
+        "ja": "基準率二条件×質問職業二条件、0～100の確率を復元。掲載二人物と記述なしに限定し、元の五人物・専門家ボーナスを全再現とはしません。",
+        "zh": "恢复基准率两条件×提问职业两条件及0～100概率。只采用已刊两个人物和无描述题；不冒称恢复原五人物及专家奖金程序。",
+        "en": "Restores two base rates crossed with two target professions and 0–100 probabilities. Uses the two published profiles plus the null description; omits the three unpublished profiles and expert-bonus procedure."
+      },
+      "names": {
+        "ja": "エンジニア・弁護士の推定",
+        "zh": "工程师／律师概率估计",
+        "en": "Engineer–lawyer estimates"
+      },
+      "conditionNote": "每位学生回答三题，基准率和提问职业在三题中保持一致。",
+      "classroomEnabled": true,
+      "audit": {
+        "status": "restored-defined-scope",
+        "pdfPages": [
+          66,
+          67,
+          68,
+          69
+        ],
+        "reason": {
+          "ja": "基準率二条件×質問職業二条件、0～100の確率を復元。掲載二人物と記述なしに限定し、元の五人物・専門家ボーナスを全再現とはしません。",
+          "zh": "恢复基准率两条件×提问职业两条件及0～100概率。只采用已刊两个人物和无描述题；不冒称恢复原五人物及专家奖金程序。",
+          "en": "Restores two base rates crossed with two target professions and 0–100 probabilities. Uses the two published profiles plus the null description; omits the three unpublished profiles and expert-bonus procedure."
+        }
+      },
+      "restoration": {
+        "label": {
+          "ja": "Jack・Dick・記述なしの掲載資料版",
+          "zh": "Jack、Dick及无描述的已刊子集",
+          "en": "Published Jack, Dick and null subset"
+        },
+        "missingMaterials": {
+          "ja": [
+            "残る三人物の原記述と専門家比較による報酬の手続き。"
+          ],
+          "zh": [
+            "另外三份原人物描述，以及与专家判断比较的奖金办法。"
+          ],
+          "en": [
+            "The other three original profiles and the expert-comparison reward procedure."
+          ]
+        },
+        "conditions": {
+          "ja": [
+            "同じ学生に三問。条件は学生ごとに固定されます。"
+          ],
+          "zh": [
+            "每位学生回答三题，基准率和提问职业在三题中保持一致。"
+          ],
+          "en": [
+            "Each student answers three items with a consistent base rate and target profession."
+          ]
+        },
+        "nextStep": {
+          "ja": "",
+          "zh": "",
+          "en": ""
+        }
+      }
+    },
+    {
+      "id": "04-07",
+      "title": "予測における回帰不足",
+      "participantTitle": "授業の印象と予測",
+      "category": "判断と確率",
+      "minutes": 6,
+      "difficulty": "low",
+      "difficultyNote": "低｜文本＋百分位评分",
+      "fidelity": "adaptation",
+      "evidence": "A｜原论文所述程序已核",
+      "chapter": 4,
+      "version": "ja-prototype-1",
+      "sourceKeys": [
+        "KT73"
+      ],
+      "original": {
+        "ja": "実習教師の一授業を評価する群、5年後の能力を予測する群、両方を行う群を比較した。",
+        "zh": "7段实习课描述；评价当课、预测五年后能力或同时两项。",
+        "en": "Groups evaluated a practice lesson, predicted competence five years later, or did both."
+      },
+      "changes": {
+        "ja": "PDF 72–73頁には方法だけがあり、七段の刺激はありません。70頁の大学新生例題は回収済みですが、別の対象・測定であり、この教師研究の復元とは区別します。",
+        "zh": "PDF72–73页只有方法，没有七段刺激。第70页的新生章内例题已提取，可另做例题，但目标和测量不同，不冒充教师研究恢复。",
+        "en": "PDF 72–73 describes methods but omits all seven stimuli. The freshman example on PDF 70 is recovered, but uses a different target and measurement and is not this teacher study."
+      },
+      "names": {
+        "ja": "予測における回帰不足",
+        "zh": "实习教师的一课表现与五年后能力",
+        "en": "Nonregressive prediction"
+      },
+      "conditionNote": "评分参照100位教师；原描述与百分位量尺需恢复。",
+      "classroomEnabled": false,
+      "audit": {
+        "status": "requires-core-materials-or-field-conditions",
+        "pdfPages": [
+          72,
+          73
+        ],
+        "reason": {
+          "ja": "PDF 72–73頁には方法だけがあり、七段の刺激はありません。70頁の大学新生例題は回収済みですが、別の対象・測定であり、この教師研究の復元とは区別します。",
+          "zh": "PDF72–73页只有方法，没有七段刺激。第70页的新生章内例题已提取，可另做例题，但目标和测量不同，不冒充教师研究恢复。",
+          "en": "PDF 72–73 describes methods but omits all seven stimuli. The freshman example on PDF 70 is recovered, but uses a different target and measurement and is not this teacher study."
+        }
+      },
+      "restoration": {
+        "missingMaterials": {
+          "ja": [
+            "実習授業の原記述七段すべて。質問の正確な文言と評価・予測の提示順。"
+          ],
+          "zh": [
+            "七段原实习课描述全部未刊；精确问卷及评价／预测的呈现顺序也未刊。"
+          ],
+          "en": [
+            "All seven original practice-lesson descriptions, exact questions and evaluation/prediction presentation order."
+          ]
+        },
+        "conditions": {
+          "ja": [
+            "100名の小学教師を参照した百分位評価。五年前の記録を評価／予測／両方の三群で扱います。"
+          ],
+          "zh": [
+            "以100名小学教师为参照做百分位判断，区分评价五年前课程、预测现在能力及两者兼做的三组。"
+          ],
+          "en": [
+            "Percentile judgments relative to 100 elementary teachers, using five-year-old records in evaluation, prediction or combined groups."
+          ]
+        },
+        "nextStep": {
+          "ja": "PDF 72–73頁には方法だけがあり、七段の刺激はありません。70頁の大学新生例題は回収済みですが、別の対象・測定であり、この教師研究の復元とは区別します。",
+          "zh": "PDF72–73页只有方法，没有七段刺激。第70页的新生章内例题已提取，可另做例题，但目标和测量不同，不冒充教师研究恢复。",
+          "en": "PDF 72–73 describes methods but omits all seven stimuli. The freshman example on PDF 70 is recovered, but uses a different target and measurement and is not this teacher study."
+        }
+      }
+    },
+    {
+      "id": "06-01",
+      "title": "リンダの合取判断",
+      "participantTitle": "人物と活動の順位",
+      "category": "判断と確率",
+      "minutes": 3,
+      "difficulty": "low",
+      "difficultyNote": "低｜固定问卷；多版本中",
+      "fidelity": "adaptation",
+      "evidence": "A｜书章题型与逻辑已核；版本须逐一选定",
+      "chapter": 6,
+      "version": "source-restored-1",
+      "sourceKeys": [
+        "TK82R"
+      ],
+      "original": {
+        "ja": "Lindaの原記述を読み、八つの職業・活動を確率の高い順に1～8位にする組内版。",
+        "zh": "阅读Linda原人物描述，将八项职业／活动按可能性排1至8名，采用组内概率排序版本。",
+        "en": "Within-subject probability-ranking version: read Linda’s profile and rank eight occupations/activities from 1 to 8."
+      },
+      "changes": {
+        "ja": "八対象と1～8順位を復元。三対象への短縮と追加の外見情報はない。三言語・数値順位入力。Billや別群の版は含めない。",
+        "zh": "恢复完整八目标与1–8排序，不缩成三目标、不加外貌条件。三语数字排序；未包含Bill及其他分组版本。",
+        "en": "Restores all eight targets and ranks 1–8, with no added appearance detail. Translated numeric ranking; excludes Bill and other study versions."
+      },
+      "names": {
+        "ja": "リンダの合取判断",
+        "zh": "Linda：合取判断",
+        "en": "Linda conjunction judgments"
+      },
+      "conditionNote": "保留性格描述、目标措辞和比较方式；整套结束时统一询问是否见过类似题目，不作逐题熟悉度筛查。",
+      "classroomEnabled": true,
+      "audit": {
+        "status": "restored-core",
+        "pdfPages": [
+          107,
+          108
+        ],
+        "reason": {
+          "ja": "原典の当該課題を復元。翻訳・画面化・教師による順序設定は変更として記録。",
+          "zh": "已恢复原出处的所选题型；翻译、屏幕化及教师顺序设置另记为改动。",
+          "en": "The selected source task is restored; translation, screen administration and teacher ordering remain documented changes."
+        }
+      }
+    },
+    {
+      "id": "08-01",
+      "title": "因果方向と診断方向",
+      "participantTitle": "二方向の推定",
+      "category": "判断と確率",
+      "minutes": 3,
+      "difficulty": "low",
+      "difficultyNote": "低｜选择题",
+      "fidelity": "adaptation",
+      "evidence": "A｜原论文题型与分布已核",
+      "chapter": 8,
+      "version": "source-restored-1",
+      "sourceKeys": [
+        "TK80"
+      ],
+      "original": {
+        "ja": "母娘の青い眼の条件付き可能性を三択で比較し、別問では高校最終学年男子と父親の身長の予測方向に対する自信を三択で比較する。",
+        "zh": "母女蓝眼条件概率三选一；另一题在高中毕业年级男生调查情境下，比较由父预测子与由子预测父身高的信心，三选一。",
+        "en": "Compare mother/daughter blue-eye conditional likelihoods, then relative confidence in predicting fathers’ versus sons’ heights in a survey of final-year high-school boys; three choices each."
+      },
+      "changes": {
+        "ja": "180cm、架空集団、同じ周辺比率、追加の0～100自信評定を削除。二問を三言語で復元し、身長回答を数学的正誤として採点しない。",
+        "zh": "删除180厘米、虚构群体、相同边际比例和额外0–100信心评分；三语恢复两种不同测量，不将身高选项判作数学正误。",
+        "en": "Removes 180 cm, a hypothetical population, equal marginals and the extra 0–100 confidence rating. Restores both distinct measures in three languages without correctness scoring for height."
+      },
+      "names": {
+        "ja": "因果方向と診断方向",
+        "zh": "因果方向与诊断方向：眼色／身高",
+        "en": "Causal versus diagnostic judgments"
+      },
+      "conditionNote": "规范对称需相应边际分布假设；真实身高世代变化不能直接代入。",
+      "classroomEnabled": true,
+      "audit": {
+        "status": "restored-core",
+        "pdfPages": [
+          134
+        ],
+        "reason": {
+          "ja": "原典の当該課題を復元。翻訳・画面化・教師による順序設定は変更として記録。",
+          "zh": "已恢复原出处的所选题型；翻译、屏幕化及教师顺序设置另记为改动。",
+          "en": "The selected source task is restored; translation, screen administration and teacher ordering remain documented changes."
+        }
+      }
+    },
+    {
+      "id": "09-03",
+      "title": "取り消された情報と信念",
+      "participantTitle": "図形の分類と自己評価",
+      "category": "社会的判断",
+      "minutes": 5,
+      "difficulty": "medium",
+      "difficultyNote": "中｜阶段锁定和事后说明",
+      "fidelity": "adaptation",
+      "evidence": "A｜作者书章已核；两实验不合并为同一条件",
+      "chapter": 9,
+      "version": "ja-prototype-1",
+      "sourceKeys": [
+        "RLH75"
+      ],
+      "original": {
+        "ja": "新奇な判別課題で虚偽の成否フィードバックを示し、それを撤回した後も評価が残るか測った。",
+        "zh": "判断真假遗书后给虚假能力反馈，再明确撤销反馈依据，测自我与他人评价。",
+        "en": "Success/failure feedback on a novel discrimination task was discredited before reassessment."
+      },
+      "changes": {
+        "ja": "PDF 163–167頁の消防員版もケース刺激が未掲載です。六つの記号分類問題では原刺激を置き換えられません。",
+        "zh": "PDF163–167页的消防员变体也没刊完整案例，不能用六道符号分类题代替原刺激。",
+        "en": "The firefighter variant on PDF 163–167 also omits complete case stimuli; six invented symbol classifications cannot restore it."
+      },
+      "names": {
+        "ja": "取り消された情報と信念",
+        "zh": "虚假成功／失败反馈后的信念持续",
+        "en": "Belief perseverance after discrediting feedback"
+      },
+      "conditionNote": "反馈须可信；阶段不能回看改答；真实研究需适当告知与事后解释。",
+      "classroomEnabled": false,
+      "audit": {
+        "status": "requires-core-materials-or-field-conditions",
+        "pdfPages": [
+          163,
+          164
+        ],
+        "reason": {
+          "ja": "PDF 163–167頁の消防員版もケース刺激が未掲載です。六つの記号分類問題では原刺激を置き換えられません。",
+          "zh": "PDF163–167页的消防员变体也没刊完整案例，不能用六道符号分类题代替原刺激。",
+          "en": "The firefighter variant on PDF 163–167 also omits complete case stimuli; six invented symbol classifications cannot restore it."
+        }
+      },
+      "restoration": {
+        "missingMaterials": {
+          "ja": [
+            "本物・架空の遺書25対、選択版に対応する虚偽成績の順序と後測質問。"
+          ],
+          "zh": [
+            "25对真假遗书、所选版本的逐试次虚假反馈安排及完整后测问句。"
+          ],
+          "en": [
+            "The 25 genuine/fictitious suicide-note pairs, version-specific feedback schedule and complete posttest wording."
+          ]
+        },
+        "conditions": {
+          "ja": [
+            "フィードバックの撤回と終了後説明が必要。能力の診断と扱いません。"
+          ],
+          "zh": [
+            "需要撤销虚假反馈并在结束后说明，不将虚假成绩当作能力诊断。"
+          ],
+          "en": [
+            "Requires feedback retraction and debriefing; fictitious scores must not be treated as ability diagnoses."
+          ]
+        },
+        "nextStep": {
+          "ja": "PDF 163–167頁の消防員版もケース刺激が未掲載です。六つの記号分類問題では原刺激を置き換えられません。",
+          "zh": "PDF163–167页的消防员变体也没刊完整案例，不能用六道符号分类题代替原刺激。",
+          "en": "The firefighter variant on PDF 163–167 also omits complete case stimuli; six invented symbol classifications cannot restore it."
+        }
+      }
+    },
+    {
+      "id": "09-05",
+      "title": "偏った同化と態度",
+      "participantTitle": "研究報告の評価",
+      "category": "社会的判断",
+      "minutes": 6,
+      "difficulty": "medium",
+      "difficultyNote": "中｜预筛选＋平衡顺序",
+      "fidelity": "adaptation",
+      "evidence": "A｜原论文和作者书章已核",
+      "chapter": 9,
+      "version": "ja-prototype-1",
+      "sourceKeys": [
+        "LRL79"
+      ],
+      "original": {
+        "ja": "死刑への立場が異なる人に賛否両方向の研究を読ませ、評価と態度変化を測った。",
+        "zh": "原有立场不同者看一正一反两份研究，分阶段评价研究与自身态度变化。",
+        "en": "Supporters and opponents of capital punishment evaluated mixed evidence and reported attitude changes."
+      },
+      "changes": {
+        "ja": "PDF 161–162頁は概要。原論文の短い結果カードは取得済みですが、最初の要約後反応だけでは詳細証拠を伴う元の極化手続きを測れません。",
+        "zh": "PDF161–162页仅为概要。原论文短结果卡已取得，能做明确标注的首阶段反应，但尚不支持当前条目的完整混合证据／态度极化程序。",
+        "en": "PDF 161–162 is a summary. Published short result cards are recovered and could support a labeled first-stage response task, but not the current full detailed-evidence/polarization procedure."
+      },
+      "names": {
+        "ja": "偏った同化と態度",
+        "zh": "支持／反对死刑者对混合证据的评价",
+        "en": "Biased assimilation and attitude polarization"
+      },
+      "conditionNote": "保留假想研究可信度、原量尺；区分自报变化与独立前后差值。",
+      "classroomEnabled": false,
+      "audit": {
+        "status": "requires-core-materials-or-field-conditions",
+        "pdfPages": [
+          161,
+          162
+        ],
+        "reason": {
+          "ja": "PDF 161–162頁は概要。原論文の短い結果カードは取得済みですが、最初の要約後反応だけでは詳細証拠を伴う元の極化手続きを測れません。",
+          "zh": "PDF161–162页仅为概要。原论文短结果卡已取得，能做明确标注的首阶段反应，但尚不支持当前条目的完整混合证据／态度极化程序。",
+          "en": "PDF 161–162 is a summary. Published short result cards are recovered and could support a labeled first-stage response task, but not the current full detailed-evidence/polarization procedure."
+        }
+      },
+      "restoration": {
+        "missingMaterials": {
+          "ja": [
+            "詳細な研究報告、方法批判と反論、刺激の表・図。"
+          ],
+          "zh": [
+            "完整研究报告、方法批评与回应，以及刺激表格和图。"
+          ],
+          "en": [
+            "Detailed study reports, methodological critiques and rebuttals, and stimulus tables/figures."
+          ]
+        },
+        "conditions": {
+          "ja": [
+            "事前の死刑態度を測り、賛否双方の証拠と評価順を保存する必要があります。"
+          ],
+          "zh": [
+            "需记录事先的死刑态度、两方向证据及评价顺序。"
+          ],
+          "en": [
+            "Requires prior death-penalty attitudes, evidence on both sides and the evaluation sequence."
+          ]
+        },
+        "nextStep": {
+          "ja": "PDF 161–162頁は概要。原論文の短い結果カードは取得済みですが、最初の要約後反応だけでは詳細証拠を伴う元の極化手続きを測れません。",
+          "zh": "PDF161–162页仅为概要。原论文短结果卡已取得，能做明确标注的首阶段反应，但尚不支持当前条目的完整混合证据／态度极化程序。",
+          "en": "PDF 161–162 is a summary. Published short result cards are recovered and could support a labeled first-stage response task, but not the current full detailed-evidence/polarization procedure."
+        }
+      }
+    },
+    {
+      "id": "09-07",
+      "title": "虚偽の合意効果：仮想の携牌場面",
+      "participantTitle": "参加の選択と他者の予測",
+      "category": "社会的判断",
+      "minutes": 12,
+      "difficulty": "low",
+      "difficultyNote": "低｜问卷；真实执行条件高",
+      "fidelity": "documented-source-restoration",
+      "evidence": "Source-linked scope and deviations are recorded.",
+      "chapter": 9,
+      "version": "false-consensus-study3-1",
+      "sourceKeys": [
+        "RGH77"
+      ],
+      "original": {
+        "ja": "広告または宗教的な看板を持つ仮想場面で、他者の承諾率、自分の選択、自己・承諾者・拒否者の八特性を評価します。",
+        "zh": "在携带餐馆广告牌或宗教劝诫牌的假想情境中，估计他人同意率，作出自己的选择，并评定自己、同意者和拒绝者的八项特质。",
+        "en": "In a hypothetical restaurant or religious sign scenario, estimate consent rates, make a personal choice and rate eight traits of self, accepters and refusers."
+      },
+      "changes": {
+        "ja": "1977年Study 3。二つの割合の合計100、三対象×八特性の−50～+50を復元。場面は忠実な転述・翻訳。六通りの対象順を個別無作為割付し、元の定数割付とは異なります。",
+        "zh": "采用1977年Study 3。恢复合计100的两个比例及三对象×八特质的−50～+50量尺。题面为保留事实的转述和翻译；对象块序独立随机，不声称完成原人数配额平衡。",
+        "en": "Uses Study 3 (1977): two percentages totaling 100 and three targets × eight traits on −50 to +50 scales. Wording is faithfully restated and translated; target orders are randomized without original fixed quotas."
+      },
+      "names": {
+        "ja": "虚偽の合意効果：仮想の携牌場面",
+        "zh": "虚假共识：假想携牌情境",
+        "en": "False consensus: hypothetical sign task"
+      },
+      "conditionNote": "仅是假想情境，不要求真实举牌，也不承诺给予学分。",
+      "classroomEnabled": true,
+      "audit": {
+        "status": "restored-defined-scope",
+        "pdfPages": [
+          157,
+          158,
+          159
+        ],
+        "reason": {
+          "ja": "1977年Study 3。二つの割合の合計100、三対象×八特性の−50～+50を復元。場面は忠実な転述・翻訳。六通りの対象順を個別無作為割付し、元の定数割付とは異なります。",
+          "zh": "采用1977年Study 3。恢复合计100的两个比例及三对象×八特质的−50～+50量尺。题面为保留事实的转述和翻译；对象块序独立随机，不声称完成原人数配额平衡。",
+          "en": "Uses Study 3 (1977): two percentages totaling 100 and three targets × eight traits on −50 to +50 scales. Wording is faithfully restated and translated; target orders are randomized without original fixed quotas."
+        }
+      },
+      "restoration": {
+        "label": {
+          "ja": "原論文Study 3",
+          "zh": "原论文Study 3",
+          "en": "Original paper: Study 3"
+        },
+        "missingMaterials": {
+          "ja": [
+            "元の紙質問票の版面と正確な順序割付表は未取得。主要場面・特性・量尺は確認済み。"
+          ],
+          "zh": [
+            "未取得原纸问卷版面和确切的顺序分配表；主要情境、特质和量尺已确认。"
+          ],
+          "en": [
+            "The original paper-form layout and exact order-allocation table are unavailable; scenarios, traits and scales are verified."
+          ]
+        },
+        "conditions": {
+          "ja": [
+            "仮想場面のみ。実際の街頭活動や単位付与は行いません。"
+          ],
+          "zh": [
+            "仅是假想情境，不要求真实举牌，也不承诺给予学分。"
+          ],
+          "en": [
+            "Hypothetical only: no actual sign carrying or course-credit promise."
+          ]
+        },
+        "nextStep": {
+          "ja": "",
+          "zh": "",
+          "en": ""
+        }
+      }
+    },
+    {
+      "id": "11-06",
+      "title": "乗算の順序と推定",
+      "participantTitle": "積の推定",
+      "category": "判断と確率",
+      "minutes": 1,
+      "difficulty": "medium",
+      "difficultyNote": "中｜五秒回答期限、未回答と中断の記録",
+      "fidelity": "translation",
+      "evidence": "A｜Tversky & Kahneman (1974), Science, pp.1128–1129; five-second numerical estimation",
+      "chapter": 11,
+      "version": "source-restored-1",
+      "sourceKeys": [
+        "TK74"
+      ],
+      "original": {
+        "ja": "二つの高校生群に1×2×…×8または8×7×…×1を提示し、5秒以内に積を推定させた。各参加者は一方の式だけを見る。",
+        "zh": "将高中生分为两组，在5秒内估计1×2×…×8或8×7×…×1的乘积；每人只看其中一个算式。",
+        "en": "Two groups of high-school students estimated either 1×2×…×8 or 8×7×…×1 within five seconds; each participant saw only one expression."
+      },
+      "changes": {
+        "ja": "黒板を画面表示へ変更。準備画面後に5秒で回答を確定し、未入力はnull、中断は別記録とする。入力速度・機器・言語の差が加わる。 原文にない計算手段の禁止指示を削除。",
+        "zh": "黑板改为屏幕。准备页后计时5秒，截止时锁定已输入的估计，未输入记为null；刷新或离开页面记为中断。新增键盘输入、设备与语言差异。 删除原文未给出的计算工具禁令。",
+        "en": "The blackboard becomes a screen. After a readiness page, a five-second deadline captures the entered estimate or null. Reloads or hidden pages are recorded as interruptions; input speed, device and language introduce differences. Removes unsupported instructions prohibiting calculation tools."
+      },
+      "names": {
+        "ja": "五秒間の乗算推定",
+        "zh": "五秒乘法外推：升序／降序乘积估计",
+        "en": "Five-second multiplication estimates"
+      },
+      "conditionNote": "独立分组，每人只见一种排列；不得并排比较或依次展示两种排列；不在作答前提示相等或真实乘积。",
+      "classroomEnabled": true,
+      "audit": {
+        "status": "restored-core",
+        "pdfPages": [
+          28
+        ],
+        "reason": {
+          "ja": "原典の当該課題を復元。翻訳・画面化・教師による順序設定は変更として記録。",
+          "zh": "已恢复原出处的所选题型；翻译、屏幕化及教师顺序设置另记为改动。",
+          "en": "The selected source task is restored; translation, screen administration and teacher ordering remain documented changes."
+        }
+      }
+    },
+    {
+      "id": "12-01",
+      "title": "会話での自己と相手の寄与",
+      "participantTitle": "二人の共同活動",
+      "category": "社会的判断",
+      "minutes": 3,
+      "difficulty": "medium",
+      "difficultyNote": "中｜配对邀请码",
+      "fidelity": "documented-source-restoration",
+      "evidence": "Source-linked scope and deviations are recorded.",
+      "chapter": 12,
+      "version": "conversation-pilot-1",
+      "sourceKeys": [
+        "RS79"
+      ],
+      "original": {
+        "ja": "同じ会話をした二人が、自分と相手の発言時間の割合を独立に推定し、互いの見積りを比較します。",
+        "zh": "同一次谈话的两位参与者，独立估计自己和对方发言时间的比例，再比较两人的估计。",
+        "en": "Two people from the same conversation independently estimate their own and their partner’s speaking time, allowing cross-person comparison."
+      },
+      "changes": {
+        "ja": "同章の26人の会話先行研究を選択。夫妻の家事項目とは別版です。合計100を強制せず、余分な回想・自信・七日間条件を削除。学籍番号は同一実施内の照合用。",
+        "zh": "选用同章26人的谈话先导研究，与夫妻家务主实验区分。两个估计不强制合计100，删除额外回忆、信心及七天条件。学号只用于同一次实施内的互指配对。",
+        "en": "Selects the chapter’s 26-person conversation pilot, distinct from the marital household study. Two estimates need not total 100; added recall, confidence and seven-day conditions are removed. Partner IDs are matching metadata within one lesson."
+      },
+      "names": {
+        "ja": "会話での自己と相手の寄与",
+        "zh": "谈话中的自己与对方贡献",
+        "en": "Self and partner contributions to conversation"
+      },
+      "conditionNote": "两人必须实际参加过同一次谈话并独立作答；不另加固定话题或时长，双方互填对方学号。",
+      "classroomEnabled": true,
+      "audit": {
+        "status": "restored-defined-scope",
+        "pdfPages": [
+          201,
+          202,
+          208
+        ],
+        "reason": {
+          "ja": "同章の26人の会話先行研究を選択。夫妻の家事項目とは別版です。合計100を強制せず、余分な回想・自信・七日間条件を削除。学籍番号は同一実施内の照合用。",
+          "zh": "选用同章26人的谈话先导研究，与夫妻家务主实验区分。两个估计不强制合计100，删除额外回忆、信心及七天条件。学号只用于同一次实施内的互指配对。",
+          "en": "Selects the chapter’s 26-person conversation pilot, distinct from the marital household study. Two estimates need not total 100; added recall, confidence and seven-day conditions are removed. Partner IDs are matching metadata within one lesson."
+        }
+      },
+      "restoration": {
+        "label": {
+          "ja": "同章の会話先行研究",
+          "zh": "同章谈话先导研究",
+          "en": "Conversation pilot from the same chapter"
+        },
+        "missingMaterials": {
+          "ja": [
+            "選択した先行研究の主要材料に欠落なし。夫妻版の20活動は取得済みですが別手続きです。"
+          ],
+          "zh": [
+            "所选先导版本的主要材料已齐；夫妻版20项活动也已取得，但属于另一程序。"
+          ],
+          "en": [
+            "Core materials for the pilot are available. The 20 marital activities are also recovered but belong to a different procedure."
+          ]
+        },
+        "conditions": {
+          "ja": [
+            "実際に同じ会話をした二人が独立回答。話題・時間は指定せず、相互に相手の学生証番号を入力します。"
+          ],
+          "zh": [
+            "两人必须实际参加过同一次谈话并独立作答；不另加固定话题或时长，双方互填对方学号。"
+          ],
+          "en": [
+            "Requires two people who actually shared a conversation and answer independently, entering each other’s IDs. No added fixed topic or duration."
+          ]
+        },
+        "nextStep": {
+          "ja": "",
+          "zh": "",
+          "en": ""
+        }
+      }
+    },
+    {
+      "id": "13-01",
+      "title": "視点と因果帰属",
+      "participantTitle": "二人の会話を観察する",
+      "category": "社会的判断",
+      "minutes": 3,
+      "difficulty": "medium",
+      "difficultyNote": "中｜多视角视频；现场版高",
+      "fidelity": "adaptation",
+      "evidence": "B｜原研究与章节主题已核；镜头、材料和量尺待提取",
+      "chapter": 13,
+      "version": "ja-prototype-1",
+      "sourceKeys": [
+        "TF75"
+      ],
+      "original": {
+        "ja": "観察者の座席や視点を変えて同じ会話を見せ、話者の因果的影響を評価させた。",
+        "zh": "让观察者从不同座位/视角看两人谈话，再评估双方影响。",
+        "en": "Observers viewed a conversation from different positions and rated the speakers' causal influence."
+      },
+      "changes": {
+        "ja": "PDF 155–156・212–213頁の概要から台本は復元できません。SVG人物の拡大と自作0～100影響度は別設計になります。",
+        "zh": "PDF155–156、212–213页的综述不足以恢复脚本；放大SVG人物并新增0～100影响题属于另一设计。",
+        "en": "Summaries on PDF 155–156 and 212–213 cannot recover the script. Enlarged SVG figures and an invented 0–100 influence question constitute another design."
+      },
+      "names": {
+        "ja": "視点と因果帰属",
+        "zh": "观察视角与谈话者因果影响",
+        "en": "Perceptual salience and causality"
+      },
+      "conditionNote": "同一内容、时长和表情信息；显著性操纵检查。",
+      "classroomEnabled": false,
+      "audit": {
+        "status": "requires-core-materials-or-field-conditions",
+        "pdfPages": [
+          155,
+          156,
+          212,
+          213
+        ],
+        "reason": {
+          "ja": "PDF 155–156・212–213頁の概要から台本は復元できません。SVG人物の拡大と自作0～100影響度は別設計になります。",
+          "zh": "PDF155–156、212–213页的综述不足以恢复脚本；放大SVG人物并新增0～100影响题属于另一设计。",
+          "en": "Summaries on PDF 155–156 and 212–213 cannot recover the script. Enlarged SVG figures and an invented 0–100 influence question constitute another design."
+        }
+      },
+      "restoration": {
+        "missingMaterials": {
+          "ja": [
+            "統制された会話の台本・映像、視点ごとの観察手順、元の帰属質問票。"
+          ],
+          "zh": [
+            "受控谈话的完整脚本或影像、各视角观看程序，以及原归因问卷。"
+          ],
+          "en": [
+            "Controlled conversation scripts or recordings, viewpoint-specific viewing procedures and the original attribution questionnaire."
+          ]
+        },
+        "conditions": {
+          "ja": [
+            "内容を共通にし、観察位置だけを操作する対面または同等の映像配置が必要です。"
+          ],
+          "zh": [
+            "需要保持谈话内容相同，仅操作观察视角的现场或等效影像安排。"
+          ],
+          "en": [
+            "Requires controlled live or equivalent video viewing that holds conversation content constant while varying viewpoint."
+          ]
+        },
+        "nextStep": {
+          "ja": "PDF 155–156・212–213頁の概要から台本は復元できません。SVG人物の拡大と自作0～100影響度は別設計になります。",
+          "zh": "PDF155–156、212–213页的综述不足以恢复脚本；放大SVG人物并新增0～100影响题属于另一设计。",
+          "en": "Summaries on PDF 155–156 and 212–213 cannot recover the script. Enlarged SVG figures and an invented 0–100 influence question constitute another design."
+        }
+      }
+    },
+    {
+      "id": "14-01",
+      "title": "反実仮想の生成",
+      "participantTitle": "出来事を書き換える",
+      "category": "記憶と推定",
+      "minutes": 4,
+      "difficulty": "medium",
+      "difficultyNote": "中｜文本输入＋编码",
+      "fidelity": "adaptation",
+      "evidence": "B｜章节摘要与范式已核；完整故事与编码表待恢复",
+      "chapter": 14,
+      "version": "source-restored-1",
+      "sourceKeys": [
+        "KT82S"
+      ],
+      "original": {
+        "ja": "Jones氏の死亡事故の経路版／時刻版を群間提示。「もし…」の続きを一つ以上記述し、研究者が最初の続きを分類する。",
+        "zh": "组间呈现Jones致命车祸的路线版／时间版，填写一个或多个“要是……”续句，研究者编码第一条。",
+        "en": "Between-subject route/time versions of Mr Jones’s fatal accident; write one or more “If only…” completions, with the first completion coded by researchers."
+      },
+      "changes": {
+        "ja": "面接物語を原事故物語に戻し、一つだけという制限・分類・理由質問を削除。三言語の自由記述を保存し、人手で符号化する。",
+        "zh": "面试故事恢复为原车祸故事，删除仅一条限制、事件编号和理由题。三语自由文本留待人工编码。",
+        "en": "Restores the accident story, removes the one-completion restriction, event-category question and reasons. Translated free text is retained for manual coding."
+      },
+      "names": {
+        "ja": "反実仮想の生成",
+        "zh": "心理撤销：改变过去事件的反事实",
+        "en": "Counterfactual simulation"
+      },
+      "conditionNote": "保留正常/异常事件操纵和故事因果结构；预定义编码标准。",
+      "classroomEnabled": true,
+      "audit": {
+        "status": "restored-core",
+        "pdfPages": [
+          224,
+          225
+        ],
+        "reason": {
+          "ja": "原典の当該課題を復元。翻訳・画面化・教師による順序設定は変更として記録。",
+          "zh": "已恢复原出处的所选题型；翻译、屏幕化及教师顺序设置另记为改动。",
+          "en": "The selected source task is restored; translation, screen administration and teacher ordering remain documented changes."
+        }
+      }
+    },
+    {
+      "id": "16-02",
+      "title": "選択権と統制の錯覚",
+      "participantTitle": "カードの選択と交換",
+      "category": "判断と確率",
+      "minutes": 3,
+      "difficulty": "medium",
+      "difficultyNote": "中｜选择＋真实激励",
+      "fidelity": "adaptation",
+      "evidence": "A｜原论文方法与数值已核",
+      "chapter": 16,
+      "version": "ja-prototype-1",
+      "sourceKeys": [
+        "L75"
+      ],
+      "original": {
+        "ja": "実物のフットボールカードのくじを1ドルで購入し、自分で選ぶ／対応するカードを割り当てられる群に分け、後日に転売価格を聞く。",
+        "zh": "1美元购买实物橄榄球卡彩票，自选／配对分配两组，之后询问转售价格。",
+        "en": "Participants bought real football-card lottery tickets for $1, chose or received matched cards, and later stated resale prices."
+      },
+      "changes": {
+        "ja": "PDF 256–257頁から手続きと三言語の詢価は回収済みです。残るのは現場材料と実際の所有・購入条件であり、架空の100円設問では代替しません。",
+        "zh": "PDF256–257页的程序及三语询价已恢复；欠缺的是现场材料、真实所有权和购买条件，不用假想100日元题冒充。",
+        "en": "The procedure and trilingual price elicitation are recovered from PDF 256–257. Remaining gaps are physical materials and actual ownership/purchase conditions, not an invented hypothetical price question."
+      },
+      "names": {
+        "ja": "選択権と統制の錯覚",
+        "zh": "彩票选择权与转售要价",
+        "en": "Choice and illusion of control"
+      },
+      "conditionNote": "真实所有权、奖金可信度、原分组和票卡吸引力；报价机制一致。",
+      "classroomEnabled": false,
+      "audit": {
+        "status": "requires-core-materials-or-field-conditions",
+        "pdfPages": [
+          256,
+          257
+        ],
+        "reason": {
+          "ja": "PDF 256–257頁から手続きと三言語の詢価は回収済みです。残るのは現場材料と実際の所有・購入条件であり、架空の100円設問では代替しません。",
+          "zh": "PDF256–257页的程序及三语询价已恢复；欠缺的是现场材料、真实所有权和购买条件，不用假想100日元题冒充。",
+          "en": "The procedure and trilingual price elicitation are recovered from PDF 256–257. Remaining gaps are physical materials and actual ownership/purchase conditions, not an invented hypothetical price question."
+        }
+      },
+      "restoration": {
+        "missingMaterials": {
+          "ja": [
+            "227種類の球星カード二組と対応する割当記録。"
+          ],
+          "zh": [
+            "两套各227张球星卡，以及匹配分配记录。"
+          ],
+          "en": [
+            "Two matched sets of 227 football-player cards and matched-allocation records."
+          ]
+        },
+        "conditions": {
+          "ja": [
+            "実際の1ドル購入と約50ドル賞金、選択者に対応した非選択者のカード、抽選前の要価。初期の売却拒否も別記録します。"
+          ],
+          "zh": [
+            "需真实1美元购买、约50美元奖池，无选择者匹配前位选择者的卡，以及开奖前的要价和初始拒卖记录。"
+          ],
+          "en": [
+            "Requires actual $1 purchase, roughly $50 prize pool, matched cards for no-choice participants and pre-draw asking prices, retaining initial refusal separately."
+          ]
+        },
+        "nextStep": {
+          "ja": "PDF 256–257頁から手続きと三言語の詢価は回収済みです。残るのは現場材料と実際の所有・購入条件であり、架空の100円設問では代替しません。",
+          "zh": "PDF256–257页的程序及三语询价已恢复；欠缺的是现场材料、真实所有权和购买条件，不用假想100日元题冒充。",
+          "en": "The procedure and trilingual price elicitation are recovered from PDF 256–257. Remaining gaps are physical materials and actual ownership/purchase conditions, not an invented hypothetical price question."
+        }
+      }
+    },
+    {
+      "id": "17-01",
+      "title": "錯覚相関",
+      "participantTitle": "図と記述の組み合わせ",
+      "category": "記憶と推定",
+      "minutes": 5,
+      "difficulty": "medium",
+      "difficultyNote": "中｜图像预加载与配额",
+      "fidelity": "adaptation",
+      "evidence": "B｜原论文摘要和章节已核；刺激配对表待恢复",
+      "chapter": 17,
+      "version": "ja-prototype-1",
+      "sourceKeys": [
+        "CC67"
+      ],
+      "original": {
+        "ja": "絵の特徴と症状の統計的な組み合わせを制御し、後から関連性を評価させた。",
+        "zh": "展示受控配对的画作与症状，之后评估两者关系。",
+        "en": "Controlled pairings of drawing features and symptoms were followed by judgments of association."
+      },
+      "changes": {
+        "ja": "PDF 261–264頁から六症状・枚数・時間は復元済みです。核心の45図がなく、三種のSVGや別研究の語連想尺度では補えません。",
+        "zh": "PDF261–264页可恢复六症状、张数和时间；核心45图缺失，不能用三种SVG或另一研究的词语联想量尺替代。",
+        "en": "PDF 261–264 supplies six symptoms, counts and exposure timing. The missing 45 drawings cannot be replaced by three SVGs or another study’s word-association scale."
+      },
+      "names": {
+        "ja": "錯覚相関",
+        "zh": "画人测验：症状—画面特征错觉相关",
+        "en": "Illusory correlation"
+      },
+      "conditionNote": "需原图、诊断标签及真实共现表；固定边际频率，不能任意随机。",
+      "classroomEnabled": false,
+      "audit": {
+        "status": "requires-core-materials-or-field-conditions",
+        "pdfPages": [
+          261,
+          262,
+          263,
+          264
+        ],
+        "reason": {
+          "ja": "PDF 261–264頁から六症状・枚数・時間は復元済みです。核心の45図がなく、三種のSVGや別研究の語連想尺度では補えません。",
+          "zh": "PDF261–264页可恢复六症状、张数和时间；核心45图缺失，不能用三种SVG或另一研究的词语联想量尺替代。",
+          "en": "PDF 261–264 supplies six symptoms, counts and exposure timing. The missing 45 drawings cannot be replaced by three SVGs or another study’s word-association scale."
+        }
+      },
+      "restoration": {
+        "missingMaterials": {
+          "ja": [
+            "45枚の原人物画、各絵への症状割当表、完全な後測。"
+          ],
+          "zh": [
+            "45张原人物画、逐图症状配对表和完整后测。"
+          ],
+          "en": [
+            "The 45 original human-figure drawings, picture-level symptom assignments and complete posttest."
+          ]
+        },
+        "conditions": {
+          "ja": [
+            "各絵に二症状、15対を各三回、各絵30秒。診断に用いる課題ではありません。"
+          ],
+          "zh": [
+            "每图两个症状，15对组合各出现三次，每图30秒；不作临床诊断。"
+          ],
+          "en": [
+            "Two symptoms per drawing, each of 15 pairs three times, 30 seconds per drawing; no clinical diagnosis."
+          ]
+        },
+        "nextStep": {
+          "ja": "PDF 261–264頁から六症状・枚数・時間は復元済みです。核心の45図がなく、三種のSVGや別研究の語連想尺度では補えません。",
+          "zh": "PDF261–264页可恢复六症状、张数和时间；核心45图缺失，不能用三种SVG或另一研究的词语联想量尺替代。",
+          "en": "PDF 261–264 supplies six symptoms, counts and exposure timing. The missing 45 drawings cannot be replaced by three SVGs or another study’s word-association scale."
+        }
+      }
+    },
+    {
+      "id": "20-01",
+      "title": "情報量と判断の自信",
+      "participantTitle": "段階的な人物情報",
+      "category": "判断と確率",
+      "minutes": 6,
+      "difficulty": "medium",
+      "difficultyNote": "中｜分阶段锁定",
+      "fidelity": "adaptation",
+      "evidence": "B｜原论文摘要已核；原病例、问题与各阶段答案待取得",
+      "chapter": 20,
+      "version": "ja-prototype-1",
+      "sourceKeys": [
+        "O65"
+      ],
+      "original": {
+        "ja": "32名の判断者が4段階の症例情報を読み、判断と自信を繰り返し回答した。",
+        "zh": "32名判断者按四阶段获得病例信息，反复判断并报信心。",
+        "en": "Thirty-two judges received case information in four stages and repeatedly reported judgments and confidence."
+      },
+      "changes": {
+        "ja": "PDF 308–311頁の第一段階と五つの例題は取得済みですが、情報増加の操作を単独の初回例題だけでは実施できません。",
+        "zh": "PDF308–311页的第一阶段和五道示例已取得，但仅做首阶段示例不能实施信息递增的核心操纵。",
+        "en": "The first stage and five examples on PDF 308–311 are recovered, but these alone cannot implement the increasing-information manipulation."
+      },
+      "names": {
+        "ja": "情報量と判断の自信",
+        "zh": "病例信息递增与诊断信心",
+        "en": "Information and overconfidence"
+      },
+      "conditionNote": "须有可评分真值及原问题；保留专家/学生构成与重复问答方式。",
+      "classroomEnabled": false,
+      "audit": {
+        "status": "requires-core-materials-or-field-conditions",
+        "pdfPages": [
+          308,
+          309,
+          310,
+          311
+        ],
+        "reason": {
+          "ja": "PDF 308–311頁の第一段階と五つの例題は取得済みですが、情報増加の操作を単独の初回例題だけでは実施できません。",
+          "zh": "PDF308–311页的第一阶段和五道示例已取得，但仅做首阶段示例不能实施信息递增的核心操纵。",
+          "en": "The first stage and five examples on PDF 308–311 are recovered, but these alone cannot implement the increasing-information manipulation."
+        }
+      },
+      "restoration": {
+        "missingMaterials": {
+          "ja": [
+            "第二～第四段階の完全なケース記録、25問中20問と選択肢・事実キー。"
+          ],
+          "zh": [
+            "第2～4阶段完整病例资料，25题中未刊的20题、选项及事实答案。"
+          ],
+          "en": [
+            "Complete stage 2–4 case records and the 20 unpublished questions of 25, including options and factual keys."
+          ]
+        },
+        "conditions": {
+          "ja": [
+            "同じ25問を四段階で反復。各題五択と20～100%の信頼度を記録します。"
+          ],
+          "zh": [
+            "四阶段重复同25题，每题五选一，逐题收20～100%信心。"
+          ],
+          "en": [
+            "Repeat the same 25 five-choice questions over four stages, with 20–100% confidence for every item."
+          ]
+        },
+        "nextStep": {
+          "ja": "PDF 308–311頁の第一段階と五つの例題は取得済みですが、情報増加の操作を単独の初回例題だけでは実施できません。",
+          "zh": "PDF308–311页的第一阶段和五道示例已取得，但仅做首阶段示例不能实施信息递增的核心操纵。",
+          "en": "The first stage and five examples on PDF 308–311 are recovered, but these alone cannot implement the increasing-information manipulation."
+        }
+      }
+    },
+    {
+      "id": "23-01",
+      "title": "結末情報と歴史判断",
+      "participantTitle": "過去の出来事の予測",
+      "category": "記憶と推定",
+      "minutes": 10,
+      "difficulty": "low",
+      "difficultyNote": "低｜组间问卷",
+      "fidelity": "documented-source-restoration",
+      "evidence": "Source-linked scope and deviations are recorded.",
+      "chapter": 23,
+      "version": "hindsight-gurka-exp1-1",
+      "sourceKeys": [
+        "F75"
+      ],
+      "original": {
+        "ja": "グルカ戦争の十二事実を読み、四結末の確率と各事実の関連性を評価します。結末を知らない群と、四種類の結末を示す群を比較します。",
+        "zh": "阅读廓尔喀战争的十二条事实，评估四种结局的概率和各事实的相关性，比较无结局信息组与四种结局信息组。",
+        "en": "Read twelve facts about the Gurka conflict, estimate four outcome probabilities and rate each fact’s relevance across one no-outcome and four outcome-information groups."
+      },
+      "changes": {
+        "ja": "1975年実験1の事件A。四確率合計100と十二項目の七点評定を復元。英語も事実を保った転述で、紙質問票の逐語複製ではありません。関連性の高低以外の端点語を加えません。",
+        "zh": "限定1975年实验1事件A，恢复四概率合计100及十二项七点评定。英语也是忠实转述，不是原纸问卷逐字复制；没有补造相关性量尺的端点词。",
+        "en": "Limited to event A in Experiment 1 (1975). Restores four probabilities totaling 100 and twelve seven-point relevance ratings. All languages are faithful restatements; no unverified endpoint labels are added."
+      },
+      "names": {
+        "ja": "結末情報と歴史判断",
+        "zh": "结局信息与历史判断",
+        "en": "Outcome information and historical judgment"
+      },
+      "conditionNote": "每人只见一个条件；部分指定结局并非真实历史，结束后统一说明。",
+      "classroomEnabled": true,
+      "audit": {
+        "status": "restored-defined-scope",
+        "pdfPages": [
+          358
+        ],
+        "reason": {
+          "ja": "1975年実験1の事件A。四確率合計100と十二項目の七点評定を復元。英語も事実を保った転述で、紙質問票の逐語複製ではありません。関連性の高低以外の端点語を加えません。",
+          "zh": "限定1975年实验1事件A，恢复四概率合计100及十二项七点评定。英语也是忠实转述，不是原纸问卷逐字复制；没有补造相关性量尺的端点词。",
+          "en": "Limited to event A in Experiment 1 (1975). Restores four probabilities totaling 100 and twelve seven-point relevance ratings. All languages are faithful restatements; no unverified endpoint labels are added."
+        }
+      },
+      "restoration": {
+        "label": {
+          "ja": "原論文の実験1・事件A",
+          "zh": "原论文实验1、事件A",
+          "en": "Original paper: Experiment 1, event A"
+        },
+        "missingMaterials": {
+          "ja": [
+            "1975年質問票の完全な版面は未取得。十二事実・結末・測定範囲は原論文で補核済み。"
+          ],
+          "zh": [
+            "未取得1975年整份问卷版面；十二事实、结局及测量范围已由原论文补核。"
+          ],
+          "en": [
+            "The complete 1975 questionnaire layout is unavailable; facts, outcomes and measurement scope are verified from the paper."
+          ]
+        },
+        "conditions": {
+          "ja": [
+            "一人一条件。提示された結末には実際と異なるものがあり、終了後に説明します。"
+          ],
+          "zh": [
+            "每人只见一个条件；部分指定结局并非真实历史，结束后统一说明。"
+          ],
+          "en": [
+            "One condition per student; some assigned outcomes are counterfactual and explained after completion."
+          ]
+        },
+        "nextStep": {
+          "ja": "",
+          "zh": "",
+          "en": ""
+        }
+      }
+    },
+    {
+      "id": "25-01",
+      "title": "ベイズ更新の保守性",
+      "participantTitle": "袋と色付きチップ",
+      "category": "判断と確率",
+      "minutes": 5,
+      "difficulty": "medium",
+      "difficultyNote": "中｜序贯数据与概率",
+      "fidelity": "adaptation",
+      "evidence": "A｜原章节选范式已核；实施须选定具体实验版本",
+      "chapter": 25,
+      "version": "source-restored-1",
+      "sourceKeys": [
+        "ED68"
+      ],
+      "original": {
+        "ja": "各1000個のチップを含む二袋（赤700／300個）から硬貨で一袋を選び、復元抽出12回で赤8・青4。赤700個の袋を選んだ確率を一度判断する章内例題。",
+        "zh": "两袋各1000片，红片分别700／300；公平硬币选袋，放回抽12次得8红4蓝，估计选中700红袋的概率一次。这是章节例题。",
+        "en": "Chapter example: a fair coin selects one of two 1,000-chip bags (700/300 red). After 12 replacement draws give 8 red and 4 blue, estimate once the probability of the 700-red bag."
+      },
+      "changes": {
+        "ja": "自作の10回逐次更新を削除し、原例題の一括標本と一回の確率回答を復元。小数も可。三言語・画面入力で、元研究全体の再現ではない。 原文の0～1の確率表記と0.5の手掛かりを維持。",
+        "zh": "删除自编10次序贯更新，恢复原例题一批样本、一次概率回答，可填小数。三语屏幕作答，不冒充原研究全套实验。 保留原文0–1概率表述及0.5提示。",
+        "en": "Removes the authored ten-step sequence; restores the batch sample and single probability judgment, accepting decimals. Translated screen response, not the full original research program. Retains the original 0–1 probability notation and 0.5 cues."
+      },
+      "names": {
+        "ja": "二袋の確率推定（章内例題）",
+        "zh": "两袋后验概率（章节例题）",
+        "en": "Two-bag probability (chapter example)"
+      },
+      "conditionNote": "保留先验、抽样方式、有无放回和展示形式；规范值按实际设计计算。",
+      "classroomEnabled": true,
+      "audit": {
+        "status": "restored-core",
+        "pdfPages": [
+          384
+        ],
+        "reason": {
+          "ja": "原典の当該課題を復元。翻訳・画面化・教師による順序設定は変更として記録。",
+          "zh": "已恢复原出处的所选题型；翻译、屏幕化及教师顺序设置另记为改动。",
+          "en": "The selected source task is restored; translation, screen administration and teacher ordering remain documented changes."
+        }
+      }
+    },
+    {
+      "id": "26-01",
+      "title": "袋・缶からの多段階推論",
+      "participantTitle": "中間情報からの推定",
+      "category": "判断と確率",
+      "minutes": 20,
+      "difficulty": "medium",
+      "difficultyNote": "中｜多层条件概率题",
+      "fidelity": "documented-source-restoration",
+      "evidence": "Source-linked scope and deviations are recorded.",
+      "chapter": 26,
+      "version": "bag-can-odds-1",
+      "sourceKeys": [
+        "GKP73"
+      ],
+      "original": {
+        "ja": "袋、缶、円片の構成表から、見えた色を手掛かりに袋I対IIのオッズを推定します。三条件・四色を二巡して24回答します。",
+        "zh": "根据袋、罐、圆片的组成表，利用观察到的颜色估计袋I与II的赔率；三条件、四色重复两轮，共24次判断。",
+        "en": "Use bag, can and disc composition tables to estimate Bag I versus II odds from an observed color: three conditions × four colors × two rounds, 24 judgments."
+      },
+      "changes": {
+        "ja": "元の行列・24題・オッズを復元。二数値の比で入力し、無限大も保持。元の4～6人共通順を個別固定順に変更。原参加者の約二時間の先行経験とは一致しません。",
+        "zh": "恢复原矩阵、24题及赔率，以两个数的比输入并保留无穷值。原4～6人小组共用顺序改为个人持久化顺序；当前学生不具备原参与者约两小时同类先行经验。",
+        "en": "Restores original matrices, 24 judgments and odds, retaining two raw weights and infinite ratios. Individual saved schedules replace shared 4–6-person schedules; the original participants’ roughly two hours of prior related experience are not reproduced."
+      },
+      "names": {
+        "ja": "袋・缶からの多段階推論",
+        "zh": "袋—罐的多阶段推断",
+        "en": "Multistage bag–can inference"
+      },
+      "conditionNote": "参与者需要理解赔率表达；界面仅说明比值含义，不新增数值范例或答案教学。",
+      "classroomEnabled": true,
+      "audit": {
+        "status": "restored-defined-scope",
+        "pdfPages": [
+          396,
+          397,
+          398,
+          399
+        ],
+        "reason": {
+          "ja": "元の行列・24題・オッズを復元。二数値の比で入力し、無限大も保持。元の4～6人共通順を個別固定順に変更。原参加者の約二時間の先行経験とは一致しません。",
+          "zh": "恢复原矩阵、24题及赔率，以两个数的比输入并保留无穷值。原4～6人小组共用顺序改为个人持久化顺序；当前学生不具备原参与者约两小时同类先行经验。",
+          "en": "Restores original matrices, 24 judgments and odds, retaining two raw weights and infinite ratios. Individual saved schedules replace shared 4–6-person schedules; the original participants’ roughly two hours of prior related experience are not reproduced."
+        }
+      },
+      "restoration": {
+        "label": {
+          "ja": "原書の三行列・24題",
+          "zh": "原书三矩阵、24题",
+          "en": "Book matrices, all 24 judgments"
+        },
+        "missingMaterials": {
+          "ja": [
+            "主要行列・条件は取得済み。元の先行経験で使った課題と個々の割付表は未取得。"
+          ],
+          "zh": [
+            "主要矩阵和条件已齐；原先行练习所用题目及个体分配表未取得。"
+          ],
+          "en": [
+            "Core matrices and conditions are recovered; earlier practice items and original individual allocation records are unavailable."
+          ]
+        },
+        "conditions": {
+          "ja": [
+            "オッズの表し方を理解できる学生が対象。画面には比の定義のみ示し、数値例や正解の練習は追加しません。"
+          ],
+          "zh": [
+            "参与者需要理解赔率表达；界面仅说明比值含义，不新增数值范例或答案教学。"
+          ],
+          "en": [
+            "Students need to understand odds notation. The screen defines ratios without numerical examples or answer training."
+          ]
+        },
+        "nextStep": {
+          "ja": "",
+          "zh": "",
+          "en": ""
+        }
+      }
+    },
+    {
+      "id": "33-03",
+      "title": "リスク・便益と危険特性（30項目）",
+      "participantTitle": "活動と技術の評価",
+      "category": "社会的判断",
+      "minutes": 90,
+      "difficulty": "medium",
+      "difficultyNote": "中｜多维量表＋样本分层",
+      "fidelity": "documented-source-restoration",
+      "evidence": "Source-linked scope and deviations are recorded.",
+      "chapter": 33,
+      "version": "risk-30-source-method-1",
+      "sourceKeys": [
+        "FSLRC78",
+        "FGW16",
+        "SFL82"
+      ],
+      "original": {
+        "ja": "30の活動・技術をリスクまたは便益で順位付けし、最小10の比率で評価。その後、許容リスクと九つの七点尺度を全項目について答えます。",
+        "zh": "对30种活动和技术的风险或收益排序，以最低项10作比率评分；随后对全部项目评估可接受风险及九个七点量尺。",
+        "en": "Rank 30 activities or technologies by risk or benefit, rate proportionally with the minimum fixed at 10, then judge acceptable risk and nine seven-point dimensions for every item."
+      },
+      "changes": {
+        "ja": "1978年報告とFox-Glassman・Weberの2016年追試で方法を補核。十項目短版を廃止。比率上限100を設けず同順位可。五ブロックの循環順を個別割付し、翻訳・現代の教室標本を明示します。",
+        "zh": "用1978年研究及Fox-Glassman、Weber的2016年复现补核，撤掉十项短版。允许并列、比率评分不设100上限；五区块循环顺序独立分配，明确翻译和当代课堂样本差异。",
+        "en": "Reconstructed from the 1978 report and the 2016 replication by Fox-Glassman and Weber. Replaces the ten-item short version; allows ties and ratio ratings above 100. Five cyclic block orders are assigned individually; translations and contemporary classroom sampling are explicit changes."
+      },
+      "names": {
+        "ja": "リスク・便益と危険特性（30項目）",
+        "zh": "风险、收益与危险特征（30项）",
+        "en": "Risk, benefit and hazard characteristics (30 items)"
+      },
+      "conditionNote": "需要较长实验时段，2016年完整版本平均约90分钟；不擅自将活动替换为日本情境。",
+      "classroomEnabled": true,
+      "audit": {
+        "status": "restored-defined-scope",
+        "pdfPages": [
+          488
+        ],
+        "reason": {
+          "ja": "1978年報告とFox-Glassman・Weberの2016年追試で方法を補核。十項目短版を廃止。比率上限100を設けず同順位可。五ブロックの循環順を個別割付し、翻訳・現代の教室標本を明示します。",
+          "zh": "用1978年研究及Fox-Glassman、Weber的2016年复现补核，撤掉十项短版。允许并列、比率评分不设100上限；五区块循环顺序独立分配，明确翻译和当代课堂样本差异。",
+          "en": "Reconstructed from the 1978 report and the 2016 replication by Fox-Glassman and Weber. Replaces the ten-item short version; allows ties and ratio ratings above 100. Five cyclic block orders are assigned individually; translations and contemporary classroom sampling are explicit changes."
+        }
+      },
+      "restoration": {
+        "label": {
+          "ja": "30項目の方法再構成",
+          "zh": "30项原方法重建",
+          "en": "30-item method reconstruction"
+        },
+        "missingMaterials": {
+          "ja": [
+            "1978年紙質問票の逐語影印は未取得。30項目と九量尺・全段階は原研究と2016年追試で確認済み。"
+          ],
+          "zh": [
+            "未取得1978年纸问卷逐字影印；30项目、九量尺及全部阶段已由原研究和2016年复现确认。"
+          ],
+          "en": [
+            "No verified facsimile of the 1978 paper questionnaire; items, dimensions and full stages are checked against the original and 2016 replication."
+          ]
+        },
+        "conditions": {
+          "ja": [
+            "長時間枠が必要です。2016年の完全版は平均約90分。活動名を勝手に日本向けへ置換しません。"
+          ],
+          "zh": [
+            "需要较长实验时段，2016年完整版本平均约90分钟；不擅自将活动替换为日本情境。"
+          ],
+          "en": [
+            "Reserve a long session: the complete 2016 version averaged about 90 minutes. Activities are not silently localized."
+          ]
+        },
+        "nextStep": {
+          "ja": "",
+          "zh": "",
+          "en": ""
+        }
+      }
+    }
+  ],
+  "retiredStudies": [
+    {
+      "id": "11-03",
+      "title": "利用可能性と文字頻度",
+      "participantTitle": "英単語の文字位置",
+      "category": "記憶と推定",
+      "minutes": 4,
+      "difficulty": "low",
+      "difficultyNote": "低｜选择＋比例输入",
+      "fidelity": "translation",
+      "evidence": "A｜原论文全文已核",
+      "chapter": 11,
+      "version": "ja-prototype-1",
+      "sourceKeys": [
+        "TK73A"
+      ],
+      "original": {
+        "ja": "K/L/N/R/Vが単語の先頭と3文字目のどちらに多いか、頻度比とともに判断させた。",
+        "zh": "对K、L、N、R、V判断首位或第三位更常见，并估计频数比。",
+        "en": "Participants compared first versus third positions of K/L/N/R/V and estimated frequency ratios."
+      },
+      "changes": {
+        "ja": "説明は日本語、刺激は英語。英語経験を記録し、新しい日本語語彙課題には置き換えない。",
+        "zh": "说明为日语，刺激保留英语K/L/N/R/V；记录英语接触程度，不替换成日语字词，不内置现代语料正答评分。",
+        "en": "Japanese instructions retain English letters; self-reported English experience is recorded."
+      },
+      "names": {
+        "ja": "利用可能性と文字頻度",
+        "zh": "英文首位／第三位字母频率",
+        "en": "Availability and letter frequency"
+      },
+      "conditionNote": "要求相应英语能力；使用原语料或明确新词频基准。",
+      "retired": true,
+      "retirementReason": "Excluded from the Japanese classroom battery: English word-frequency judgments depend on English lexical experience."
+    },
+    {
+      "id": "01-01",
+      "title": "数値のアンカリング",
+      "participantTitle": "数字と割合の推定",
+      "category": "判断と確率",
+      "minutes": 2,
+      "difficulty": "low",
+      "difficultyNote": "低｜两阶段问卷＋动画",
+      "fidelity": "translation",
+      "evidence": "A｜原文核心设计与数值已核",
+      "chapter": 1,
+      "version": "ja-prototype-1",
+      "sourceKeys": [
+        "TK74"
+      ],
+      "original": {
+        "ja": "10または65に止まるルーレットの後で、国連加盟国に占めるアフリカ諸国の割合を比較・推定した。",
+        "zh": "转盘停在10或65；先判断联合国成员国中非洲国家的比例高于或低于锚，再填写估计值。",
+        "en": "A wheel stopped at 10 or 65 before comparison and estimation of the proportion of African countries among UN members."
+      },
+      "changes": {
+        "ja": "画面の固定値ルーレットと日訳。対象年を1974年頃と明示し、歴史知識の差を記録する。",
+        "zh": "将实体转盘改为停在预设值的动画；问题限定1974年前后，记录历史知识自评。题目接触经历改为整套结束时统一询问。",
+        "en": "A digital preset wheel and Japanese wording; the historical reference is explicitly around 1974."
+      },
+      "names": {
+        "ja": "数値のアンカリング",
+        "zh": "转盘锚定：联合国非洲成员比例",
+        "en": "Anchoring by a random number"
+      },
+      "conditionNote": "固定呈现顺序；保持被试对转盘随机性的理解；估计对象的历史年份一致。",
+      "retired": true,
+      "retirementReason": "Replaced by 11-06 multiplication estimates as the single anchoring representative for the Japanese classroom battery."
+    }
+  ]
+}

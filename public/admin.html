@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>実験の管理</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/styles.css">
+    <script type="module" src="/admin.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main" data-i18n="本文へ移動">本文へ移動</a>
+    <header class="student-topbar"><span class="student-brand" data-i18n="実験の管理">実験の管理</span><div class="header-tools"><a href="/" data-i18n="学生ページ">学生ページ</a><div id="language-control"></div></div></header>
+    <main id="main" class="admin-main">
+      <div class="admin-heading"><h1 data-i18n="実験を選択">実験を選択</h1><span id="classroom-status" role="status"></span></div>
+      <p id="admin-error" class="form-error" role="alert"></p>
+      <section id="controls"></section>
+      <div class="admin-heading"><h2 data-i18n="学生">学生</h2><div class="admin-actions"><a class="button secondary" href="/api/export.csv?scope=students" download>CSV</a><a class="button secondary" href="/api/export.json?scope=students" download>JSON</a></div></div>
+      <div id="records" aria-live="polite">読み込み中…</div>
+    </main>
+  </body>
+</html>
