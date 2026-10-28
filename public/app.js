@@ -1,18 +1,23 @@
 import { escape, fieldHTML, stimulusHTML, languageHTML } from './task-ui.js';
 import { translate, translateError, format, localizeTrial, normalizeLanguage, documentLanguage, TRANSLATION_VERSION } from './i18n.js';
 import { createTimedAttempt, captureTimedInput, finishTimedAttempt } from './timed-response.js';
+import { rankingHTML, mountRanking, RANKING_CONTROL } from './ranking.js';
+import { createPreviewState, previewRun } from './preview-state.js';
 
 const $=(selector,root=document)=>root.querySelector(selector);
 const $$=(selector,root=document)=>[...root.querySelectorAll(selector)];
 const app=$('#app');
+const isPreview=location.pathname==='/preview/student';
+const previewParams=new URLSearchParams(location.search),previewMemory=new Map();
 const storage={
-  get(key,fallback=null){try{return JSON.parse(localStorage.getItem('classroom.'+key))??fallback;}catch{return fallback;}},
-  set(key,value){localStorage.setItem('classroom.'+key,JSON.stringify(value));},
-  remove(key){localStorage.removeItem('classroom.'+key);}
+  get(key,fallback=null){if(isPreview)return previewMemory.get(key)??fallback;try{return JSON.parse(localStorage.getItem('classroom.'+key))??fallback;}catch{return fallback;}},
+  set(key,value){if(isPreview)previewMemory.set(key,value);else localStorage.setItem('classroom.'+key,JSON.stringify(value));},
+  remove(key){if(isPreview)previewMemory.delete(key);else localStorage.removeItem('classroom.'+key);}
 };
-let language=normalizeLanguage(storage.get('language','ja'));
+let language=normalizeLanguage(isPreview?previewParams.get('lang'):storage.get('language','ja'));
 let cleanup=()=>{};
 let studentToken=storage.get('studentToken'),studentId='',currentRun=null,view='entry',sending=false,polling=false;
+let preview=null;
 const t=text=>translate(text,language);
 const f=(text,values)=>format(text,language,values);
 const mark='<span class="brand-icon" aria-hidden="true"><i></i><i></i><i></i></span>';
@@ -87,6 +92,31 @@ async function boot(){
     showEntry(error.status===404?'':error.message);
   }
 }
+async function bootPreview(){
+  setLanguage(language);$('.loading').textContent=t('読み込み中…');
+  try{
+    const data=await api('preview',{studyIds:(previewParams.get('studies')||'').split(',').filter(Boolean),
+      randomizeExperiments:previewParams.get('experiments')==='true',randomizeChoices:previewParams.get('choices')==='true'});
+    preview=createPreviewState(data.protocols);
+    render(previewRun(preview));
+  }catch(error){
+    app.innerHTML=header()+'<main id="main" class="loading" role="alert">'+escape(t('プレビューを読み込めませんでした。'))+'</main>';
+    window.parent.postMessage({type:'preview:error'},location.origin);
+  }
+}
+function previewMove(direction,skip=false){
+  if(!preview)return;
+  const form=$('#answer-form');
+  if(form)preview.drafts[preview.index]=captureDraft(form);
+  if(skip)delete preview.answers[preview.index];
+  preview.index=Math.max(0,Math.min(preview.pages.length,preview.index+direction));
+  render(previewRun(preview),{draft:preview.drafts[preview.index]});
+}
+if(isPreview)window.addEventListener('message',event=>{
+  if(event.origin!==location.origin||event.source!==window.parent||!preview)return;
+  if(event.data?.type==='preview:previous')previewMove(-1);
+  if(event.data?.type==='preview:skip'&&preview.index<preview.pages.length)previewMove(1,true);
+});
 function showWaiting(message=''){
   reset();view='waiting';currentRun=null;
   app.innerHTML=header(escape(studentId))+'<main id="main" class="waiting-main"><div class="waiting-mark" aria-hidden="true"><i></i><i></i><i></i></div><h1>'+escape(t('開始をお待ちください。'))+'</h1><p id="waiting-error" class="form-error" role="status"></p><button id="logout" class="text-button">'+escape(t('ログアウト'))+'</button></main>';
@@ -121,6 +151,7 @@ function captureDraft(form){
 }
 function restoreDraft(form,draft=[]){
   for(const input of $$('input,textarea',form)){
+    if(isPreview&&input.readOnly)continue;
     const key=input.dataset.na?'na:'+input.dataset.na:input.name;
     const previous=draft.find(item=>item.key===key&&item.type===input.type&&(input.type!=='radio'||item.value===input.value));
     if(!previous)continue;
@@ -148,6 +179,7 @@ function validateForm(form,error){
 function render(state,resume={}){
   reset();
   currentRun=state;view=state.status==='active'?'running':'finished';
+  if(isPreview)window.parent.postMessage({type:'preview:state',index:state.currentIndex,total:state.totalTrials,status:state.status},location.origin);
   if(state.status!=='active')return finish(state);
   const trial=localizeTrial(state.trial,language);
   const timedKey='timed.'+state.id+'.'+state.currentIndex;
@@ -155,10 +187,10 @@ function render(state,resume={}){
   const percentage=Math.round(state.currentIndex/state.totalTrials*100);
   const nextLabel=trial.startTimedTask?'開始する':state.currentIndex+1===state.totalTrials?'送信する':'次へ';
   app.innerHTML=header((state.currentIndex+1)+' / '+state.totalTrials)+
-    '<main id="main" class="participant-main"><div class="progress-track" role="progressbar" aria-label="'+escape(t('進行状況'))+'" aria-valuenow="'+percentage+'" aria-valuemin="0" aria-valuemax="100"><span style="width:'+percentage+'%"></span></div>'+
+    '<main id="main" class="participant-main'+(trial.rankFields?' ranking-main':'')+'"><div class="progress-track" role="progressbar" aria-label="'+escape(t('進行状況'))+'" aria-valuenow="'+percentage+'" aria-valuemin="0" aria-valuemax="100"><span style="width:'+percentage+'%"></span></div>'+
     '<article class="task-panel"><h1 id="trial-title" tabindex="-1">'+escape(trial.title)+'</h1>'+
     (trial.body?'<p class="task-body">'+escape(trial.body)+'</p>':'')+(reloadedTimed?'<p>'+escape(t('この項目は終了しました。'))+'</p>':stimulusHTML(trial.stimulus,language))+
-    '<form id="answer-form" novalidate>'+trial.fields.map(field=>fieldHTML(field,language)).join('')+
+    '<form id="answer-form" novalidate>'+(trial.rankFields?rankingHTML(trial,language):'')+trial.fields.filter(field=>!trial.rankFields?.includes(field.id)).map(field=>fieldHTML(field,language)).join('')+
     (state.pairSetup?'<div id="pair-field" class="pair-entry" hidden><label class="field-label" for="pair-code">'+escape(t('ペア番号'))+'</label><input id="pair-code" name="pairCode" maxlength="8" pattern="[A-Za-z0-9]{8}" autocomplete="off"><p class="hint">'+escape(t('相手から受け取った番号を入力してください。先に回答する場合は空欄にしてください。'))+'</p></div>':'')+
     (state.pairCode?'<p class="pair-code">'+escape(t('ペア番号'))+' <strong>'+escape(state.pairCode)+'</strong><span>'+escape(t('相手にこの番号を伝えてください。'))+'</span></p>':'')+
     (trial.sumFields?'<p id="sum-indicator" class="sum-indicator" aria-live="polite"></p>':'')+
@@ -167,6 +199,7 @@ function render(state,resume={}){
     '<dialog id="withdraw-dialog" aria-labelledby="withdraw-title"><h2 id="withdraw-title">'+escape(t('ここで実験を終了しますか。'))+'</h2><div class="dialog-actions"><button id="keep-going" class="button secondary">'+escape(t('戻る'))+'</button><button id="confirm-withdraw" class="button primary">'+escape(t('終了する'))+'</button></div><p id="withdraw-error" class="form-error" role="alert"></p></dialog></main>';
   const form=$('#answer-form'),next=$('#next'),error=$('#answer-error'),dialog=$('#withdraw-dialog');
   restoreDraft(form,resume.draft);reportError(error,resume.error||'');
+  const ranking=trial.rankFields?mountRanking($('.ranking-board',form),trial,{language,scroll:resume.rankingScroll}):null;
   let busy=false,frozen=storage.get('pending.'+state.id);
   let runtime=resume.runtime;
   if(!runtime){
@@ -174,7 +207,7 @@ function render(state,resume={}){
     const reloadCount=storage.get(visits,0);storage.set(visits,reloadCount+1);
     runtime={started:performance.now(),last:performance.now(),clientStartedAt:new Date().toISOString(),
       activeMs:0,focusLosses:0,reloadCount,languageHistory:[{language,atActiveMs:0}]};
-    if(trial.responseWindowMs){
+    if(trial.responseWindowMs&&!isPreview){
       runtime.timed=createTimedAttempt(trial.responseWindowMs,runtime.started);
       if(reloadedTimed)runtime.timed.startedAt-=Math.max(0,Math.min(86400000,Date.now()-reloadedTimed.startedAt));
       else storage.set(timedKey,{startedAt:Date.now()});
@@ -184,7 +217,7 @@ function render(state,resume={}){
     const now=performance.now();
     if(!document.hidden&&!dialog.open)runtime.activeMs+=now-runtime.last;
     runtime.last=now;
-    const remaining=runtime.timed?Math.max(0,trial.responseWindowMs-(now-runtime.timed.startedAt)):Math.max(0,(trial.minViewMs||0)-runtime.activeMs);
+    const remaining=isPreview?0:runtime.timed?Math.max(0,trial.responseWindowMs-(now-runtime.timed.startedAt)):Math.max(0,(trial.minViewMs||0)-runtime.activeMs);
     next.disabled=busy||Boolean(runtime.interruptPending)||(!runtime.timed&&remaining>0);
     $('#exposure-status').textContent=remaining>0?f('あと{seconds}秒',{seconds:Math.ceil(remaining/1000)}):'';
     if(trial.stimulus?.kind==='wheel'){
@@ -206,7 +239,7 @@ function render(state,resume={}){
   }
   document.addEventListener('visibilitychange',visibility);
   const timer=setInterval(tick,25);
-  cleanup=()=>{clearInterval(timer);document.removeEventListener('visibilitychange',visibility);};
+  cleanup=()=>{clearInterval(timer);document.removeEventListener('visibilitychange',visibility);ranking?.destroy();};
   function dependencies(){
     const value=key=>form.elements.namedItem(key)?.value;
     for(const field of trial.fields){
@@ -226,6 +259,7 @@ function render(state,resume={}){
       $('#sum-indicator').classList.toggle('valid',sum===100);
     }
     $('#language-select').disabled=busy||Boolean(frozen);
+    ranking?.setDisabled(busy||Boolean(frozen));
   }
   form.addEventListener('input',event=>{
     if(runtime.timed)captureTimedInput(runtime.timed,form.elements.namedItem('estimate').value,performance.now());
@@ -235,10 +269,10 @@ function render(state,resume={}){
     if(busy||frozen)return;
     tick();
     if(busy||frozen)return;
-    const draft=captureDraft(form),currentError=error.dataset.message,scrollY=window.scrollY;
+    const draft=captureDraft(form),currentError=error.dataset.message,scrollY=window.scrollY,rankingScroll=ranking?.scrollState();
     setLanguage(nextLanguage);
     runtime.languageHistory.push({language,atActiveMs:Math.floor(runtime.activeMs)});
-    render(state,{runtime,draft,error:currentError,scrollY});
+    render(state,{runtime,draft,error:currentError,scrollY,rankingScroll});
   });
   if(resume.runtime){
     $('#language-select').focus({preventScroll:true});window.scrollTo({top:resume.scrollY||0,behavior:'instant'});
@@ -273,6 +307,7 @@ function render(state,resume={}){
       captureTimedInput(runtime.timed,form.elements.namedItem('estimate').value,performance.now());
       return completeTimed('submitted');
     }
+    if(ranking&&!ranking.validate()){reportError(error,'すべての項目を順位に配置してください。');return;}
     if(!validateForm(form,error))return;
     const values=new FormData(form),answer={};
     for(const field of trial.fields){
@@ -290,11 +325,12 @@ function render(state,resume={}){
     submitAnswer(answer,values);
   });
   function submitAnswer(answer,values,timed){
+    if(isPreview){preview.answers[preview.index]=answer;previewMove(1);return;}
     const payload={trialIndex:state.currentIndex,trialId:trial.id,submissionId:crypto.randomUUID(),answer,
       metrics:{rtMs:Math.round(performance.now()-runtime.started),activeMs:Math.floor(runtime.activeMs),
         focusLosses:runtime.focusLosses,reloadCount:runtime.reloadCount,viewport:{width:innerWidth,height:innerHeight},
         clientStartedAt:runtime.clientStartedAt,language,translationVersion:TRANSLATION_VERSION,languageHistory:runtime.languageHistory,
-        ...(timed?{timed}:{})}};
+        ...(timed?{timed}:{}),...(ranking?{responseControl:RANKING_CONTROL}:{})}};
     if(state.pairSetup)payload.pairCode=answer.cohabit==='yes'?(values.get('pairCode')||'').trim().toUpperCase():'';
     storage.set('pending.'+state.id,payload);frozen=payload;save(payload);
   }
@@ -314,6 +350,7 @@ function render(state,resume={}){
   $('#keep-going').onclick=()=>{dialog.close();cancelWithdrawal();};
   dialog.addEventListener('cancel',cancelWithdrawal);
   $('#confirm-withdraw').onclick=async ()=>{
+    if(isPreview){preview.index=preview.pages.length;render({...previewRun(preview),status:'withdrawn'});return;}
     $('#confirm-withdraw').disabled=true;sending=true;
     try{
       const updated=await api('runs/'+state.id+'/withdraw',{});
@@ -326,15 +363,16 @@ function finish(state){
   app.innerHTML=header()+'<main id="main" class="student-finish"><div class="completion-mark" aria-hidden="true">✓</div>'+
     '<h1 id="finish-title" tabindex="-1">'+escape(t(state.status==='completed'?'回答が完了しました。':'実験を終了しました。'))+'</h1><p class="thanks">'+escape(t('ありがとうございました。'))+'</p>'+
     (state.debrief?.length?'<div class="end-notes">'+state.debrief.map(note=>'<p>'+escape(t(note))+'</p>').join('')+'</div>':'')+
-    '<button id="exit" class="button primary large">'+escape(t('待機に戻る'))+'</button></main>';
+    '<button id="exit" class="button primary large">'+escape(t(isPreview?'最初に戻る':'待機に戻る'))+'</button></main>';
   languageListener(next=>{setLanguage(next);finish(state);$('#language-select').focus({preventScroll:true});});
   $('#finish-title').focus({preventScroll:true});
   $('#exit').onclick=()=>{
+    if(isPreview){preview.index=0;render(previewRun(preview),{draft:preview.drafts[0]});return;}
     storage.set('dismissed.'+state.id,true);storage.remove('pending.'+state.id);
     Object.keys(localStorage).filter(key=>key.startsWith('classroom.visits.'+state.id+'.')).forEach(key=>localStorage.removeItem(key));
     showWaiting();pollClassroom();
   };
   window.scrollTo({top:0,behavior:'instant'});
 }
-boot();
-setInterval(pollClassroom,1000);
+if(isPreview)bootPreview();
+else {boot();setInterval(pollClassroom,1000);}

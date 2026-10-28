@@ -20,6 +20,8 @@ npm start
 
 - The teacher opens http://127.0.0.1:3000/admin , selects experiment blocks, independently enables experiment-order and answer-position randomization, and presses Start.
 
+- After selecting tasks, use Preview to change screen sizes and move between or skip questions. Preview results are not saved; timed screens remain visible, and a skipped ranking uses an example reference for the ratio screen.
+
 - Waiting students begin within roughly one second and complete the selected tasks consecutively. Late arrivals enter the active lesson. Students can return to waiting after finishing. The teacher ends the active lesson before starting another.
 
 - Experiment order is randomized independently per student, or follows chapter order when disabled. Answer randomization affects choice buttons, not ordered numerical scales, multiplication conditions or within-task stages. Original condition assignment is separate.
@@ -80,6 +82,8 @@ Experiment cards show only the names and brief descriptions of available tasks. 
 - Restored tasks include the eight-target Linda ranking, six-child family-count estimate, and Jones route/time accident versions. The two-bag task is a chapter 25 example with one 0–1 probability judgment, retaining the original 0.5 cues; it is not the full research program.
 
 - 11-06 shows one expression for five seconds after readiness. The deadline captures the last valid input; blank or invalid input is null. Interruption, reload and hiding the page also produce null, without repeating the expression. Screen and keyboard replace a blackboard.
+
+- Ranking tasks move labels from the upper bank into ranks below, by dragging or by selecting an item and then a rank. Compact labels expand to show the full bank on desktop. Original label spaces remain to prevent shrinking and page jumps, and ranks use multiple columns to reduce scrolling. Linda uses each rank from 1 to 8 once; moving into an occupied rank swaps the items. The 30-item risk task allows multiple labels in one rank, preserving ties. Rank meanings, item order and numeric answer storage are unchanged. JSON metrics.responseControl = drag-ranking-v1 records the changed input method.
 
 - Seven additions cover two hypothetical bet pairs; Jack, Dick and the null profile; false-consensus Study 3; the conversation pilot; Gurka Experiment 1; 24 bag–can odds judgments; and the full 30-item risk method. Selecting all 14 tasks gives 86 readiness/response pages.
 

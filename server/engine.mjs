@@ -77,6 +77,7 @@ export function validateMetrics(metrics = {}, minimum = 0, responseWindowMs = 0)
     height: Number.isFinite(viewport.height) ? Math.max(0, Math.min(20000, Math.round(viewport.height))) : null
   };
   clean.clientStartedAt = typeof metrics.clientStartedAt === 'string' ? metrics.clientStartedAt.slice(0, 40) : null;
+  if(metrics.responseControl==='drag-ranking-v1')clean.responseControl=metrics.responseControl;
   if(responseWindowMs){
     const timed=metrics.timed;
     if(!timed||timed.limitMs!==responseWindowMs||!['submitted','deadline','interrupted'].includes(timed.endReason)||

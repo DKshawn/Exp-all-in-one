@@ -12,6 +12,7 @@ ja:{
  flow:[
  '学生は http://127.0.0.1:3000/ で7桁の学生証番号を入力して待機します。先頭の0は保持します。',
  '教員は http://127.0.0.1:3000/admin で実験ブロックを選び、実験順と選択肢位置のランダム化をそれぞれ設定して「開始する」を押します。',
+ '選んだ課題は「プレビュー」で画面サイズを切り替えて確認できます。回答せずに前後へ移動でき、結果は保存されません。制限時間のある画面は確認できるよう停止し、順位を飛ばした場合の比率画面には仮の基準が表示されます。',
  '待機中の学生は約1秒以内に開始し、選択された課題を連続して回答します。途中参加者も同じ実施に入ります。終了後は待機へ戻れます。教員は現在の実施を終了して次の実施を開始します。',
  '順序ランダム化は学生ごとに行います。無効時は章順です。選択肢のランダム化は選択ボタンだけに適用し、順位の数値尺度、乗算の昇降条件、課題内の段階順は変えません。原研究内の条件割付は別に維持します。',
  '割付・順序・保存済み回答は再読込しても変わりません。言語切替は回答中の入力を保持します。通常の未送信入力は再読込で失われます。送信結果が不明の場合は同じ送信IDで再試行します。',
@@ -52,6 +53,7 @@ zh:{
  flow:[
  '学生打开 http://127.0.0.1:3000/ ，输入7位学生证号后等待。保留前导0。',
  '教师打开 http://127.0.0.1:3000/admin ，按实验block选择任务，分别设置实验顺序和选择题按钮位置是否随机，点击开始。',
+ '选择任务后可点击“预览”，切换屏幕尺寸并在题目间前后移动或跳过。预览结果不会保存；限时页面会停留，跳过排序后显示的比例基准为示例。',
  '等待中的学生约1秒内进入实验，连续完成所选任务。迟到登录者也进入当前实施。完成后可回到等待页。教师结束当前实施后可以开始下一次。',
  '实验顺序按学生独立随机；关闭时按章节顺序。选项随机只改变选择按钮位置，不打乱排名量尺的数值顺序、乘法升降序条件或任务内部阶段。原研究的组内条件分配单独保留。',
  '刷新不改变分组、顺序和已存回答。切换语言保留当前输入；普通未提交输入刷新会丢失。结果未确认的提交使用同一提交ID重试。',
@@ -87,6 +89,7 @@ en:{
  flow:[
  'Students open http://127.0.0.1:3000/ , enter a seven-digit student ID, and wait. Leading zeros are preserved.',
  'The teacher opens http://127.0.0.1:3000/admin , selects experiment blocks, independently enables experiment-order and answer-position randomization, and presses Start.',
+ 'After selecting tasks, use Preview to change screen sizes and move between or skip questions. Preview results are not saved; timed screens remain visible, and a skipped ranking uses an example reference for the ratio screen.',
  'Waiting students begin within roughly one second and complete the selected tasks consecutively. Late arrivals enter the active lesson. Students can return to waiting after finishing. The teacher ends the active lesson before starting another.',
  'Experiment order is randomized independently per student, or follows chapter order when disabled. Answer randomization affects choice buttons, not ordered numerical scales, multiplication conditions or within-task stages. Original condition assignment is separate.',
  'Reloads preserve assignments, order and saved answers. Language switching preserves current inputs; ordinary unsent inputs are lost on reload. Unconfirmed submissions retry with the same submission ID.',
@@ -116,16 +119,19 @@ en:{
 }};
 for(const [lang,items] of Object.entries({
  ja:[
+  '順位課題は上のラベルを下の順位枠へ移動します。ドラッグ、または項目と順位を順に選択して操作できます。ラベルは余白を抑えて並べ、デスクトップでは一覧できる高さまで表示します。元の置き場所を残し、配置による領域の縮小とページ移動を防ぎます。順位表も複数列です。Lindaは1〜8位を一度ずつ使用し、埋まった順位への移動は交換になります。30項目リスク課題は同じ枠に複数置いて同順位にできます。順位の意味・項目順・数値保存は維持し、入力方法の変更をJSON内のmetrics.responseControl = drag-ranking-v1で記録します。',
   '追加した七件は、二対の仮想賭け、Jack・Dick・記述なし、虚偽の合意Study 3、会話先行研究、Gurka実験1、袋・缶の24オッズ判断、30項目リスク研究です。全14件を選ぶと86の準備／回答ページになります。',
   '会話題は同じ実際の会話をした二人が独立回答します。合計100を強制せず、同一実施内で互いを相手と指定した回答だけをconversationPairsに集計。自己評定−相手による本人評定と、その二人平均を出力します。客観的な発言時間の正誤ではありません。',
   'リスク題は原研究と2016年追試で補核した30項目・全段階版です。最低順位項目を10に固定し、同順位と小数を許し、比率の上限100を設けません。9量尺の順と端点方向は保持します。2016年完全版の平均約90分を目安に時間を確保してください。'
  ],
  zh:[
+  '排序题将上方标签移到下方名次框，可拖动，也可先选项目再选名次。标签紧凑排列，桌面优先完整展开；保留原标签占位，避免移动后区域收缩或页面跳动。排名表也采用多列布局，减少滚动。Linda使用1至8名且不并列，移到已占用名次时交换位置；30项风险题可把多个标签放在同一名次中，保留并列。名次含义、项目顺序和保存的数值保持不变，输入方式改动记录在JSON的metrics.responseControl = drag-ranking-v1中。',
   '此次新增七项：两对假想下注、Jack／Dick／无描述、虚假共识Study 3、谈话先导研究、Gurka实验1、袋—罐24次赔率判断、30项风险研究。全选14项共86个准备／作答页面。',
   '谈话题要求两人实际参加同一次谈话并独立回答，两个估计不强制合计100。仅同一实施中互指对方学号的记录进入conversationPairs，输出“自己对自己的估计−对方对自己的估计”及两人差值均值，不判定客观发言时间的正误。',
   '风险题由原研究和2016年复现补核，含30项目及全部阶段。最低项固定为10，允许并列和小数，比率评分不设100上限，保持九量尺顺序和方向。请安排长时段：2016年完整版本平均约90分钟。'
  ],
  en:[
+  'Ranking tasks move labels from the upper bank into ranks below, by dragging or by selecting an item and then a rank. Compact labels expand to show the full bank on desktop. Original label spaces remain to prevent shrinking and page jumps, and ranks use multiple columns to reduce scrolling. Linda uses each rank from 1 to 8 once; moving into an occupied rank swaps the items. The 30-item risk task allows multiple labels in one rank, preserving ties. Rank meanings, item order and numeric answer storage are unchanged. JSON metrics.responseControl = drag-ranking-v1 records the changed input method.',
   'Seven additions cover two hypothetical bet pairs; Jack, Dick and the null profile; false-consensus Study 3; the conversation pilot; Gurka Experiment 1; 24 bag–can odds judgments; and the full 30-item risk method. Selecting all 14 tasks gives 86 readiness/response pages.',
   'Conversation partners must share a real conversation and answer independently. Estimates need not total 100. Only reciprocal partner IDs within one lesson enter conversationPairs. Exports give each self-estimate minus the partner’s estimate of that person and the pair mean; these are not objective speaking-time accuracy scores.',
   'The 30-item risk task uses the original study plus the 2016 replication. Minimum-ranked items are fixed at 10; ties, decimal responses and ratios above 100 are allowed. All nine scales retain their order and direction. Reserve a long session: the complete 2016 version averaged about 90 minutes.'

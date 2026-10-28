@@ -35,11 +35,12 @@ function renderControls(){
   $('#controls').innerHTML='<div class="experiment-grid">'+blocks(enabled)+'</div><div class="lesson-settings">'+
     '<label><input id="shuffle-experiments" type="checkbox"'+(settings.randomizeExperiments?' checked':'')+(active||busy?' disabled':'')+'>'+escape(t('学生ごとに実験順をランダム化'))+'</label>'+
     '<label><input id="shuffle-choices" type="checkbox"'+(settings.randomizeChoices?' checked':'')+(active||busy?' disabled':'')+'>'+escape(t('選択肢の位置をランダム化'))+'</label></div>'+
-    '<div class="lesson-actions"><span id="selection-count"></span><button id="lesson-action" class="button primary large"'+(busy?' disabled':'')+'>'+escape(t(active?'実験を終了':'開始する'))+'</button></div>'+
+    '<div class="lesson-actions"><span id="selection-count"></span><div class="lesson-buttons"><button id="preview-action" class="button secondary large">'+escape(t('プレビュー'))+'</button><button id="lesson-action" class="button primary large"'+(busy?' disabled':'')+'>'+escape(t(active?'実験を終了':'開始する'))+'</button></div></div>'+
     '<dialog id="end-dialog"><h2>'+escape(t('実施中の実験を終了しますか。'))+'</h2><div class="dialog-actions"><button id="cancel-end" class="button secondary">'+escape(t('戻る'))+'</button><button id="confirm-end" class="button primary">'+escape(t('終了する'))+'</button></div></dialog>';
   const updateCount=()=>{
     $('#selection-count').textContent=format('{count}件選択',language,{count:settings.studyIds.length});
     $('#lesson-action').disabled=busy||(!active&&!draft.studyIds.length);
+    $('#preview-action').disabled=busy||!settings.studyIds.length;
   };
   $('#controls').onchange=()=>{
     if(active||busy)return;
@@ -48,6 +49,10 @@ function renderControls(){
     saveDraft();updateCount();
   };
   $('#lesson-action').onclick=()=>active?$('#end-dialog').showModal():start();
+  $('#preview-action').onclick=()=>{
+    const params=new URLSearchParams({studies:settings.studyIds.join(','),experiments:String(settings.randomizeExperiments),choices:String(settings.randomizeChoices),lang:language});
+    location.href='/preview?'+params;
+  };
   $('#cancel-end').onclick=()=>$('#end-dialog').close();
   $('#confirm-end').onclick=()=>end();updateCount();
 }

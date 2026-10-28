@@ -2,6 +2,9 @@ import { readFileSync } from 'node:fs';
 import { rng, choose, shuffle, posterior, marginal } from './engine.mjs';
 import { restoredProtocol } from './restored.mjs';
 import { expandedProtocol } from './expanded.mjs';
+import { publicTrial } from '../public/present-trial.js';
+
+export { publicTrial };
 
 export const catalog = JSON.parse(readFileSync(new URL('../content/catalog.json', import.meta.url), 'utf8'));
 export const studyById = id => [...catalog.studies,...(catalog.retiredStudies||[])].find(s => s.id === id);
@@ -380,23 +383,6 @@ export function createProtocol(id, seed, presentation = {}) {
   return { studyId:id, version:study.version, seed, condition, trials, normative, explanation, changes:study.changes.ja };
 }
 
-export function publicTrial(protocol, index, responses) {
-  const current=structuredClone(protocol.trials[index]);
-  if(!current)return null;
-  if(current.ratioRankingTrial){
-    const ranks=responses.find(response=>response.trialId===current.ratioRankingTrial)?.answer;
-    if(ranks){
-      current.fields.sort((a,b)=>ranks[a.id]-ranks[b.id]);
-      const minimum=Math.min(...Object.values(ranks));
-      for(const field of current.fields)if(ranks[field.id]===minimum)Object.assign(field,{min:10,max:10,value:10,readOnly:true});
-    }
-  }
-  if(current.stimulus?.kind==='owned-ticket'){
-    const previous=responses.find(r=>r.trialId==='ticket');
-    current.stimulus={kind:'ticket',card:previous?.answer.ticket || protocol.trials.find(t=>t.id==='ticket').stimulus.card};
-  }
-  return current;
-}
 export function analyze(protocol, responses) {
   const result={};
   for(const response of responses){

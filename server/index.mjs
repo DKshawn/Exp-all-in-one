@@ -5,11 +5,17 @@ import { resolve } from 'node:path';
 import { Store } from './store.mjs';
 import { catalog } from './protocols.mjs';
 import { AppError } from './engine.mjs';
+import { createPreview } from './preview.mjs';
 
 const root=fileURLToPath(new URL('..',import.meta.url));
 const files = new Map([
   ['/app.js',['app.js','text/javascript; charset=utf-8']],
+  ['/preview.js',['preview.js','text/javascript; charset=utf-8']],
+  ['/preview-state.js',['preview-state.js','text/javascript; charset=utf-8']],
+  ['/present-trial.js',['present-trial.js','text/javascript; charset=utf-8']],
+  ['/debrief.js',['debrief.js','text/javascript; charset=utf-8']],
   ['/task-ui.js',['task-ui.js','text/javascript; charset=utf-8']],
+  ['/ranking.js',['ranking.js','text/javascript; charset=utf-8']],
   ['/i18n.js',['i18n.js','text/javascript; charset=utf-8']],
   ['/timed-response.js',['timed-response.js','text/javascript; charset=utf-8']],
   ['/locale-data.js',['locale-data.js','text/javascript; charset=utf-8']],
@@ -49,10 +55,12 @@ export function createApp(store) {
       if(!/^(127\.0\.0\.1|localhost)(:\d{1,5})?$/.test(host))throw new AppError('ローカル接続のみ利用できます。',403);
       const url=new URL(req.url,'http://'+host);
       const path=url.pathname;
+      if(path==='/preview/student')headers['Content-Security-Policy']=headers['Content-Security-Policy'].replace("frame-ancestors 'none'","frame-ancestors 'self'");
       const privateRequest=req.method!=='GET'||path.startsWith('/api/');
       if(privateRequest && req.headers.origin && req.headers.origin!=='http://'+host)throw new AppError('別のサイトからは操作できません。',403);
       if(privateRequest && req.headers['sec-fetch-site']==='cross-site')throw new AppError('別のサイトからは操作できません。',403);
       if(req.method==='GET' && path==='/api/catalog')return send(200,catalog);
+      if(req.method==='POST' && path==='/api/preview')return send(200,createPreview(await body(req)));
       if(req.method==='GET' && path==='/api/health')return send(200,{ok:true,version:catalog.version});
       if(req.method==='GET' && path==='/api/classroom')return send(200,store.classroom.dashboard());
       if(req.method==='POST' && path==='/api/classroom/join')return send(200,store.classroom.join(await body(req)));
@@ -87,6 +95,8 @@ export function createApp(store) {
       }
       if(req.method==='GET' && /^\/experiment\/[0-9]{2}-[0-9]{2}$/.test(path)){res.writeHead(302,{...headers,Location:'/'});return res.end();}
       if(req.method==='GET' && path==='/')return send(200,readFileSync(resolve(root,'public/index.html')),'text/html; charset=utf-8');
+      if(req.method==='GET' && path==='/preview/student')return send(200,readFileSync(resolve(root,'public/index.html')),'text/html; charset=utf-8');
+      if(req.method==='GET' && path==='/preview')return send(200,readFileSync(resolve(root,'public/preview.html')),'text/html; charset=utf-8');
       if(req.method==='GET' && path==='/admin')return send(200,readFileSync(resolve(root,'public/admin.html')),'text/html; charset=utf-8');
       if(req.method==='GET' && files.has(path)){
         const [file,type]=files.get(path);return send(200,readFileSync(resolve(root,'public',file)),type);
