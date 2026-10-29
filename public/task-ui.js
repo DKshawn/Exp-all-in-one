@@ -16,7 +16,9 @@ export function fieldHTML(field,language='ja') {
     else input='<div class="number-line"><input id="'+id+'" aria-labelledby="'+labelId+'" type="number" name="'+escape(field.id)+'" min="'+field.min+'" max="'+field.max+'" step="'+field.step+'"'+(field.value!==undefined?' value="'+field.value+'"':'')+(field.readOnly?' readonly':'')+' inputmode="'+(field.step===1?'numeric':'decimal')+'" required autocomplete="off">'+(field.hideRange?'':'<span class="number-range">'+format('{min}〜{max}',language,{min:field.min,max:field.max})+'</span>')+'</div>'+(field.allowNA?'<label class="na-choice"><input type="checkbox" data-na="'+escape(field.id)+'">'+escape(field.nullLabel || translate('対象外',language))+'</label>':'');
   }
   if(field.type==='text')input=field.singleLine?'<input id="'+id+'" aria-labelledby="'+labelId+'" type="text" name="'+escape(field.id)+'" minlength="'+field.minLength+'" maxlength="'+field.maxLength+'" pattern="'+escape(field.pattern||'.*')+'" inputmode="'+escape(field.inputMode||'text')+'" required autocomplete="off">':'<textarea id="'+id+'" aria-labelledby="'+labelId+'" name="'+escape(field.id)+'" minlength="'+field.minLength+'" maxlength="'+field.maxLength+'" rows="4" required></textarea>';
-  return '<fieldset class="answer-field'+(field.control==='scale'?' scale-field':'')+'" data-field="'+escape(field.id)+'"><legend id="'+labelId+'">'+escape(field.label)+'</legend>'+input+'</fieldset>';
+  const scale=field.control==='scale';
+  return '<fieldset class="answer-field '+escape(field.type)+'-field'+(scale?' scale-field':'')+'" data-field="'+escape(field.id)+'"><legend id="'+labelId+'"'+(scale?' class="sr-only"':'')+'>'+escape(field.label)+'</legend>'+
+    (scale?'<span class="scale-label" aria-hidden="true">'+escape(field.label)+'</span>':'')+input+'</fieldset>';
 }
 function ticketSVG(card) {
   const index=Number(String(card).replace('card-',''))||0;

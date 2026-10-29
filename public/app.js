@@ -186,11 +186,16 @@ function render(state,resume={}){
   const reloadedTimed=trial.responseWindowMs&&!resume.runtime?storage.get(timedKey):null;
   const percentage=Math.round(state.currentIndex/state.totalTrials*100);
   const nextLabel=trial.startTimedTask?'開始する':state.currentIndex+1===state.totalTrials?'送信する':'次へ';
+  const fields=trial.fields.filter(field=>!trial.rankFields?.includes(field.id));
+  const scaleGrid=fields.length>1&&fields.every(field=>field.control==='scale');
+  const manyNumbers=fields.length>=12&&fields.every(field=>field.type==='number'&&!field.control);
+  const textResponse=fields.some(field=>field.type==='text'&&!field.singleLine);
+  const fieldLayout='answer-fields'+(fields.length>1?' field-grid':'')+(scaleGrid?(fields.length>=20||fields.every(field=>field.label.length<=28)?' scale-grid short-scales':' scale-grid long-scales'):'')+(manyNumbers?' many-numbers':'');
   app.innerHTML=header((state.currentIndex+1)+' / '+state.totalTrials)+
-    '<main id="main" class="participant-main'+(trial.rankFields?' ranking-main':'')+'"><div class="progress-track" role="progressbar" aria-label="'+escape(t('進行状況'))+'" aria-valuenow="'+percentage+'" aria-valuemin="0" aria-valuemax="100"><span style="width:'+percentage+'%"></span></div>'+
+    '<main id="main" class="participant-main'+(trial.rankFields?' ranking-main':'')+(textResponse?' text-response-main':'')+'"><div class="progress-track" role="progressbar" aria-label="'+escape(t('進行状況'))+'" aria-valuenow="'+percentage+'" aria-valuemin="0" aria-valuemax="100"><span style="width:'+percentage+'%"></span></div>'+
     '<article class="task-panel"><h1 id="trial-title" tabindex="-1">'+escape(trial.title)+'</h1>'+
-    (trial.body?'<p class="task-body">'+escape(trial.body)+'</p>':'')+(reloadedTimed?'<p>'+escape(t('この項目は終了しました。'))+'</p>':stimulusHTML(trial.stimulus,language))+
-    '<form id="answer-form" novalidate>'+(trial.rankFields?rankingHTML(trial,language):'')+trial.fields.filter(field=>!trial.rankFields?.includes(field.id)).map(field=>fieldHTML(field,language)).join('')+
+    (trial.body?'<div class="task-body">'+trial.body.split(/\n{2,}/).filter(Boolean).map(paragraph=>'<p>'+escape(paragraph)+'</p>').join('')+'</div>':'')+(reloadedTimed?'<p>'+escape(t('この項目は終了しました。'))+'</p>':stimulusHTML(trial.stimulus,language))+
+    '<form id="answer-form" novalidate>'+(trial.rankFields?rankingHTML(trial,language):'')+(fields.length?'<div class="'+fieldLayout+'">'+fields.map(field=>fieldHTML(field,language)).join('')+'</div>':'')+
     (state.pairSetup?'<div id="pair-field" class="pair-entry" hidden><label class="field-label" for="pair-code">'+escape(t('ペア番号'))+'</label><input id="pair-code" name="pairCode" maxlength="8" pattern="[A-Za-z0-9]{8}" autocomplete="off"><p class="hint">'+escape(t('相手から受け取った番号を入力してください。先に回答する場合は空欄にしてください。'))+'</p></div>':'')+
     (state.pairCode?'<p class="pair-code">'+escape(t('ペア番号'))+' <strong>'+escape(state.pairCode)+'</strong><span>'+escape(t('相手にこの番号を伝えてください。'))+'</span></p>':'')+
     (trial.sumFields?'<p id="sum-indicator" class="sum-indicator" aria-live="polite"></p>':'')+
@@ -243,6 +248,7 @@ function render(state,resume={}){
   function dependencies(){
     const value=key=>form.elements.namedItem(key)?.value;
     for(const field of trial.fields){
+      if(trial.rankFields?.includes(field.id))continue;
       const element=$('[data-field="'+field.id+'"]');
       const on=!field.when||value(field.when.id)===field.when.equals;
       element.hidden=!on;

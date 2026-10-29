@@ -9,7 +9,7 @@ import { LANGUAGES, TRANSLATION_VERSION, UI_MESSAGES, normalizeLanguage, documen
 import { taskMessages } from '../public/locale-data.js';
 import { revisedMessages } from '../public/revised-messages.js';
 import { expandedMessages } from '../public/expanded-messages.js';
-import { fieldHTML, stimulusHTML } from '../public/task-ui.js';
+import { escape, fieldHTML, stimulusHTML } from '../public/task-ui.js';
 import { catalog, createProtocol, publicTrial } from '../server/protocols.mjs';
 import { studentProtocol } from '../server/runs.mjs';
 import { Store } from '../server/store.mjs';
@@ -100,6 +100,16 @@ test('validation errors use the selected language, including dynamic numerical b
   assert.equal(translateError('割合は整数で入力してください。','en'),'Enter a whole number.');
   assert.equal(translateError('回答を選択してください。','zh'),'请回答这一项。');
   assert.equal(translateError('未知のエラー','en'),'Could not submit. Please try again.');
+});
+
+test('scale fields retain their accessible question and all seven response values in each language',()=>{
+  const trial=createProtocol('23-01',1).trials.find(item=>item.id==='relevance');
+  for(const language of LANGUAGES){
+    const field=localizeTrial(trial,language).fields[0],html=fieldHTML(field,language);
+    assert(html.includes('<legend id="label-'+field.id+'" class="sr-only">'+escape(field.label)+'</legend>'));
+    assert(html.includes('<span class="scale-label" aria-hidden="true">'+escape(field.label)+'</span>'));
+    assert.deepEqual([...html.matchAll(/type="radio" name="fact-0" value="(\d+)" required/g)].map(match=>Number(match[1])),[1,2,3,4,5,6,7]);
+  }
 });
 
 test('language histories are bounded, monotonic and tied to the submitted presentation',()=>{
