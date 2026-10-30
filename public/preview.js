@@ -1,23 +1,30 @@
 import { translate, normalizeLanguage, documentLanguage } from './i18n.js';
 
 const $=selector=>document.querySelector(selector);
-const params=new URLSearchParams(location.search),language=normalizeLanguage(params.get('lang'));
+const params=new URLSearchParams(location.search);
+let language=normalizeLanguage(params.get('lang'));
 const t=text=>translate(text,language);
 const sizes=[
   ['phone-small','スマートフォン',360,800],['phone','スマートフォン',390,844],
   ['tablet','タブレット',768,1024],['tablet-wide','タブレット',1024,768],
   ['laptop','ノートパソコン',1366,768],['desktop','デスクトップ',1920,1080]
 ];
-document.documentElement.lang=documentLanguage(language);document.title=t('プレビュー');
-document.querySelectorAll('[data-i18n]').forEach(element=>element.textContent=t(element.dataset.i18n));
-$('#preview-frame').title=t('プレビュー');
-$('.preview-navigation').setAttribute('aria-label',t('プレビュー'));
 const selector=$('#screen-size');
-selector.innerHTML=sizes.map(([id,label,width,height])=>'<option value="'+id+'">'+t(label)+' · '+width+' × '+height+'</option>').join('')+
-  '<option value="custom">'+t('カスタム')+'</option>';
+selector.innerHTML=sizes.map(([id])=>'<option value="'+id+'"></option>').join('')+'<option value="custom"></option>';
 selector.value='phone';
 const frame=$('#preview-frame'),box=$('#preview-frame-box'),stage=$('#preview-stage');
-let width=390,height=844;
+let width=390,height=844,previewError=false;
+function setLanguage(next){
+  language=normalizeLanguage(next);
+  document.documentElement.lang=documentLanguage(language);document.title=t('プレビュー');
+  document.querySelectorAll('[data-i18n]').forEach(element=>element.textContent=t(element.dataset.i18n));
+  frame.title=t('プレビュー');
+  $('.preview-navigation').setAttribute('aria-label',t('プレビュー'));
+  sizes.forEach(([,label,w,h],index)=>{selector.options[index].textContent=t(label)+' · '+w+' × '+h;});
+  selector.options[sizes.length].textContent=t('カスタム');
+  if(previewError)$('#preview-progress').textContent=t('プレビューを読み込めませんでした。');
+}
+setLanguage(language);
 function fit(){
   const scale=Math.min(1,Math.max(1,stage.clientWidth-48)/width,Math.max(1,stage.clientHeight-48)/height);
   box.style.width=width*scale+'px';box.style.height=height*scale+'px';
@@ -47,7 +54,14 @@ window.addEventListener('message',event=>{
     $('#preview-skip').disabled=status!=='active';
     $('#preview-progress').textContent=Math.min(index+1,total)+' / '+total;
   }else if(event.data?.type==='preview:error'){
+    previewError=true;
     $('#preview-progress').textContent=t('プレビューを読み込めませんでした。');
+  }else if(event.data?.type==='preview:language'){
+    const next=normalizeLanguage(event.data.language);
+    if(next===language)return;
+    setLanguage(next);
+    const url=new URL(location.href);url.searchParams.set('lang',next);
+    history.replaceState(history.state,'',url);
   }
 });
 fit();frame.src='/preview/student?'+params;

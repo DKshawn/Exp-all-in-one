@@ -27,6 +27,7 @@ function setLanguage(next){
   language=normalizeLanguage(next);storage.set('language',language);
   document.documentElement.lang=documentLanguage(language);
   document.title=t('実験');$('.skip-link').textContent=t('本文へ移動');
+  if(isPreview)window.parent.postMessage({type:'preview:language',language},location.origin);
 }
 function languageListener(change){
   $('#language-select').addEventListener('change',event=>change(event.target.value));
