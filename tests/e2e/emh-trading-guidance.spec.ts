@@ -159,7 +159,7 @@ for (const experiment of ["exp1", "exp2"] as const) {
         await expect(student.locator(".emh-conditions")).toContainText(
           "非公開",
         );
-        await expect(student.locator(".emh-score-note")).toContainText(
+        await expect(student.locator(".emh-personal-score-note")).toContainText(
           "B期末に確定",
         );
       }
@@ -485,7 +485,7 @@ for (const experiment of ["exp1", "exp2"] as const) {
       }
       await expect(student.locator(".score-status.final")).toHaveText("確定");
       await expect(
-        student.getByText("ラウンド確定得点", { exact: true }),
+        student.getByText("ラウンド損益（確定）", { exact: true }),
       ).toBeVisible();
       const final = (await state(contexts[0]!.request, "student")).market!;
       const expected =

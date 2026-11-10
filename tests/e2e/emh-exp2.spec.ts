@@ -60,11 +60,11 @@ test("Exp2 creation and participant view use the default two securities and a si
       studentPage.getByRole("group", { name: "状態別の配当、確率と期待配当" }),
     ).toBeVisible();
     await expect(studentPage.locator(".exp2-state-realized")).toHaveCount(0);
-    await expect(studentPage.locator(".stat-grid")).toContainText(
+    await expect(studentPage.locator(".emh-personal-account")).toContainText(
       /保有証券\s*2\s*単位/,
     );
     await expect(
-      studentPage.getByRole("heading", { name: "配当・得点の記録" }),
+      studentPage.getByRole("heading", { name: "配当・損益の記録" }),
     ).toBeVisible();
     await expect(studentPage.getByText("B期配当 / 単位")).toHaveCount(0);
     for (const width of [1440, 768, 390, 320]) {

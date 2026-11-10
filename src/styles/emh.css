@@ -854,26 +854,8 @@
   gap: 15px;
   min-width: 190px;
 }
-.emh-app .period-badge {
-  font-size: 24px;
-  background: var(--lavender);
-  color: var(--accent);
-  width: 49px;
-  height: 51px;
-  border-radius: 9px;
-  display: grid;
-  place-items: center;
-}
-.emh-app .session-phase > div {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
 .emh-app .session-phase strong {
   font-size: 16px;
-}
-.emh-app .session-phase .muted {
-  font-size: 10px;
 }
 .emh-app .timers {
   display: flex;
@@ -1396,10 +1378,6 @@
 .emh-app .wide .session-bar {
   padding: 12px 20px;
 }
-.emh-app .wide .period-badge {
-  height: 43px;
-  width: 43px;
-}
 .emh-app .wide .timer {
   font-size: 27px;
 }
@@ -1687,16 +1665,8 @@
     min-width: 120px;
     gap: 10px;
   }
-  .emh-app .period-badge {
-    width: 39px;
-    height: 43px;
-    font-size: 20px;
-  }
   .emh-app .session-phase strong {
     font-size: 14px;
-  }
-  .emh-app .session-phase .muted {
-    font-size: 9px;
   }
   .emh-app .timers {
     margin-left: auto;
@@ -1981,10 +1951,6 @@
 .emh-app .emh-demo-exp2-active .session-bar {
   padding: 8px 14px;
 }
-.emh-app .emh-demo-exp2-active .period-badge {
-  width: 38px;
-  height: 38px;
-}
 .emh-app .emh-demo-exp2-active .market-note {
   padding: 6px 2px;
 }
@@ -2252,7 +2218,6 @@
     h2,
     h3,
     .session-phase strong,
-    .period-badge,
     .stat-grid strong,
     .exp2-state-values small,
     .lobby-settings dd
@@ -2500,6 +2465,42 @@
   font-size: 13px;
   color: var(--ink);
 }
+.emh-app .session-overview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  gap: 8px 20px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.emh-app .wide .session-overview .round-strip {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+}
+.emh-app .session-overview .round-step {
+  flex: 0 0 auto;
+}
+.emh-app .wide .session-overview .session-bar {
+  flex: 0 1 auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  gap: 16px;
+}
+.emh-app .session-overview .session-phase {
+  min-width: 0;
+  gap: 8px;
+}
+.emh-app .session-overview .timers {
+  margin-left: 0;
+  gap: 16px;
+}
 .emh-app .timers progress {
   width: 100%;
   height: 4px;
@@ -2514,27 +2515,39 @@
   font-size: 12px;
   color: var(--muted);
 }
-.emh-app .wide .stat-grid.emh-account-stats {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-bottom: 10px;
+.emh-app .emh-personal-account {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+  margin-bottom: 8px;
 }
-.emh-app .wide .stat-grid.emh-account-stats > div {
-  grid-column: auto;
+.emh-app .emh-personal-account > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
-.emh-app .emh-score-note {
-  padding: 10px 14px;
-  border-left: 3px solid var(--accent);
-  background: var(--surface);
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 16px;
+.emh-app .emh-personal-account .emh-personal-score {
+  grid-column: 1 / -1;
 }
-.emh-app .emh-score-note > span {
-  display: block;
-  margin-top: 4px;
-  font-size: 11px;
-  font-weight: 400;
+.emh-app .emh-personal-account span,
+.emh-app .emh-personal-account small {
   color: var(--muted);
+}
+.emh-app .emh-student-view .emh-personal-account strong {
+  font-size: 16px !important;
+  font-variant-numeric: tabular-nums;
+}
+.emh-app .emh-personal-account small {
+  margin-left: 4px;
+}
+.emh-app .emh-personal-score-note {
+  margin: 0 0 12px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.emh-app .emh-personal-score-note > span {
+  display: block;
 }
 .emh-app .market-grid.student-market-grid {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(430px, 1.14fr);
@@ -2549,6 +2562,8 @@
   display: block;
 }
 .emh-app .emh-conditions > h2 {
+  flex-wrap: wrap;
+  gap: 6px;
   margin-bottom: 12px;
 }
 .emh-app .emh-conditions .private-dividends {
@@ -2658,11 +2673,12 @@
   color: var(--buy);
 }
 .emh-app .emh-conditions .exp2-clue {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 8px;
-  padding: 6px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  margin: 0;
+  padding: 3px 7px;
   border-radius: 6px;
   background: var(--lavender);
   color: var(--accent);
@@ -2671,6 +2687,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 2px 4px;
+  border-color: var(--line);
 }
 .emh-app .emh-conditions .exp2-state-values > div > span {
   grid-column: 1 / -1;
@@ -2685,6 +2702,12 @@
 }
 .emh-app .emh-conditions .exp2-expected-contribution {
   grid-column: 1 / -1;
+  padding-top: 4px;
+  margin-top: 2px;
+  border-top: 1px solid var(--line);
+}
+.emh-app .student-action-column h3 {
+  text-align: center;
 }
 .emh-app .emh-conditions .exp2-state-values > .exp2-state-realized {
   border-color: var(--accent);
@@ -2743,6 +2766,21 @@
   }
 }
 @media (max-width: 760px) {
+  .emh-app .wide .session-overview .round-strip,
+  .emh-app .wide .session-overview .session-bar {
+    flex-basis: 100%;
+  }
+  .emh-app .wide .session-overview .session-bar {
+    gap: 8px;
+  }
+  .emh-app .session-overview .timers {
+    gap: 8px;
+  }
+  .emh-app .session-overview .control-buttons {
+    width: auto;
+    padding-top: 0;
+    border-top: 0;
+  }
   .emh-app .market-grid.student-market-grid {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -2751,9 +2789,6 @@
   }
 }
 @media (max-width: 480px) {
-  .emh-app .wide .stat-grid.emh-account-stats > div {
-    padding: 0 8px;
-  }
   .emh-app .timers {
     gap: 14px;
   }

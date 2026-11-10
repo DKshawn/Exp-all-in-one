@@ -41,13 +41,17 @@ The teacher creates and shares a room, and students join with its code, using a 
 
 Enter the teacher key once at the teacher entry. The same browser stays signed in for eight hours across reloads, experiment changes, room creation and management. Sign in again after logout, expiry or a key change; each room keeps its separate teacher password.
 
-EMH labels prices, dividends, trading balances and scores in yen.
+EMH labels prices, dividends, trading balances and profits in yen.
 
-After the teacher starts EMH, a five-second countdown appears directly above the personal conditions panel in its trading-screen position, highlighted with an arrow and border; trading opens when it ends.
+After the teacher starts EMH, a five-second countdown appears directly above the personal conditions panel in its trading-screen position, highlighted with an arrow and border; trading opens when it ends. The highlighted round indicator shares one compact area with the trading clocks.
 
 EMH Demo Model supports both experiments. Experiment 2 defaults to a 12-person market and uses separate practice dividends and states. Students see their state-contingent dividends and probabilities. In both experiments, students see buy and sell controls in separate columns, market prices, and personal records together; teachers can expand or collapse conditions during play. Open `/emh/demo/preview` to view the demo at different screen sizes.
 
-Everyone can quote in EMH. Accepting an opposing price or submitting a crossing quote immediately trades one unit. Students see anonymous trade records and their own resting orders highlighted in the book; Experiment 1 scores are marked provisional until period B ends.
+The standalone [EMH Experiment 2 AI student program](ai-emh/README.en.md) joins through student interfaces with a configurable participant count, accepts room links and hidden token input, adds `/v1` to local model server roots, and uses a local model or OpenAI for decisions. It does not substitute rule-based robots when a model does not respond. The AI action log also records model request duration and reasons for skipped actions. The default output limit is 2048 tokens per model request. When an AI waits, the program monitors its student market view and requests a new decision after a market change.
+
+An optional LM Studio fast mode disables extended reasoning; complete fenced JSON blocks are also supported.
+
+Everyone can quote in EMH. Accepting an opposing price or submitting a crossing quote immediately trades one unit. Students see anonymous trade records and their own resting orders highlighted in the book; Experiment 1 profits are marked provisional until period B ends. Holdings, trading balance, and the current round profit appear in the student’s conditions panel.
 
 Experiment 2 configures initial securities, the unsuccessful-attempt limit, insider start round and number per type, state probabilities, dividends, market count, target size and type ratios. At start, each round’s state is drawn independently from the configured probabilities and saved; markets in the same room share the draw and Clues show the corresponding state. Market count may be automatic or specified; actual attendance is split into markets of 3–999. Defaults are a target of 12, two securities, two unsuccessful attempts and up to two insiders per type from round 3.
 

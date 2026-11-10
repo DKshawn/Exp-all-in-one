@@ -240,7 +240,7 @@ test("EMH conditions persist, lock with allocation, and govern six rounds and ex
       studentPage.getByRole("heading", { name: "取引記録" }),
     ).toBeVisible();
     await expect(
-      studentPage.getByRole("heading", { name: "配当・得点の記録" }),
+      studentPage.getByRole("heading", { name: "配当・損益の記録" }),
     ).toBeVisible();
     await expect(studentPage.getByRole("tab", { name: "市場" })).toHaveCount(0);
     await expect(

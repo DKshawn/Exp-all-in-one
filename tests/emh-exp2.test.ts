@@ -404,7 +404,7 @@ test("formal Exp2 student view presents state conditions, both quote forms and r
   assert.match(html, /買い指値注文/);
   assert.match(html, /売り指値注文/);
   assert.match(html, /取引記録/);
-  assert.match(html, /配当・得点の記録/);
+  assert.match(html, /配当・損益の記録/);
   assert.match(html, /class="yen-unit">円/);
   assert.doesNotMatch(html, /role="tablist"/);
 });

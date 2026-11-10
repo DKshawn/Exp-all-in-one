@@ -145,10 +145,10 @@ function StudentOrderEntry({
               onSubmit={(event) => submit(event, side, price)}
             >
               <div className="field">
-                <label htmlFor={`order-${side}-price`}>{label}（円）</label>
                 <div className="study-price-input">
                   <input
                     id={`order-${side}-price`}
+                    aria-label={`${label}（円）`}
                     inputMode="numeric"
                     type="number"
                     placeholder={`${label}を入力`}
@@ -213,10 +213,12 @@ export function PersonalPanel({
   room,
   act,
   disabled,
+  finalScore,
 }: {
   room: RoomView;
   act: RunAction;
   disabled: boolean;
+  finalScore: boolean;
 }) {
   const me = room.me!;
   const panelRef = useRef<HTMLElement>(null);
@@ -302,9 +304,52 @@ export function PersonalPanel({
       )}
       <h2>
         <LockKeyhole size={16} aria-hidden="true" />
-        {me.name}の条件 <small>非公開</small>
+        {me.name}の条件
+        {room.exp2 && (
+          <span className="exp2-clue">
+            <span>Clue カード</span>
+            <strong>
+              {room.exp2.clue ? `状態 ${room.exp2.clue}` : "情報なし"}
+            </strong>
+          </span>
+        )}
+        <small>非公開</small>
       </h2>
       <div className="study-private-values private-dividends">
+        <div className="emh-personal-account">
+          <div>
+            <span>保有証券</span>
+            <strong>
+              {me.holdings}
+              <small>単位</small>
+            </strong>
+          </div>
+          <div>
+            <span>売買収支</span>
+            <strong>
+              <Yen value={me.cash} />
+            </strong>
+          </div>
+          <div className="emh-personal-score">
+            <span>
+              {finalScore ? "ラウンド損益（確定）" : "ラウンド損益（暫定）"}
+            </span>
+            <strong>
+              <Yen value={me.cash + me.dividend} />
+            </strong>
+          </div>
+        </div>
+        <p className="emh-personal-score-note">
+          {finalScore
+            ? "このラウンドの損益は確定しました。"
+            : room.exp2
+              ? "ラウンド末に確定。表示は売買収支＋受取済み配当です。"
+              : "B期末に確定。A期は途中経過で、B期の売買と配当も反映します。"}
+          <span>
+            受取済み配当 <Yen value={me.dividend} />
+            {!finalScore && "・未受取の配当は損益に含みません。"}
+          </span>
+        </p>
         {!room.exp2 ? (
           <>
             <p>1単位あたりの配当</p>
@@ -354,7 +399,7 @@ export function PersonalPanel({
                     </div>
                     <div className="exp2-state-line">
                       <span>確率</span>
-                      <small>{fmt(probability * 100, 4)}%</small>
+                      <strong>{fmt(probability * 100, 4)}%</strong>
                     </div>
                     <div className="exp2-state-line exp2-expected-contribution">
                       <span>期待配当</span>
@@ -372,12 +417,6 @@ export function PersonalPanel({
                   </div>
                 ))}
               </div>
-            </div>
-            <div className="exp2-clue">
-              <span>Clue カード</span>
-              <strong>
-                {room.exp2.clue ? `状態 ${room.exp2.clue}` : "情報なし"}
-              </strong>
             </div>
             <div className="sr-only" role="status" aria-live="polite">
               {room.exp2.state !== null &&
@@ -553,7 +592,7 @@ export function ParticipantsPanel({ room }: { room: RoomView }) {
               </th>
               <th>保有</th>
               <th>売買収支（円）</th>
-              <th>累計得点（円）</th>
+              <th>累計損益（円）</th>
             </tr>
           </thead>
           <tbody>
@@ -587,7 +626,7 @@ export function ResultsPanel({ room }: { room: RoomView }) {
   return (
     <section className="panel results-panel">
       <div className="section-heading">
-        <h2>{teacher ? "ラウンドの結果" : "配当・得点の記録"}</h2>
+        <h2>{teacher ? "ラウンドの結果" : "配当・損益の記録"}</h2>
         <span className="muted">
           {room.results.length ? `${room.results.length}期を精算` : "精算待ち"}
         </span>
@@ -616,7 +655,7 @@ export function ResultsPanel({ room }: { room: RoomView }) {
                     売買収支<span className="table-unit">（円）</span>
                   </th>
                   <th>
-                    得点<span className="table-unit">（円）</span>
+                    損益<span className="table-unit">（円）</span>
                   </th>
                 </>
               )}

@@ -1,6 +1,7 @@
 node_modules
 .next
 .data
+ai-emh/.local
 .vercel
 work
 test-results

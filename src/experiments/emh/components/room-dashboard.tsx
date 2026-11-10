@@ -282,55 +282,62 @@ export function RoomDashboard({
           </div>
         ) : (
           <>
-            <div className={`round-strip ${room.exp2 ? "exp2-rounds" : ""}`}>
-              {Array.from({ length: room.rounds }, (_, i) => (
-                <div
-                  key={i}
-                  className={`round-step ${i + 1 < room.year || room.status === "completed" ? "done" : i + 1 === room.year ? "active" : ""}`}
-                >
-                  <span>{i + 1}</span>
-                  {room.experiment !== "exp2" && (
-                    <div>
-                      <i
-                        className={
-                          i + 1 < room.year ||
-                          (i + 1 === room.year &&
-                            (room.period === "B" ||
-                              room.status === "completed"))
-                            ? "done"
-                            : i + 1 === room.year
-                              ? "active"
-                              : ""
-                        }
-                      >
-                        A
-                      </i>
-                      <i
-                        className={
-                          i + 1 < room.year ||
-                          (i + 1 === room.year &&
-                            (room.status === "break" ||
-                              room.status === "completed"))
-                            ? "done"
-                            : i + 1 === room.year && room.period === "B"
-                              ? "active"
-                              : ""
-                        }
-                      >
-                        B
-                      </i>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className="session-bar">
-              <div className="session-phase">
-                <span className="period-badge">
-                  {room.experiment === "exp2" ? room.year : room.period}
-                </span>
-                <div>
-                  <span className="muted">第{room.year}ラウンド</span>
+            <div className="session-overview">
+              <div
+                className={`round-strip ${room.exp2 ? "exp2-rounds" : ""}`}
+                role="list"
+                aria-label="ラウンドの進行"
+              >
+                {Array.from({ length: room.rounds }, (_, i) => (
+                  <div
+                    key={i}
+                    role="listitem"
+                    aria-label={`第${i + 1}ラウンド${room.experiment !== "exp2" && i + 1 === room.year && room.status !== "completed" ? `、${room.period}期` : ""}`}
+                    aria-current={
+                      i + 1 === room.year && room.status !== "completed"
+                        ? "step"
+                        : undefined
+                    }
+                    className={`round-step ${i + 1 < room.year || room.status === "completed" ? "done" : i + 1 === room.year ? "active" : ""}`}
+                  >
+                    <span>{i + 1}</span>
+                    {room.experiment !== "exp2" && (
+                      <div>
+                        <i
+                          className={
+                            i + 1 < room.year ||
+                            (i + 1 === room.year &&
+                              (room.period === "B" ||
+                                room.status === "completed"))
+                              ? "done"
+                              : i + 1 === room.year
+                                ? "active"
+                                : ""
+                          }
+                        >
+                          A
+                        </i>
+                        <i
+                          className={
+                            i + 1 < room.year ||
+                            (i + 1 === room.year &&
+                              (room.status === "break" ||
+                                room.status === "completed"))
+                              ? "done"
+                              : i + 1 === room.year && room.period === "B"
+                                ? "active"
+                                : ""
+                          }
+                        >
+                          B
+                        </i>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="session-bar">
+                <div className="session-phase">
                   <strong>
                     {room.status === "completed"
                       ? "すべての取引が終了"
@@ -343,102 +350,102 @@ export function RoomDashboard({
                             : `Period ${room.period}`}
                   </strong>
                 </div>
-              </div>
-              <div className="timers">
-                {room.status !== "completed" && (
-                  <>
-                    <div>
-                      <span>
-                        {countdown
-                          ? "開始まで"
-                          : room.status === "break"
-                            ? "休憩"
-                            : "期の残り"}
-                      </span>
-                      <strong className="timer">
-                        {clock(
-                          remaining(
-                            countdown
-                              ? room.countdownEndsAt
-                              : room.status === "break"
-                                ? room.breakEndsAt
-                                : room.periodEndsAt,
-                            reference,
-                          ),
-                        )}
-                      </strong>
-                      {active && (
-                        <progress
-                          max={room.periodSeconds}
-                          value={remaining(room.periodEndsAt, reference)}
-                          aria-label={
-                            room.exp2
-                              ? "ラウンドの残り時間"
-                              : `${room.period}期の残り時間`
-                          }
-                        />
-                      )}
-                    </div>
-                    {active && (
-                      <div
-                        className={
-                          remaining(room.unitEndsAt, reference) <= 5
-                            ? "urgent"
-                            : ""
-                        }
-                      >
-                        <span>第{room.unit}取引の残り</span>
-                        <strong className="timer small-timer">
-                          {remaining(room.unitEndsAt, reference)}
-                          <small>秒</small>
+                <div className="timers">
+                  {room.status !== "completed" && (
+                    <>
+                      <div>
+                        <span>
+                          {countdown
+                            ? "開始まで"
+                            : room.status === "break"
+                              ? "休憩"
+                              : "期の残り"}
+                        </span>
+                        <strong className="timer">
+                          {clock(
+                            remaining(
+                              countdown
+                                ? room.countdownEndsAt
+                                : room.status === "break"
+                                  ? room.breakEndsAt
+                                  : room.periodEndsAt,
+                              reference,
+                            ),
+                          )}
                         </strong>
-                        <progress
-                          max={room.unitSeconds}
-                          value={remaining(room.unitEndsAt, reference)}
-                          aria-label="この取引の残り時間"
-                        />
+                        {active && (
+                          <progress
+                            max={room.periodSeconds}
+                            value={remaining(room.periodEndsAt, reference)}
+                            aria-label={
+                              room.exp2
+                                ? "ラウンドの残り時間"
+                                : `${room.period}期の残り時間`
+                            }
+                          />
+                        )}
                       </div>
-                    )}
-                  </>
-                )}
-              </div>
-              {teacher && room.status !== "completed" && (
-                <div className="control-buttons">
-                  <button
-                    className="button secondary"
-                    disabled={disabled}
-                    onClick={() => control(paused ? "resume" : "pause")}
-                  >
-                    {paused ? <Play size={16} /> : <Pause size={16} />}
-                    <span>{paused ? "再開" : "一時停止"}</span>
-                  </button>
-                  {room.status === "break" ? (
-                    <button
-                      className="button secondary"
-                      disabled={disabled || paused}
-                      onClick={() => control("next-year")}
-                    >
-                      <SkipForward size={16} />
-                      次へ
-                    </button>
-                  ) : (
-                    <button
-                      className="button quiet"
-                      disabled={disabled || paused || countdown}
-                      onClick={() =>
-                        setConfirmation({
-                          kind: "end-period",
-                          phase: room.phaseKey,
-                          year: room.year,
-                          period: room.period,
-                        })
-                      }
-                    >
-                      期を終了
-                    </button>
+                      {active && (
+                        <div
+                          className={
+                            remaining(room.unitEndsAt, reference) <= 5
+                              ? "urgent"
+                              : ""
+                          }
+                        >
+                          <span>第{room.unit}取引の残り</span>
+                          <strong className="timer small-timer">
+                            {remaining(room.unitEndsAt, reference)}
+                            <small>秒</small>
+                          </strong>
+                          <progress
+                            max={room.unitSeconds}
+                            value={remaining(room.unitEndsAt, reference)}
+                            aria-label="この取引の残り時間"
+                          />
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
-              )}
+                {teacher && room.status !== "completed" && (
+                  <div className="control-buttons">
+                    <button
+                      className="button secondary"
+                      disabled={disabled}
+                      onClick={() => control(paused ? "resume" : "pause")}
+                    >
+                      {paused ? <Play size={16} /> : <Pause size={16} />}
+                      <span>{paused ? "再開" : "一時停止"}</span>
+                    </button>
+                    {room.status === "break" ? (
+                      <button
+                        className="button secondary"
+                        disabled={disabled || paused}
+                        onClick={() => control("next-year")}
+                      >
+                        <SkipForward size={16} />
+                        次へ
+                      </button>
+                    ) : (
+                      <button
+                        className="button quiet"
+                        disabled={disabled || paused || countdown}
+                        onClick={() =>
+                          setConfirmation({
+                            kind: "end-period",
+                            phase: room.phaseKey,
+                            year: room.year,
+                            period: room.period,
+                          })
+                        }
+                      >
+                        期を終了
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
             {room.status === "completed" ? (
               <div className="notice completion">
@@ -449,7 +456,7 @@ export function RoomDashboard({
                       "実験が終了しました。結果と記録を確認できます。"
                     ) : (
                       <>
-                        おつかれさまでした。あなたの累計得点は{" "}
+                        おつかれさまでした。あなたの累計損益は{" "}
                         <strong>
                           <Yen value={room.me?.totalProfit} />
                         </strong>{" "}
@@ -480,7 +487,7 @@ export function RoomDashboard({
               <div className="notice">
                 <span>
                   第{room.year}
-                  ラウンドの得点が確定しました。次は証券を{room.initialUnits}
+                  ラウンドの損益が確定しました。次は証券を{room.initialUnits}
                   単位ずつ受け取ります。
                 </span>
               </div>
@@ -520,50 +527,6 @@ export function RoomDashboard({
             )}
             {!teacher && (
               <>
-                <div className="emh-account-section">
-                  <div className="emh-account-balance">
-                    <div className="stat-grid emh-account-stats">
-                      <div>
-                        <span>保有証券</span>
-                        <strong>
-                          {room.me?.holdings}
-                          <small>単位</small>
-                        </strong>
-                      </div>
-                      <div>
-                        <span>売買収支</span>
-                        <strong>
-                          <Yen value={room.me?.cash} />
-                        </strong>
-                      </div>
-                      <div>
-                        <span>
-                          {finalScore
-                            ? "ラウンド確定得点"
-                            : "現在の累計得点（暫定）"}
-                        </span>
-                        <strong>
-                          <Yen
-                            value={
-                              (room.me?.cash ?? 0) + (room.me?.dividend ?? 0)
-                            }
-                          />
-                        </strong>
-                      </div>
-                    </div>
-                    <p className="emh-score-note">
-                      {finalScore
-                        ? "このラウンドの得点は確定しました。"
-                        : room.exp2
-                          ? "ラウンド末に確定。表示は売買収支＋受取済み配当です。"
-                          : "B期末に確定。A期は途中経過で、B期の売買と配当も反映します。"}
-                      <span>
-                        受取済み配当 <Yen value={room.me?.dividend} />
-                        {!finalScore && "・未受取の配当は得点に含みません。"}
-                      </span>
-                    </p>
-                  </div>
-                </div>
                 <div
                   className="personal-trade-feedback"
                   role="status"
@@ -619,7 +582,12 @@ export function RoomDashboard({
                   act={act}
                   disabled={disabled || !active || paused}
                 />
-                <PersonalPanel room={room} act={act} disabled={disabled} />
+                <PersonalPanel
+                  room={room}
+                  act={act}
+                  disabled={disabled}
+                  finalScore={!!finalScore}
+                />
                 <div className="emh-records">
                   <HistoryPanel room={room} compact />
                   <ResultsPanel room={room} />

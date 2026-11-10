@@ -212,6 +212,21 @@ test("Exp2 demo runs the default 12-person market with practice information", as
   await conditions.click();
   await expect(page.locator("#demo-conditions")).toHaveCount(0);
   await page.getByRole("button", { name: "学生画面を見る" }).click();
+  await expect(
+    page
+      .getByRole("list", { name: "ラウンドの進行" })
+      .getByRole("listitem", { name: "第1ラウンド" }),
+  ).toHaveAttribute("aria-current", "step");
+  await expect(page.locator(".session-phase")).not.toContainText("第1ラウンド");
+  await expect(page.locator(".period-badge")).toHaveCount(0);
+  const roundIndicators = await page
+    .locator(".exp2-rounds .round-step > span")
+    .all();
+  const firstRound = await roundIndicators[0]!.boundingBox();
+  const secondRound = await roundIndicators[1]!.boundingBox();
+  expect(
+    secondRound!.x - (firstRound!.x + firstRound!.width),
+  ).toBeLessThanOrEqual(16);
   await expect(page.getByText("Clue カード")).toBeVisible();
   await expect(page.getByText("情報なし")).toBeVisible();
   await expect(
@@ -237,7 +252,7 @@ test("Exp2 demo runs the default 12-person market with practice information", as
   await page.setViewportSize({ width: 1280, height: 720 });
   await expect(page.getByRole("heading", { name: "取引記録" })).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "配当・得点の記録" }),
+    page.getByRole("heading", { name: "配当・損益の記録" }),
   ).toBeVisible();
   await expect(page.getByRole("tab", { name: "市場" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "注文板" })).toBeVisible();
@@ -394,8 +409,15 @@ test("Exp1 student demo shows the trading board, prices and records together", a
   await page.getByRole("button", { name: "分け方を確定して受付終了" }).click();
   await page.getByRole("button", { name: "全市場で実験を開始" }).click();
   await page.getByRole("button", { name: "学生画面を見る" }).click();
+  await expect(
+    page
+      .getByRole("list", { name: "ラウンドの進行" })
+      .getByRole("listitem", { name: "第1ラウンド、A期" }),
+  ).toHaveAttribute("aria-current", "step");
+  await expect(page.locator(".round-step.active i.active")).toHaveText("A");
+  await expect(page.locator(".session-phase")).not.toContainText("第1ラウンド");
   await expect(page.locator(".emh-conditions")).not.toContainText("見込利益");
-  for (const name of ["注文板", "取引記録", "配当・得点の記録"]) {
+  for (const name of ["注文板", "取引記録", "配当・損益の記録"]) {
     await expect(page.getByRole("heading", { name })).toBeVisible();
   }
   await expect(page.getByRole("tab", { name: "市場" })).toHaveCount(0);
@@ -428,7 +450,7 @@ test("Exp1 student demo shows the trading board, prices and records together", a
     await expect(page.getByLabel("買値（円）")).toBeVisible();
     await expect(page.getByLabel("売値（円）")).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: "配当・得点の記録" }),
+      page.getByRole("heading", { name: "配当・損益の記録" }),
     ).toBeVisible();
   }
 });
@@ -486,9 +508,15 @@ test("student views use three font sizes and equal state dividend and probabilit
             .first()
             .evaluate((el) => getComputedStyle(el).fontSize);
           const probability = await state
-            .locator("small")
+            .locator(".exp2-state-line")
+            .nth(1)
+            .locator("strong")
             .evaluate((el) => getComputedStyle(el).fontSize);
           expect(dividend).toBe(probability);
+          await expect(state.locator(".exp2-expected-contribution")).toHaveCSS(
+            "border-top-width",
+            "1px",
+          );
           const metrics = await state.evaluate((element) => {
             const labels = [
               ...element.querySelectorAll(".exp2-state-line > span"),
