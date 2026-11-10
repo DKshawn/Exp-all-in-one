@@ -2517,18 +2517,23 @@
 }
 .emh-app .emh-personal-account {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 12px;
+  grid-template-columns: repeat(3, minmax(max-content, 1fr));
+  gap: 3px;
   margin-bottom: 8px;
+  max-width: 100%;
+  overflow-x: auto;
 }
 .emh-app .emh-personal-account > div {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: 2px;
   min-width: 0;
-}
-.emh-app .emh-personal-account .emh-personal-score {
-  grid-column: 1 / -1;
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-soft);
+  white-space: nowrap;
 }
 .emh-app .emh-personal-account span,
 .emh-app .emh-personal-account small {
@@ -2538,8 +2543,14 @@
   font-size: 16px !important;
   font-variant-numeric: tabular-nums;
 }
+.emh-app .emh-personal-account > div:nth-child(2) strong {
+  min-width: calc(7ch + 1em);
+}
 .emh-app .emh-personal-account small {
   margin-left: 4px;
+}
+.emh-app .emh-personal-score-status {
+  white-space: nowrap;
 }
 .emh-app .emh-personal-score-note {
   margin: 0 0 12px;
@@ -2755,7 +2766,7 @@
     grid-column: 1 / -1;
     grid-row: 1;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    grid-template-columns: minmax(300px, 1fr) minmax(0, 1.4fr);
     gap: 0 20px;
   }
   .emh-app .emh-conditions > h2 {
@@ -2791,6 +2802,20 @@
 @media (max-width: 480px) {
   .emh-app .timers {
     gap: 14px;
+  }
+}
+@media (max-width: 360px) {
+  .emh-app .market-grid.student-market-grid .emh-conditions {
+    padding: 10px 6px;
+  }
+  .emh-app .emh-personal-account {
+    gap: 1px;
+  }
+  .emh-app .emh-personal-account > div {
+    padding: 4px 2px;
+  }
+  .emh-app .emh-personal-account > div > span {
+    letter-spacing: -0.8px;
   }
 }
 

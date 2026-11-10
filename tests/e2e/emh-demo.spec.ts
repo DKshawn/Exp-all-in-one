@@ -248,6 +248,77 @@ test("Exp2 demo runs the default 12-person market with practice information", as
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
+    const cards = await page
+      .locator(".emh-personal-account > div")
+      .evaluateAll((elements) =>
+        elements.map((element) => {
+          const label = element.firstElementChild!;
+          const range = document.createRange();
+          range.selectNodeContents(label);
+          const labelLines = new Set(
+            Array.from(range.getClientRects(), (rect) => Math.round(rect.top)),
+          ).size;
+          return {
+            top: element.getBoundingClientRect().top,
+            left: element.getBoundingClientRect().left,
+            width: element.getBoundingClientRect().width,
+            height: element.getBoundingClientRect().height,
+            border: getComputedStyle(element).borderTopWidth,
+            overflow: element.scrollWidth > element.clientWidth,
+            labelLines,
+          };
+        }),
+      );
+    expect(cards).toHaveLength(3);
+    expect(
+      Math.max(...cards.map((card) => card.top)) -
+        Math.min(...cards.map((card) => card.top)),
+    ).toBeLessThanOrEqual(1);
+    expect(
+      Math.max(...cards.map((card) => card.height)) -
+        Math.min(...cards.map((card) => card.height)),
+    ).toBeLessThanOrEqual(1);
+    expect(
+      cards.every(
+        (card) =>
+          card.border === "1px" && !card.overflow && card.labelLines === 1,
+      ),
+    ).toBe(true);
+    const accountSize = await page
+      .locator(".emh-personal-account")
+      .evaluate((element) => ({
+        scroll: element.scrollWidth,
+        client: element.clientWidth,
+      }));
+    expect(accountSize.scroll, `viewport ${width}`).toBeLessThanOrEqual(
+      accountSize.client,
+    );
+    expect(cards[0].left).toBeLessThan(cards[1].left);
+    expect(cards[1].left).toBeLessThan(cards[2].left);
+    const sampleFits = await page
+      .locator(".emh-personal-account")
+      .evaluate((account) => {
+        const values = Array.from(account.querySelectorAll("strong"));
+        const originals = values.map((value) => value.innerHTML);
+        values[0].innerHTML = "99<small>単位</small>";
+        values[1].innerHTML = '-99,999<span class="yen-unit">円</span>';
+        values[2].innerHTML = '-99,999<span class="yen-unit">円</span>';
+        const cards = Array.from(account.children);
+        const fits =
+          account.scrollWidth <= account.clientWidth &&
+          cards.every((card) => card.scrollWidth <= card.clientWidth) &&
+          cards.every(
+            (card, index) =>
+              index === 0 ||
+              cards[index - 1].getBoundingClientRect().right <=
+                card.getBoundingClientRect().left,
+          );
+        values.forEach((value, index) => {
+          value.innerHTML = originals[index];
+        });
+        return fits;
+      });
+    expect(sampleFits, `sample amounts at viewport ${width}`).toBe(true);
   }
   await page.setViewportSize({ width: 1280, height: 720 });
   await expect(page.getByRole("heading", { name: "取引記録" })).toBeVisible();

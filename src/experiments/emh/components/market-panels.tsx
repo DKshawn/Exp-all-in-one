@@ -332,7 +332,10 @@ export function PersonalPanel({
           </div>
           <div className="emh-personal-score">
             <span>
-              {finalScore ? "ラウンド損益（確定）" : "ラウンド損益（暫定）"}
+              ラウンド損益
+              <span className="emh-personal-score-status">
+                （{finalScore ? "確定" : "暫定"}）
+              </span>
             </span>
             <strong>
               <Yen value={me.cash + me.dividend} />

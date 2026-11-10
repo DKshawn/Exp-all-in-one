@@ -4,6 +4,8 @@ User acceptance is a required release gate. Complete implementation and local ve
 
 Give navigation and action text a visible button shape using the shared button styles. Preserve link semantics for navigation and button semantics for actions; do not rely on text color alone to signal that a control is clickable.
 
+Keep interface labels and control text, including card titles, on one line. Adjust sizing and responsive layouts so the full text remains visible without wrapping, truncation, or overlap; verify at supported screen sizes.
+
 When changing a shared feature or control, check every experiment and its demo and formal screens, and apply the same labels, colors, styles, accessibility, and behavior wherever the feature is shared. Prefer shared components and tokens, and verify the affected screens; preserve experiment-specific behavior where it differs.
 
 Whenever a formal experiment interface changes, update the corresponding demo interfaces at the same time, and vice versa. Check all affected experiments, teacher and student views, and previews; verify each corresponding screen while preserving intentional demo-specific behavior.

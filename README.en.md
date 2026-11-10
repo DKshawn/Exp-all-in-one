@@ -51,7 +51,7 @@ The standalone [EMH Experiment 2 AI student program](ai-emh/README.en.md) joins 
 
 An optional LM Studio fast mode disables extended reasoning; complete fenced JSON blocks are also supported.
 
-Everyone can quote in EMH. Accepting an opposing price or submitting a crossing quote immediately trades one unit. Students see anonymous trade records and their own resting orders highlighted in the book; Experiment 1 profits are marked provisional until period B ends. Holdings, trading balance, and the current round profit appear in the student’s conditions panel.
+Everyone can quote in EMH. Accepting an opposing price or submitting a crossing quote immediately trades one unit. Students see anonymous trade records and their own resting orders highlighted in the book; Experiment 1 profits are marked provisional until period B ends. Holdings, trading balance, and the current round profit appear as three cards in one row in the student’s conditions panel.
 
 Experiment 2 configures initial securities, the unsuccessful-attempt limit, insider start round and number per type, state probabilities, dividends, market count, target size and type ratios. At start, each round’s state is drawn independently from the configured probabilities and saved; markets in the same room share the draw and Clues show the corresponding state. Market count may be automatic or specified; actual attendance is split into markets of 3–999. Defaults are a target of 12, two securities, two unsuccessful attempts and up to two insiders per type from round 3.
 
