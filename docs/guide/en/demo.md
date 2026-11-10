@@ -12,12 +12,12 @@ Select **市場実験室** or **戻る** in the demo header to return to the dem
 
 Open [`/demo`](https://exp-all-in-one.vercel.app/demo) directly or choose Double Auction from the demo list. It starts with the same settings form used for production experiments. The defaults are one market and 16 participants; institutions, periods per institution, markets, participants, and timing are configurable using the same validation rules as room creation.
 
-1. **デモルームを作成** opens a teacher view containing you and virtual participants. Use **作成前に詳細を設定** for detailed configuration before creation. Before starting, **実験設定を変更** can change institutions, periods, timing, values, and costs.
+1. **ルーム作成** opens a teacher view containing you and virtual participants. Use **作成前に詳細を設定** for detailed configuration before creation. Before starting, use **実験の準備** to change institutions, periods, timing, values, and costs.
 2. Close admission with **入室を締め切って割り当て** or the admission timer to allocate actual participants to markets and buyer/seller roles. **実験を開始** begins a five-second countdown before trading. **学生画面を見る** shows the transition from waiting to trading.
 3. Each selected institution runs for its configured number of periods. CDA trades through the order book; Call clears public orders together at the deadline; Posted lets all buyers purchase directly at sellers' published prices.
 4. **教員画面を見る** shows all-market results and both sides' orders, conditions, and profits for the selected market. The teacher view always displays both sides; roles cannot be switched there.
 5. **一時停止** stops every market clock and virtual participant. **30秒進める** advances time while processing clearings and purchases. The last period of each institution has an eight-second results view before advancing, and the demo ends after the configured total periods. Switching to the teacher view does not place orders or make purchases on your behalf.
-6. **実験設定に戻る** returns to the settings form with the previous institutions, periods, participant count, and timing preserved, ready to adjust and create a new demo.
+6. In the teacher view, **教員の管理・設定へ** returns to the settings form with the previous institutions, periods, participant count, and timing preserved, ready to adjust and create a new demo.
 
 The demo uses production matching, clearing, inventory, and profit calculations, but has demo-specific initial values and costs. Changing attendance samples or duplicates conditions using the production method. In CDA, the first three seconds of each period allow time to think; virtual buyers and sellers then submit orders every two seconds, initially leaving a larger profit margin and gradually reducing it. Call and Posted use fixed margins. These behaviors do not model human learning or price convergence.
 
