@@ -257,7 +257,6 @@ export default function DemoRoom({
     <div
       className={`demo-workspace${!teacher && view.phase !== "waiting" && !view.me.withdrawnAt ? " demo-trading" : ""}`}
     >
-      {controlsTarget ? createPortal(toolbar, controlsTarget) : toolbar}
       <StudyRoom
         key={`${state.generation}-${teacher}`}
         view={view}
@@ -269,6 +268,9 @@ export default function DemoRoom({
         notice=""
         retry={() => {}}
         demo
+        toolbar={
+          controlsTarget ? createPortal(toolbar, controlsTarget) : toolbar
+        }
         onConfigure={() =>
           onConfigure(view.config, session.getGeneratorConfig())
         }

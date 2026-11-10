@@ -66,7 +66,9 @@ export function StudyRoster({
   const [expandedMarkets, setExpandedMarkets] = useState<Set<number>>(
     () => new Set(),
   );
+  const [rosterExpanded, setRosterExpanded] = useState(false);
   const rosterId = useId();
+  const rosterVisible = waiting || rosterExpanded;
   const marketDraft = hideControls
     ? (setupMarketDraft ?? null)
     : localMarketDraft;
@@ -155,7 +157,7 @@ export function StudyRoster({
     ) : null;
   return (
     <section
-      className="panel study-roster"
+      className={`panel study-roster${rosterVisible ? "" : " study-roster-collapsed"}`}
       aria-labelledby={`${rosterId}-heading`}
     >
       <header className="study-roster-heading">
@@ -178,8 +180,23 @@ export function StudyRoster({
                 : "入室受付終了"
               : "入室順の仮配置"}
         </span>
+        {!waiting && (
+          <button
+            type="button"
+            className="button secondary small-button"
+            aria-expanded={rosterVisible}
+            aria-controls={`${rosterId}-content`}
+            onClick={() => setRosterExpanded((expanded) => !expanded)}
+          >
+            {rosterVisible ? "割り当てを折りたたむ" : "割り当てを表示"}
+          </button>
+        )}
       </header>
-      <div className="study-roster-content">
+      <div
+        id={`${rosterId}-content`}
+        className="study-roster-content"
+        hidden={!rosterVisible}
+      >
         {waiting && !hideControls && (
           <StudyAdmission
             view={view}

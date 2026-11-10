@@ -1221,6 +1221,9 @@ summary.disclosure-button {
   --accent: #805c00;
   --accent-hover: #624500;
   --lavender: #fff2c7;
+  --study-settings-highlight: #fff3cf;
+  --study-settings-surface: #fffbf0;
+  --study-settings-focus: #bc8f1d;
   min-height: 100dvh;
   background: var(--bg);
 }

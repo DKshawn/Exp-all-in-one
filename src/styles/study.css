@@ -59,7 +59,7 @@
   opacity: 0.65;
 }
 .study-setup-step.active > h3 > button {
-  background: #f6f5fc;
+  background: var(--study-settings-highlight, #f6f5fc);
 }
 .study-setup-step-toggle:focus-visible {
   outline: 2px solid var(--accent);
@@ -189,6 +189,10 @@
   display: flex;
   flex-direction: column;
 }
+.study-roster.study-roster-collapsed {
+  height: auto;
+  min-height: 0;
+}
 @media (max-width: 1200px) {
   .study-roster {
     max-height: 70dvh;
@@ -220,7 +224,7 @@
 }
 .study-lobby-label {
   margin-left: auto;
-  background: #f0edf9;
+  background: var(--study-settings-highlight, #f0edf9);
   color: var(--accent);
   padding: 5px 10px;
   border-radius: 20px;
@@ -301,7 +305,7 @@
   color: var(--accent);
 }
 .study-admission-timer-action:hover:not(:disabled) {
-  background: #f0edff;
+  background: var(--study-settings-highlight, #f0edff);
 }
 .study-admission-timer :focus-visible {
   outline: 2px solid var(--accent);
@@ -357,7 +361,7 @@
   padding: 12px;
   border: 0;
   border-radius: 0;
-  background: #f6f5fc;
+  background: var(--study-settings-highlight, #f6f5fc);
   color: var(--ink);
   text-align: left;
 }
@@ -1130,7 +1134,7 @@
   padding: 18px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: #faf9ff;
+  background: var(--study-settings-surface, #faf9ff);
 }
 .study-preset-picker > .field,
 .study-preset-settings > .field {
@@ -1394,7 +1398,7 @@
   z-index: 1;
 }
 .study-unit-preview:focus-visible {
-  outline: 3px solid #9998ed;
+  outline: 3px solid var(--study-settings-focus, #9998ed);
   outline-offset: -3px;
 }
 @container preset-columns (min-width: 800px) {
@@ -1532,7 +1536,7 @@
   padding: 8px;
 }
 .study-equilibrium-comparison tbody tr:last-child {
-  background: #eeeaff;
+  background: var(--study-settings-highlight, #eeeaff);
 }
 .study-equilibrium-comparison th[scope="row"] {
   white-space: normal;
@@ -1647,7 +1651,7 @@
   white-space: nowrap;
 }
 .study-zero-surplus-row {
-  background: #eeeaff;
+  background: var(--study-settings-highlight, #eeeaff);
 }
 .study-saved-generation {
   margin-top: 16px;

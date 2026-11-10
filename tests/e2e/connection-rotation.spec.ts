@@ -184,6 +184,12 @@ test("short CDA rotates during End/Start, preserves fills, pauses the overlay an
     await settings.getByRole("button", { name: "閉じる", exact: true }).click();
     await monitor(f.buyer.page);
     await page.getByRole("button", { name: "実験を開始", exact: true }).click();
+    const roster = page.getByRole("region", { name: /^学生の割り当て/ });
+    await expect(roster.locator(".study-roster-content")).toBeHidden();
+    await roster.getByRole("button", { name: "割り当てを表示" }).click();
+    await expect(roster.locator(".study-roster-content")).toBeVisible();
+    await roster.getByRole("button", { name: "割り当てを折りたたむ" }).click();
+    await expect(roster.locator(".study-roster-content")).toBeHidden();
     await expect(
       f.buyer.page.getByRole("heading", { name: "第1期 Start", exact: true }),
     ).toBeVisible();

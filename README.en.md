@@ -39,6 +39,8 @@ flowchart LR
 
 The teacher creates and shares a room, and students join with its code, using a nickname or student ID as instructed by the teacher. The teacher chooses the experiment, explains the rules, and downloads the results after the session.
 
+In Double Auction, the teacher's student allocation panel collapses after the experiment starts and can be reopened at any time; the demo behaves the same way.
+
 Enter the teacher key once at the teacher entry. The same browser stays signed in for eight hours across reloads, experiment changes, room creation and management. Sign in again after logout, expiry or a key change; each room keeps its separate teacher password.
 
 EMH labels prices, dividends, trading balances and profits in yen.
