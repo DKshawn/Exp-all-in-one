@@ -19,8 +19,8 @@ import type { RoomSummary } from "@/lib/room-management";
 import {
   newGame,
   newSeat,
-  closeAdmission,
-  start,
+  teacherAction,
+  phaseDeadline,
   choose,
   tick,
   type Action,
@@ -89,10 +89,7 @@ async function actor(
   if (!result.rows[0]) throw unauthorized();
   return result.rows[0].id;
 }
-async function advance(tx: Sql, r: Room, now: number) {
-  const old = r.game.round,
-    phase = r.game.phase;
-  tick(r.game, now);
+async function archiveRound(tx: Sql, r: Room, old: Round | null) {
   if (old && old !== r.game.round) {
     const histories = Object.fromEntries(
       r.game.seats.map((s) => [s.id, personal(old, s.id)]),
@@ -108,7 +105,14 @@ async function advance(tx: Sql, r: Room, now: number) {
       ],
     );
   }
-  if (phase !== r.game.phase || old !== r.game.round) await save(tx, r);
+}
+async function advance(tx: Sql, r: Room, now: number) {
+  const deadline = phaseDeadline(r.game);
+  if (r.game.pausedAt != null || deadline === null || now < deadline) return;
+  const old = r.game.round;
+  tick(r.game, now);
+  await archiveRound(tx, r, old);
+  await save(tx, r);
 }
 async function heartbeat(tx: Sql, code: string, id: string, now: number) {
   await tx.query(
@@ -169,6 +173,7 @@ export class EvolutionService {
     const error = await this.db.transaction(async (tx) => {
       const room = await load(tx, code),
         now = await this.time(tx);
+      if (room.game.phase === "open") await advance(tx, room, now);
       const identity =
         input.role === "teacher" ? "teacher" : "student/" + input.nickname;
       const counter = (
@@ -245,10 +250,10 @@ export class EvolutionService {
       let r = await load(tx, code, Boolean(action));
       let id = await actor(tx, r, role, token),
         now = await this.time(tx);
-      const deadline = baseView(r.game, code, r.title, now).deadline;
+      const deadline = phaseDeadline(r.game);
       const needsWrite =
         Boolean(action) ||
-        (deadline !== null && now >= deadline) ||
+        (r.game.pausedAt == null && deadline !== null && now >= deadline) ||
         (r.game.phase === "playing" &&
           r.game.round?.entries[id]?.seenAt === null) ||
         (role === "student" && !r.game.seats.some((p) => p.id === id));
@@ -270,10 +275,11 @@ export class EvolutionService {
         }
       }
       if (action) {
-        if (action.kind === "close") closeAdmission(g, now);
-        if (action.kind === "start") start(g, now);
+        const old = g.round;
         if (action.kind === "choose")
           choose(g, id, action.round, action.choice, now);
+        else teacherAction(g, action, now);
+        await archiveRound(tx, r, old);
         await save(tx, r);
       }
       const base = baseView(g, code, r.title, now);
@@ -327,7 +333,8 @@ export class EvolutionService {
         "SELECT id,joined_at,last_seen,gaps FROM evolution_players WHERE room=$1",
         [code],
       );
-      const end = g.phase === "finished" ? g.round!.closedAt! : now;
+      const end =
+        g.phase === "finished" ? (g.endedAt ?? g.round!.closedAt!) : now;
       const participants = people.rows.map((p) => {
         const lastSeen = Math.min(Number(p.last_seen), end);
         const gaps = p.gaps
@@ -360,6 +367,10 @@ export class EvolutionService {
           title: r.title,
           createdAt: Number(r.created_at),
           admissionClosedAt: g.closedAt,
+          controls: g.controls ?? [],
+          endedAt:
+            g.endedAt ?? (g.phase === "finished" ? g.round?.closedAt : null),
+          pausedAt: g.pausedAt ?? null,
           exportedAt: now,
           phase: g.phase,
           settings: g.settings,
@@ -382,17 +393,19 @@ export class EvolutionService {
       round: number;
       rounds: number;
       groups: number;
+      paused: boolean;
       count: number;
     }>(
-      `SELECT code,title,created_at,game->>'phase' AS phase,COALESCE((game->'round'->>'number')::int,0) AS round,(game->'settings'->>'rounds')::int AS rounds,(game->'settings'->>'groups')::int AS groups,jsonb_array_length(game->'seats') AS count FROM evolution_rooms`,
+      `SELECT code,title,created_at,game->>'phase' AS phase,(game->>'pausedAt' IS NOT NULL) AS paused,COALESCE((game->'round'->>'number')::int,0) AS round,(game->'settings'->>'rounds')::int AS rounds,(game->'settings'->>'groups')::int AS groups,jsonb_array_length(game->'seats') AS count FROM evolution_rooms`,
     );
     return rows.map((r) => ({
       code: r.code,
       title: r.title,
       createdAt: Number(r.created_at),
       experiment: "evolution",
-      phase:
-        r.phase === "playing"
+      phase: r.paused
+        ? "paused"
+        : r.phase === "playing"
           ? "running"
           : r.phase === "feedback"
             ? "review"

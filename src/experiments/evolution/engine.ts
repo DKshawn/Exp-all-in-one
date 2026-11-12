@@ -21,11 +21,18 @@ export type Entry = {
   pay: string | null;
   total: string;
   status:
-    "choosing" | "submitted" | "settled" | "bye" | "timeout" | "unmatched";
+    | "choosing"
+    | "submitted"
+    | "settled"
+    | "bye"
+    | "timeout"
+    | "unmatched"
+    | "interrupted";
 };
 export type Round = {
   number: number;
   openedAt: number;
+  shortened?: boolean;
   deadline: number;
   closedAt: number | null;
   entries: Record<string, Entry>;
@@ -36,9 +43,32 @@ export type Game = {
   seats: Seat[];
   closedAt: number | null;
   round: Round | null;
+  admission?: {
+    seconds: number;
+    deadline: number | null;
+    remaining: number | null;
+    insufficient: boolean;
+  };
+  pausedAt?: number | null;
+  feedbackDeadline?: number;
+  endedAt?: number;
+  controls?: { kind: string; at: number; round: number; value?: number }[];
+};
+export type RunControl = {
+  kind: "pause" | "resume" | "advance" | "shorten" | "end";
+  round: number;
+  phase: "playing" | "feedback";
+  revision: number;
 };
 export type Action =
-  | { kind: "close" | "start" }
+  | { kind: "close" | "start"; revision?: number }
+  | { kind: "timerStart"; seconds: number; revision: number }
+  | { kind: "setGroups"; groups: number; revision: number }
+  | {
+      kind: "timerPause" | "timerResume" | "timerReset" | "reopen";
+      revision: number;
+    }
+  | RunControl
   | { kind: "choose"; round: number; choice: number };
 export const newGame = (settings: Settings): Game => ({
   settings,
@@ -85,6 +115,12 @@ export function closeAdmission(g: Game, now: number) {
   }
   g.phase = "ready";
   g.closedAt = now;
+  g.admission = {
+    ...admissionClock(g),
+    deadline: null,
+    remaining: null,
+    insufficient: false,
+  };
 }
 function openRound(g: Game, now: number) {
   const entries: Round["entries"] = {};
@@ -141,22 +177,44 @@ function closeRound(g: Game, at: number) {
   const r = g.round!;
   r.closedAt = at;
   g.phase = r.number === g.settings.rounds ? "finished" : "feedback";
+  g.feedbackDeadline = at + g.settings.feedbackSeconds * 1000;
+}
+export const admissionClock = (g: Game) =>
+  g.admission ?? {
+    seconds: 60,
+    deadline: null,
+    remaining: null,
+    insufficient: false,
+  };
+export function phaseDeadline(g: Game) {
+  if (g.phase === "open") return admissionClock(g).deadline;
+  if (g.phase === "playing") return g.round!.deadline;
+  if (g.phase === "feedback")
+    return (
+      g.feedbackDeadline ??
+      g.round!.closedAt! + g.settings.feedbackSeconds * 1000
+    );
+  return null;
 }
 export function tick(g: Game, now: number) {
+  if (g.pausedAt != null) return;
+  const timer = admissionClock(g);
+  if (g.phase === "open" && timer.deadline !== null && now >= timer.deadline) {
+    if (groupSizes(g).every((n) => n >= 2)) closeAdmission(g, timer.deadline);
+    else g.admission = { ...timer, deadline: null, insufficient: true };
+  }
   const r = g.round;
   if (!r) return;
   if (g.phase === "playing" && now >= r.deadline) {
     for (const e of Object.values(r.entries)) {
-      if (e.status === "choosing") e.status = "timeout";
-      if (e.status === "submitted") e.status = "unmatched";
+      if (e.status === "choosing")
+        e.status = r.shortened ? "interrupted" : "timeout";
+      if (e.status === "submitted")
+        e.status = r.shortened ? "interrupted" : "unmatched";
     }
     closeRound(g, r.deadline);
   }
-  if (
-    g.phase === "feedback" &&
-    now >= r.closedAt! + g.settings.feedbackSeconds * 1000
-  )
-    openRound(g, now);
+  if (g.phase === "feedback" && now >= phaseDeadline(g)!) openRound(g, now);
 }
 export function choose(
   g: Game,
@@ -170,6 +228,7 @@ export function choose(
   if (!r || r.number !== round || !e || !e.opponent)
     reject("現在の組合せを確認してください。");
   if (e.choice === choice) return; // An acknowledged submission can be retried.
+  if (g.pausedAt != null) reject("一時停止中です。");
   if (g.phase !== "playing" || now >= r.deadline || e.status !== "choosing")
     reject("このラウンドの回答は締め切られました。");
   if (
@@ -202,4 +261,126 @@ export function choose(
     )
   )
     closeRound(g, now);
+}
+
+export function teacherAction(
+  g: Game,
+  action: Exclude<Action, { kind: "choose" }>,
+  now: number,
+) {
+  if (
+    action.revision !== undefined &&
+    action.revision !== (g.controls?.length ?? 0)
+  )
+    reject("操作が更新されました。");
+  const timer = admissionClock(g);
+  if (action.kind === "close") closeAdmission(g, now);
+  else if (action.kind === "start") start(g, now);
+  else if (action.kind === "reopen") {
+    if (g.phase !== "ready") reject("入室受付を再開できません。");
+    g.phase = "open";
+    g.closedAt = null;
+    for (const seat of g.seats) {
+      seat.group = 0;
+      seat.side = null;
+    }
+  } else if ("phase" in action) {
+    if (g.phase !== action.phase || g.round?.number !== action.round)
+      reject("ラウンドが更新されました。");
+    if (action.kind === "pause") {
+      if (g.pausedAt != null) reject("一時停止中です。");
+      g.pausedAt = now;
+    } else if (action.kind === "resume") {
+      if (g.pausedAt == null) reject("一時停止していません。");
+      const shifted = phaseDeadline(g)! + now - g.pausedAt;
+      if (g.phase === "playing") g.round.deadline = shifted;
+      else g.feedbackDeadline = shifted;
+      g.pausedAt = null;
+    } else {
+      if (action.kind !== "end" && g.pausedAt != null)
+        reject("一時停止中です。");
+      const reducedDeadline = phaseDeadline(g)! - 30000;
+      if (action.kind === "shorten" && reducedDeadline > now) {
+        if (g.phase === "playing") {
+          g.round.deadline = reducedDeadline;
+          g.round.shortened = true;
+        } else g.feedbackDeadline = reducedDeadline;
+      } else if (g.phase === "playing") {
+        for (const e of Object.values(g.round.entries))
+          if (e.status === "choosing" || e.status === "submitted")
+            e.status = "interrupted";
+        closeRound(g, now);
+      } else if (action.kind !== "end") openRound(g, now);
+      if (action.kind === "end") {
+        g.phase = "finished";
+        g.endedAt = now;
+        g.pausedAt = null;
+      }
+    }
+  } else {
+    if (g.phase !== "open") reject("入室受付は終了しました。");
+    switch (action.kind) {
+      case "setGroups":
+        if (
+          !Number.isInteger(action.groups) ||
+          action.groups < 1 ||
+          action.groups > 32
+        )
+          reject("グループ数を確認してください。");
+        g.settings = { ...g.settings, groups: action.groups };
+        break;
+      case "timerStart":
+        if (
+          timer.deadline !== null ||
+          timer.remaining !== null ||
+          !Number.isInteger(action.seconds) ||
+          action.seconds < 5 ||
+          action.seconds > 3600
+        )
+          reject("受付時間を確認してください。");
+        g.admission = {
+          seconds: action.seconds,
+          deadline: now + action.seconds * 1000,
+          remaining: null,
+          insufficient: false,
+        };
+        break;
+      case "timerPause":
+        if (timer.deadline === null) reject("タイマーが開始されていません。");
+        g.admission = {
+          ...timer,
+          deadline: null,
+          remaining: Math.max(0, timer.deadline - now),
+        };
+        break;
+      case "timerResume":
+        if (timer.remaining === null)
+          reject("タイマーは一時停止していません。");
+        g.admission = {
+          ...timer,
+          deadline: now + timer.remaining,
+          remaining: null,
+        };
+        break;
+      case "timerReset":
+        g.admission = {
+          ...timer,
+          deadline: null,
+          remaining: null,
+          insufficient: false,
+        };
+        break;
+    }
+  }
+  (g.controls ??= []).push({
+    kind: action.kind,
+    at: now,
+    round: "round" in action ? action.round : (g.round?.number ?? 0),
+    value:
+      "seconds" in action
+        ? action.seconds
+        : "groups" in action
+          ? action.groups
+          : undefined,
+  });
 }

@@ -1,20 +1,12 @@
 "use client";
-import { useEffect, useReducer, useState } from "react";
+import { useEffect, useState } from "react";
+import { GraduationCap, UserRound, SkipForward, RotateCcw } from "lucide-react";
 import { Header } from "@/components/shell";
 import { DemoSelectionLink } from "@/components/demo-selection-link";
 import { DEMO_TEACHER_HREFS } from "@/lib/demo-navigation";
 import { responsesCsv } from "../export";
-import {
-  choose,
-  closeAdmission,
-  newGame,
-  newSeat,
-  start,
-  tick,
-  type Action,
-  type Game,
-  type Round,
-} from "../engine";
+import type { Action } from "../engine";
+import { EvolutionPractice } from "../practice";
 import {
   baseView,
   personal,
@@ -28,56 +20,52 @@ import { label } from "../locale";
 import { useLanguage } from "./rules";
 import { EvolutionSetup } from "./setup";
 import { Panels } from "./panels";
-type Demo = { g: Game; archive: Round[]; title: string; createdAt: number };
-function advance(d: Demo, now: number) {
-  const old = d.g.round;
-  tick(d.g, now);
-  if (old && old !== d.g.round) d.archive.push(old);
-}
+
 export function EvolutionDemo() {
   const lang = useLanguage(),
-    [demo, setDemo] = useState<Demo | null>(null),
-    [role, setRole] = useState("teacher"),
+    [demo, setDemo] = useState<EvolutionPractice | null>(null),
+    [teacher, setTeacher] = useState(true),
     [now, setNow] = useState(0),
-    [err, setError] = useState(""),
-    [, refresh] = useReducer((n) => n + 1, 0);
+    [err, setError] = useState("");
+  const refresh = () => setNow(demo?.time(Date.now()) ?? Date.now());
+  const finished = demo?.game.phase === "finished";
   useEffect(() => {
-    if (!demo) return;
+    if (!demo || finished) return;
     const timer = setInterval(() => {
-      const at = Date.now();
-      advance(demo, at);
+      const at = demo.time(Date.now());
+      demo.advanceTo(at);
+      const entry = demo.game.round?.entries[demo.human];
+      if (
+        !teacher &&
+        entry &&
+        demo.game.phase === "playing" &&
+        demo.game.pausedAt == null
+      )
+        entry.seenAt ??= at;
       setNow(at);
     }, 250);
     return () => clearInterval(timer);
-  }, [demo]);
-  function create(title: string, s: Settings, n: number) {
-    const g = newGame(s);
-    g.seats = Array.from({ length: n }, (_, i) => newSeat(String(i + 1)));
+  }, [demo, teacher, finished]);
+  function create(title: string, s: Settings, n: number, student: boolean) {
     const at = Date.now();
     setNow(at);
-    setRole("teacher");
+    setDemo(new EvolutionPractice(title, s, n, at));
+    setTeacher(!student);
     setError("");
-    setDemo({ g, archive: [], title, createdAt: at });
   }
   function act(a: Action) {
     if (!demo) return;
-    const at = Date.now(),
-      g = demo.g;
-    advance(demo, at);
     try {
-      if (a.kind === "close") closeAdmission(g, at);
-      if (a.kind === "start") start(g, at);
-      if (a.kind === "choose") choose(g, role, a.round, a.choice, at);
+      demo.act(a, Date.now());
       setError("");
     } catch (e) {
-      setError(String(e));
+      setError(e instanceof Error ? e.message : String(e));
     }
-    setNow(at);
     refresh();
   }
   function download(format: "csv" | "json") {
     if (!demo) return;
-    const g = demo.g,
+    const g = demo.game,
       rounds = g.round ? [...demo.archive, g.round] : demo.archive;
     const rows = rounds.flatMap((r) => rawRows(g, r, "DEMO"));
     const body =
@@ -85,6 +73,11 @@ export function EvolutionDemo() {
         ? JSON.stringify(
             {
               demo: true,
+              humanSeat: demo.human,
+              simulatedSeats: g.seats
+                .filter((p) => p.id !== demo.human)
+                .map((p) => p.id),
+              controls: g.controls ?? [],
               title: demo.title,
               createdAt: demo.createdAt,
               admissionClosedAt: g.closedAt,
@@ -109,21 +102,17 @@ export function EvolutionDemo() {
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
-  const base = demo && baseView(demo.g, "DEMO", demo.title, now);
+  const base = demo && baseView(demo.game, "DEMO", demo.title, now);
   const view =
     demo &&
     base &&
-    (role === "teacher"
-      ? teacherView(
-          demo.g,
-          base,
-          demo.archive.flatMap((r) => summaries(demo.g, r)),
-        )
+    (teacher
+      ? teacherView(demo.game, base, demo.history)
       : studentView(
-          demo.g,
+          demo.game,
           base,
-          role,
-          demo.archive.map((r) => personal(r, role)),
+          demo.human,
+          demo.archive.map((r) => personal(r, demo.human)),
         ));
   return (
     <div className="demo-theme">
@@ -138,39 +127,62 @@ export function EvolutionDemo() {
         </main>
       ) : (
         <>
-          <div className="ev ev-demo-bar">
-            <label className="field">
-              {label(lang, "demoView")}
-              <select
-                value={role}
-                onChange={(e) => {
-                  const id = e.target.value;
-                  setRole(id);
-                  setError("");
-                  const entry = demo.g.round?.entries[id];
-                  if (entry && demo.g.phase === "playing")
-                    entry.seenAt ??= Date.now();
-                }}
-              >
-                <option value="teacher">{label(lang, "teacher")}</option>
-                {demo.g.seats.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {label(lang, "student")} {p.id}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button className="button secondary" onClick={() => setDemo(null)}>
-              {label(lang, "reset")}
-            </button>
-          </div>
+          <section
+            className="demo-panel ev-demo-bar"
+            aria-label={label(lang, "demoView")}
+          >
+            <div className="demo-controls">
+              <div className="demo-options">
+                <span className="role-tag">
+                  {label(lang, teacher ? "teacher" : "student")}
+                </span>
+                <button
+                  className="button secondary"
+                  onClick={() => setTeacher(!teacher)}
+                >
+                  {teacher ? (
+                    <UserRound size={16} />
+                  ) : (
+                    <GraduationCap size={16} />
+                  )}{" "}
+                  {label(lang, teacher ? "toStudent" : "toTeacher")}
+                </button>
+                <span>
+                  {label(lang, "bots")} <b>{demo.game.seats.length - 1}</b>
+                </span>
+              </div>
+              <div className="demo-actions">
+                <button
+                  className="button secondary"
+                  disabled={
+                    !(view.phase === "playing" || view.phase === "feedback") ||
+                    view.pausedAt !== null
+                  }
+                  onClick={() => {
+                    demo.fastForward(Date.now());
+                    refresh();
+                  }}
+                >
+                  <SkipForward size={16} />
+                  {label(lang, "fast")}
+                </button>
+                <button
+                  className="button secondary"
+                  onClick={() => setDemo(null)}
+                >
+                  <RotateCcw size={16} />
+                  {label(lang, "reset")}
+                </button>
+              </div>
+            </div>
+          </section>
           {err && (
             <p role="alert" className="error-message">
               {err}
             </p>
           )}
           <Panels
-            key={role}
+            key={teacher ? "teacher" : "student"}
             view={view}
             lang={lang}
             busy={false}

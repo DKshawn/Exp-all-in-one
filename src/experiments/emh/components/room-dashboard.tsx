@@ -11,6 +11,7 @@ import {
   Radio,
   Eye,
 } from "lucide-react";
+import { RoundStrip, clockText as clock } from "@/components/round-strip";
 import { StudentWaitingCard } from "@/components/student-waiting-card";
 import type { RoomView, TeacherAction } from "@/experiments/emh/types";
 import {
@@ -38,10 +39,6 @@ export function useClock(serverNow: number) {
 }
 const remaining = (deadline: number | null, now: number) =>
   Math.max(0, Math.ceil(((deadline ?? now) - now) / 1000));
-const clock = (seconds: number) =>
-  `${Math.floor(seconds / 60)
-    .toString()
-    .padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`;
 export function RoomDashboard({
   room,
   act,
@@ -283,34 +280,27 @@ export function RoomDashboard({
         ) : (
           <>
             <div className="session-overview">
-              <div
-                className={`round-strip ${room.exp2 ? "exp2-rounds" : ""}`}
-                role="list"
-                aria-label="ラウンドの進行"
+              <RoundStrip
+                rounds={room.rounds}
+                current={room.year}
+                finished={room.status === "completed"}
+                label="ラウンドの進行"
+                roundLabel={(n) =>
+                  `第${n}ラウンド${room.experiment !== "exp2" && n === room.year && room.status !== "completed" ? `、${room.period}期` : ""}`
+                }
               >
-                {Array.from({ length: room.rounds }, (_, i) => (
-                  <div
-                    key={i}
-                    role="listitem"
-                    aria-label={`第${i + 1}ラウンド${room.experiment !== "exp2" && i + 1 === room.year && room.status !== "completed" ? `、${room.period}期` : ""}`}
-                    aria-current={
-                      i + 1 === room.year && room.status !== "completed"
-                        ? "step"
-                        : undefined
-                    }
-                    className={`round-step ${i + 1 < room.year || room.status === "completed" ? "done" : i + 1 === room.year ? "active" : ""}`}
-                  >
-                    <span>{i + 1}</span>
-                    {room.experiment !== "exp2" && (
+                {room.experiment === "exp2"
+                  ? undefined
+                  : (n) => (
                       <div>
                         <i
                           className={
-                            i + 1 < room.year ||
-                            (i + 1 === room.year &&
+                            n < room.year ||
+                            (n === room.year &&
                               (room.period === "B" ||
                                 room.status === "completed"))
                               ? "done"
-                              : i + 1 === room.year
+                              : n === room.year
                                 ? "active"
                                 : ""
                           }
@@ -319,12 +309,12 @@ export function RoomDashboard({
                         </i>
                         <i
                           className={
-                            i + 1 < room.year ||
-                            (i + 1 === room.year &&
+                            n < room.year ||
+                            (n === room.year &&
                               (room.status === "break" ||
                                 room.status === "completed"))
                               ? "done"
-                              : i + 1 === room.year && room.period === "B"
+                              : n === room.year && room.period === "B"
                                 ? "active"
                                 : ""
                           }
@@ -333,9 +323,7 @@ export function RoomDashboard({
                         </i>
                       </div>
                     )}
-                  </div>
-                ))}
-              </div>
+              </RoundStrip>
               <div className="session-bar">
                 <div className="session-phase">
                   <strong>

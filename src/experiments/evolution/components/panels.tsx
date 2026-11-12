@@ -5,14 +5,15 @@ import Link from "next/link";
 import { label, displayChoices, type Key, type Lang } from "../locale";
 import type { Action } from "../engine";
 import type { View, Personal } from "../views";
-import { Language, Rules } from "./rules";
+import { Admission, SessionOverview } from "./session-controls";
+import { Language, PayoffRules, Rules } from "./rules";
 
 type Props = {
   view: View;
   lang: Lang;
   busy: boolean;
   now: number;
-  act: (action: Action) => void;
+  act: (action: Action) => void | Promise<void>;
   downloads?: React.ReactNode;
 };
 function Decision({
@@ -77,7 +78,12 @@ function History({
     options = displayChoices(lang, view.settings);
   const name = (c: number | null) => (c === null ? "—" : options[c]);
   return (
-    <div className="ev-scroll">
+    <div
+      className="ev-scroll ev-history-scroll"
+      tabIndex={0}
+      role="region"
+      aria-label={t("history")}
+    >
       <table>
         <caption>{t("history")}</caption>
         <thead>
@@ -98,6 +104,11 @@ function History({
           </tr>
         </thead>
         <tbody>
+          {!rows.length && (
+            <tr>
+              <td colSpan={7}>{t("empty")}</td>
+            </tr>
+          )}
           {rows.toReversed().map((x) => (
             <tr key={x.round}>
               <th>{x.round}</th>
@@ -136,7 +147,7 @@ function Analysis({
     ));
   }
   return (
-    <section className="panel ev-panel">
+    <section className="panel ev-panel ev-analysis">
       <h2>{t("results")}</h2>
       <label className="field ev-filter">
         {t("group")}
@@ -172,6 +183,7 @@ function Analysis({
           </thead>
           <tbody>
             {view.history
+              .toReversed()
               .filter((x) => x.group === group)
               .map((x) => (
                 <tr key={x.round}>
@@ -218,76 +230,39 @@ function Analysis({
 }
 export function Panels({ view: v, lang, busy, now, act, downloads }: Props) {
   const t = (k: Key) => label(lang, k),
+    waiting = v.round === 0,
     demand = v.settings.mode === "demand";
-  const mine = v.role === "student" ? v.current : null;
+  const mine = v.role === "student" ? v.current : null,
+    names = displayChoices(lang, v.settings);
   return (
     <main className="ev ev-room" lang={lang}>
       <div className="ev-heading">
         <h1>{v.title}</h1>
-        <Language lang={lang} />
-      </div>
-      <section className="panel ev-panel">
-        <div className="ev-heading">
-          <h2>{t(v.phase)}</h2>
+        <div className="ev-options">
           <span className="ev-code">
             {t("code")} <b>{v.code}</b>
           </span>
+          <Language lang={lang} />
         </div>
-        <div className="ev-meta">
-          <span>
-            {t("round")}{" "}
-            <b>
-              {v.round} / {v.settings.rounds}
-            </b>
-          </span>
-          {v.deadline !== null && (
-            <span>
-              {t(v.phase === "feedback" ? "next" : "timeLeft")}{" "}
-              <b>
-                {Math.max(0, Math.ceil((v.deadline - now) / 1000))} {t("sec")}
-              </b>
-            </span>
-          )}
-          {v.role === "teacher" ? (
+      </div>
+      {waiting ? (
+        <section className="ev-heading">
+          <h2>{t(v.phase)}</h2>
+          {v.role === "teacher" && (
             <span>
               {t("count")} <b>{v.count}</b>
             </span>
-          ) : (
-            <>
-              <span>
-                {t("sum")} <b>{v.total}</b>
-              </span>
-              {v.group > 0 && (
-                <span>
-                  {t("group")} <b>{v.group}</b>
-                </span>
-              )}
-              {v.side && (
-                <span>
-                  {t("side")} <b>{v.side}</b>
-                </span>
-              )}
-              {mine?.position && !demand && (
-                <span>
-                  <b>{t(mine.position)}</b>
-                </span>
-              )}
-            </>
           )}
-        </div>
-      </section>
+        </section>
+      ) : (
+        <SessionOverview view={v} lang={lang} now={now} busy={busy} act={act} />
+      )}
       {v.role === "teacher" ? (
         <>
-          {(v.phase === "open" || v.phase === "ready") && (
+          {waiting ? (
             <section className="panel ev-panel">
-              <h2>{t("preview")}</h2>
-              <div className="ev-meta">
-                <span>
-                  {t("seconds")} <b>{v.settings.seconds}</b>
-                </span>
-                <span>
-                  {t("feedbackSeconds")} <b>{v.settings.feedbackSeconds}</b>
-                </span>
+              <div className="ev-heading">
+                <h2>{t("roster")}</h2>
                 {v.code !== "DEMO" && (
                   <Link
                     className="button secondary small-button"
@@ -298,6 +273,7 @@ export function Panels({ view: v, lang, busy, now, act, downloads }: Props) {
                   </Link>
                 )}
               </div>
+              <Admission view={v} lang={lang} now={now} busy={busy} act={act} />
               <div className="ev-scroll">
                 <table>
                   <thead>
@@ -311,6 +287,7 @@ export function Panels({ view: v, lang, busy, now, act, downloads }: Props) {
                         </>
                       )}
                       <th>{t("byes")}</th>
+                      {v.phase === "ready" && <th>{t("student")}</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -325,94 +302,144 @@ export function Panels({ view: v, lang, busy, now, act, downloads }: Props) {
                           </>
                         )}
                         <td>{n % 2}</td>
+                        {v.phase === "ready" && (
+                          <td className="ev-roster-seats">
+                            {v.seats
+                              .filter((p) => p.group === i + 1)
+                              .map((p) => (
+                                <span key={p.number}>
+                                  #{p.number} {p.side}
+                                </span>
+                              ))}
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              {v.sizes.some((n) => n < 2) && <p role="status">{t("tooFew")}</p>}
-              <button
-                className="button primary"
-                disabled={busy || v.sizes.some((n) => n < 2)}
-                onClick={() =>
-                  act({ kind: v.phase === "open" ? "close" : "start" })
-                }
-              >
-                {t(v.phase === "open" ? "close" : "start")}
-              </button>
             </section>
+          ) : (
+            <Analysis view={v} lang={lang} />
           )}
-          {v.round > 0 && <Analysis view={v} lang={lang} />}
           <div className="ev-options">{downloads}</div>
         </>
+      ) : waiting ? (
+        <StudentWaitingCard assigned={v.phase === "ready"}>
+          <h2>{t(v.phase)}</h2>
+          <p>
+            {v.group
+              ? t("group") + " " + v.group + (v.side ? " · " + v.side : "")
+              : t("random")}
+          </p>
+          {v.admission.deadline !== null || v.admission.remaining !== null ? (
+            <strong role="timer">
+              {Math.ceil(
+                Math.max(
+                  0,
+                  v.admission.deadline === null
+                    ? v.admission.remaining!
+                    : v.admission.deadline - now,
+                ) / 1000,
+              )}{" "}
+              {t("sec")}
+            </strong>
+          ) : null}
+        </StudentWaitingCard>
       ) : (
-        <>
-          {!mine && (
-            <StudentWaitingCard assigned={v.phase === "ready"}>
-              <h2>{t(v.phase === "ready" ? "ready" : "open")}</h2>
-              <p>{t("random")}</p>
-            </StudentWaitingCard>
-          )}
-          {mine && (
-            <section className="panel ev-panel">
-              <h2>{t(mine.status)}</h2>
-              {mine.status === "choosing" ? (
-                <Decision
-                  key={v.round}
+        mine && (
+          <>
+            <div className="ev-account">
+              {[
+                ["sum", v.total],
+                ["group", v.group],
+                ...(v.side
+                  ? [["side", v.side]]
+                  : mine.position
+                    ? [["position", t(mine.position)]]
+                    : []),
+              ].map(([k, value]) => (
+                <div key={k}>
+                  <span>{t(k as Key)}</span>
+                  <strong>{value}</strong>
+                </div>
+              ))}
+            </div>
+            <div
+              className={
+                "ev-workbench" + (v.history.length ? " has-history" : "")
+              }
+            >
+              <section className="panel ev-panel ev-task">
+                <h2>{t(mine.status)}</h2>
+                {mine.status === "choosing" ? (
+                  <Decision
+                    key={v.round}
+                    view={v}
+                    lang={lang}
+                    busy={
+                      busy ||
+                      v.pausedAt !== null ||
+                      now >= (v.deadline ?? Infinity)
+                    }
+                    act={act}
+                  />
+                ) : (
+                  <dl className="ev-payoffs">
+                    {(
+                      [
+                        [
+                          "mine",
+                          mine.choice === null ? null : names[mine.choice],
+                        ],
+                        [
+                          "other",
+                          mine.otherChoice === null
+                            ? null
+                            : names[mine.otherChoice],
+                        ],
+                        ["pay", mine.pay],
+                        ["otherPay", mine.otherPay],
+                      ] as const
+                    ).map(([k, val]) => (
+                      <div key={k}>
+                        <dt>{t(k)}</dt>
+                        <dd>{val ?? "—"}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+              </section>
+              <section className="panel ev-panel ev-history">
+                <History
                   view={v}
                   lang={lang}
-                  busy={busy || now >= (v.deadline ?? Infinity)}
-                  act={act}
+                  rows={
+                    mine.status === "choosing" || mine.status === "submitted"
+                      ? v.history
+                      : [...v.history, mine]
+                  }
                 />
-              ) : (
-                <dl className="ev-payoffs">
-                  {(
-                    [
-                      [
-                        "mine",
-                        mine.choice === null
-                          ? null
-                          : displayChoices(lang, v.settings)[mine.choice],
-                      ],
-                      [
-                        "other",
-                        mine.otherChoice === null
-                          ? null
-                          : displayChoices(lang, v.settings)[mine.otherChoice],
-                      ],
-                      ["pay", mine.pay],
-                      ["otherPay", mine.otherPay],
-                    ] as const
-                  ).map(([k, x]) => (
-                    <div key={k}>
-                      <dt>{t(k)}</dt>
-                      <dd>{x ?? "—"}</dd>
-                    </div>
-                  ))}
-                </dl>
+              </section>
+              {mine.status === "choosing" && (
+                <section className="panel ev-panel ev-reference">
+                  <PayoffRules s={v.settings} lang={lang} />
+                </section>
               )}
-            </section>
-          )}
-        </>
+            </div>
+          </>
+        )
       )}
-      <details className="panel ev-panel" open>
-        <summary className="button secondary">{t("rules")}</summary>
+      <details
+        key={waiting ? "lobby" : "live"}
+        className="panel ev-panel"
+        open={waiting}
+      >
+        <summary className="button secondary small-button">
+          {t("rules")}
+        </summary>
         <Rules lang={lang} s={v.settings} />
       </details>
-      {v.role === "student" &&
-        (v.history.length > 0 || v.phase === "finished") && (
-          <section className="panel ev-panel">
-            <History
-              rows={
-                mine && v.phase === "finished"
-                  ? [...v.history, mine]
-                  : v.history
-              }
-              view={v}
-              lang={lang}
-            />
-          </section>
-        )}
     </main>
   );
 }

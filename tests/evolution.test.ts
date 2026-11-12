@@ -16,6 +16,9 @@ import {
   start,
   choose,
   tick,
+  teacherAction,
+  phaseDeadline,
+  type Action,
 } from "../src/experiments/evolution/engine";
 import { personal, summaries } from "../src/experiments/evolution/views";
 import { rawRows } from "../src/experiments/evolution/views";
@@ -331,4 +334,164 @@ test("heartbeat gaps and PIN re-entry do not imply timeout or change the assigne
   } finally {
     await pg.close();
   }
+});
+test("timed admission, reopening and teacher controls preserve actual research records", async () => {
+  const pg = new PGlite();
+  try {
+    const db = localDatabase(pg);
+    await migrate(db);
+    let now = 10_000;
+    const svc = new EvolutionService(db, async () => now);
+    const { code, token } = await svc.create(
+      "Controls",
+      "controls-test",
+      process.env.TEACHER_ACCESS_KEY ?? "",
+      { ...defaults("demand"), rounds: 3, seconds: 15 },
+    );
+    const join = (name: string) =>
+      svc.login(code, { role: "student", nickname: name, pin: "1234" });
+    const teacher = (a?: Action) => svc.view(code, token, "teacher", a);
+    await teacher({ kind: "timerStart", seconds: 5, revision: 0 });
+    now += 5000;
+    const a = await join("A");
+    const insufficient = await teacher();
+    assert.equal(insufficient.phase, "open");
+    assert.ok(insufficient.admission.insufficient);
+    await join("B");
+    await teacher({ kind: "timerStart", seconds: 5, revision: 1 });
+    now += 3000;
+    await teacher({ kind: "timerPause", revision: 2 });
+    now += 10000;
+    assert.equal((await teacher()).admission.remaining, 2000);
+    await teacher({ kind: "timerResume", revision: 3 });
+    now += 2000;
+    await assert.rejects(join("late"));
+    assert.equal((await teacher()).phase, "ready");
+    await teacher({ kind: "reopen", revision: 4 });
+    await join("C");
+    await join("D");
+    await teacher({ kind: "setGroups", groups: 2, revision: 5 });
+    await teacher({ kind: "close" });
+    await teacher({ kind: "start" });
+    const admin = await teacher();
+    assert.equal(admin.role, "teacher");
+    const revision = admin.revision;
+    const pause = {
+      kind: "pause",
+      round: 1,
+      phase: "playing",
+      revision,
+    } as const;
+    await assert.rejects(svc.view(code, a.token, "student", pause));
+    await teacher(pause);
+    await assert.rejects(teacher(pause));
+    now += 60000;
+    const chooseFirst = { kind: "choose", round: 1, choice: 0 } as const;
+    await assert.rejects(svc.view(code, a.token, "student", chooseFirst));
+    assert.equal((await teacher()).round, 1);
+    await teacher({ ...pause, kind: "resume", revision: revision + 1 });
+    await svc.view(code, a.token, "student", chooseFirst);
+    await teacher({ ...pause, kind: "advance", revision: revision + 2 });
+    const feedback = await teacher();
+    assert.equal(feedback.phase, "feedback");
+    await teacher({
+      ...pause,
+      phase: "feedback",
+      kind: "pause",
+      revision: revision + 3,
+    });
+    now += 30000;
+    await teacher({
+      ...pause,
+      phase: "feedback",
+      kind: "resume",
+      revision: revision + 4,
+    });
+    assert.equal((await teacher()).deadline, feedback.deadline! + 30000);
+    await teacher({
+      ...pause,
+      phase: "feedback",
+      kind: "advance",
+      revision: revision + 5,
+    });
+    assert.equal((await teacher()).round, 2);
+    await teacher({ ...pause, kind: "end", round: 2, revision: revision + 6 });
+    const data = JSON.parse(await svc.export(code, token, "json"));
+    assert.equal(data.phase, "finished");
+    assert.equal(data.rows.length, 8);
+    assert.equal(data.endedAt, now);
+    assert.ok(
+      data.rows.every(
+        (x: { status: string; pay: string | null }) =>
+          x.status === "interrupted" && x.pay === null,
+      ),
+    );
+    assert.equal(
+      data.rows.filter((x: { choice: number | null }) => x.choice !== null)
+        .length,
+      1,
+    );
+    assert.equal(data.controls.at(-1).kind, "end");
+  } finally {
+    await pg.close();
+  }
+});
+test("early closure keeps settled and bye payoffs and never credits an unfinished pair", () => {
+  const g = newGame(defaults("coordination"));
+  g.seats = ["a", "b", "c", "d", "e"].map(newSeat);
+  closeAdmission(g, 0);
+  start(g, 1);
+  const entries = g.round!.entries;
+  const [id, e] = Object.entries(entries).find(([, e]) => e.opponent !== null)!;
+  choose(g, id, 1, 0, 100);
+  choose(g, e.opponent!, 1, 0, 200);
+  teacherAction(
+    g,
+    { kind: "end", phase: "playing", round: 1, revision: 0 },
+    300,
+  );
+  assert.equal(g.phase, "finished");
+  assert.equal(phaseDeadline(g), null);
+  assert.equal(
+    Object.values(entries).filter(
+      (e) => e.status === "settled" && e.pay === "4",
+    ).length,
+    2,
+  );
+  assert.equal(
+    Object.values(entries).filter((e) => e.status === "bye" && e.pay === null)
+      .length,
+    1,
+  );
+  assert.equal(
+    Object.values(entries).filter(
+      (e) => e.status === "interrupted" && e.pay === null,
+    ).length,
+    2,
+  );
+});
+test("the formal 30-second advance only shortens the current phase and records affected missing responses", () => {
+  const game = newGame({ ...defaults("demand"), seconds: 45, rounds: 2 });
+  game.seats = ["a", "b"].map(newSeat);
+  closeAdmission(game, 0);
+  start(game, 1000);
+  teacherAction(
+    game,
+    { kind: "shorten", phase: "playing", round: 1, revision: 0 },
+    2000,
+  );
+  assert.equal(game.round!.deadline, 16000);
+  choose(game, "a", 1, 0, 3000);
+  tick(game, 16000);
+  assert.equal(game.phase, "feedback");
+  assert.equal(game.round!.entries.a.choice, 0);
+  assert.equal(game.round!.entries.a.status, "interrupted");
+  assert.equal(game.round!.entries.b.pay, null);
+  teacherAction(
+    game,
+    { kind: "shorten", phase: "feedback", round: 1, revision: 1 },
+    17000,
+  );
+  assert.equal(game.round!.number, 2);
+  assert.equal(game.round!.deadline, 62000);
 });

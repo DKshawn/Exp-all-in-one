@@ -4,10 +4,14 @@
 
 ## Run a classroom session
 
-1. At `/teacher`, select **確率的進化ゲーム**. Select Japanese, Chinese or English. Choose the game, name the room, check the payoff preview and set a room password. Parameters lock on creation.
+1. At `/teacher`, select **確率的進化ゲーム**. Select Japanese, Chinese or English. Choose the game, name the room, check the payoff preview and set a room password. Game, payoff and round settings lock on creation.
 2. Share the room code and student entry `/`. Students join with a nickname and four-digit PIN. They can review the rules while waiting.
 3. Check actual enrollment and projected group sizes, then close admission. Closing randomly assigns the roster to fixed, balanced groups. Each group needs at least two people. In the demand game each group also receives fixed, nearly equal A/B sides. In an odd group a random draw determines which side has the extra person. Check the allocation and confirm start.
 4. Each round, choose privately and confirm once. A submitted choice survives reload and re-entry. Both players see their own and their partner’s choice and payoff as soon as the pair settles, plus their own cumulative payoff. Personal round history stays available. Teachers see the group tables and can download data during or after the session.
+
+Group count remains editable during admission. Close manually or start the 5–3600 second admission timer (default 60). Pause, resume or reset it as needed. When time expires, admission closes if every group can pair at least two people. Otherwise it stays open. Reopen before starting to admit more participants and draw a new allocation at the next cutoff.
+
+Both views show round progress and a minutes-and-seconds clock with a progress bar. Teachers can pause/resume decisions or feedback, shorten the current phase by 30 seconds (up to its boundary), close decisions early for feedback (or finish on the final round), advance from feedback to the next round, or confirm early termination. Settled payoffs stand. Incomplete pairs are marked `interrupted`, retaining submitted choices with null payoff. Research JSON records teacher interventions with time and round in `controls`. Personal history scrolls inside its own table, newest first.
 
 ## Parameters and payoff rules
 

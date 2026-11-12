@@ -1,6 +1,8 @@
 import { add } from "./numbers";
 import {
   groupSizes,
+  phaseDeadline,
+  admissionClock,
   type Game,
   type Round,
   type Entry,
@@ -86,12 +88,9 @@ export function baseView(g: Game, code: string, title: string, now: number) {
     phase: g.phase,
     round: g.round?.number ?? 0,
     now,
-    deadline:
-      g.phase === "playing"
-        ? g.round!.deadline
-        : g.phase === "feedback"
-          ? g.round!.closedAt! + g.settings.feedbackSeconds * 1000
-          : null,
+    deadline: phaseDeadline(g),
+    pausedAt: g.pausedAt ?? null,
+    admission: admissionClock(g),
   };
 }
 export function teacherView(
@@ -108,6 +107,14 @@ export function teacherView(
     role: "teacher" as const,
     sizes,
     sides,
+    revision: g.controls?.length ?? 0,
+    seats: g.round
+      ? []
+      : g.seats.map((seat, i) => ({
+          number: i + 1,
+          group: seat.group,
+          side: seat.side,
+        })),
     count: g.seats.length,
     history: [...history, ...(g.round ? summaries(g, g.round) : [])],
   };

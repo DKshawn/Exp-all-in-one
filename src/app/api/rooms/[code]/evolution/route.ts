@@ -10,8 +10,46 @@ import {
 } from "@/lib/server/http";
 import { evolutionService } from "@/experiments/evolution/server/service";
 const schema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("close") }).strict(),
-  z.object({ kind: z.literal("start") }).strict(),
+  z
+    .object({
+      kind: z.literal("close"),
+      revision: z.int().nonnegative().optional(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("start"),
+      revision: z.int().nonnegative().optional(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.enum(["timerPause", "timerResume", "timerReset", "reopen"]),
+      revision: z.int().nonnegative(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("timerStart"),
+      seconds: z.int().min(5).max(3600),
+      revision: z.int().nonnegative(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("setGroups"),
+      groups: z.int().min(1).max(32),
+      revision: z.int().nonnegative(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.enum(["pause", "resume", "advance", "shorten", "end"]),
+      round: z.int().positive(),
+      phase: z.enum(["playing", "feedback"]),
+      revision: z.int().nonnegative(),
+    })
+    .strict(),
   z
     .object({
       kind: z.literal("choose"),

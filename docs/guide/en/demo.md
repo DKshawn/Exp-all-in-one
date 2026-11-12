@@ -4,7 +4,7 @@ The demo list and screens use a yellow theme, with a demo-mode text label beside
 
 [日本語](../ja/demo.md) · [中文](../zh-CN/demo.md) · [English](../en/demo.md)
 
-Choose Stochastic Evolutionary Games at `/evolution/demo`. Configure a practice roster (default 5), close admission, start and switch among the teacher and individual seats to submit both choices manually. Reloading discards the practice room. Demo downloads contain practice data only. [Rules and data](evolution.md)
+At `/evolution/demo`, open the student view directly from setup or create a teacher demo. By default you control one seat and five simulated participants submit independently drawn choices. The toolbar switches views, advances 30 seconds or returns to setup. Switching views preserves your seat and progress. Reloading clears practice. Demo downloads contain practice data only. [Rules and data](evolution.md)
 
 Sign in at the teacher entry and open **Demo Model** to choose an experiment at `/demo/select`. Opening a demo or screen-size preview directly first takes you to teacher login, then returns you to that page. A student room session grants access only to the classroom experiment.
 

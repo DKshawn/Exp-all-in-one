@@ -17,7 +17,7 @@ export function EvolutionSetup({
   onDemo,
 }: {
   ready?: boolean;
-  onDemo?: (title: string, s: Settings, n: number) => void;
+  onDemo?: (title: string, s: Settings, n: number, student: boolean) => void;
 }) {
   const lang = useLanguage(),
     t = (k: Key) => label(lang, k),
@@ -26,7 +26,7 @@ export function EvolutionSetup({
     [title, setTitle] = useState(""),
     [password, setPassword] = useState(""),
     [text, setText] = useState("1/3, 1/2, 2/3"),
-    [n, setN] = useState(5),
+    [n, setN] = useState(6),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const names = displayChoices(lang, s);
@@ -53,7 +53,13 @@ export function EvolutionSetup({
     if (!parsed.success) return;
     const roomTitle = title.trim() || t("title");
     if (onDemo) {
-      onDemo(roomTitle, parsed.data, n);
+      const submitter = (e.nativeEvent as SubmitEvent).submitter;
+      onDemo(
+        roomTitle,
+        parsed.data,
+        n,
+        submitter instanceof HTMLButtonElement && submitter.value === "student",
+      );
       return;
     }
     setBusy(true);
@@ -72,8 +78,22 @@ export function EvolutionSetup({
   }
   return (
     <form lang={lang} className="emh-create ev ev-setup" onSubmit={create}>
-      <Language lang={lang} />
-      <h1>{t("title")}</h1>
+      <div className="ev-heading">
+        <h1>{t("title")}</h1>
+        <div className="ev-options">
+          <Language lang={lang} />
+          {onDemo && (
+            <button
+              type="submit"
+              value="student"
+              disabled={!parsed.success}
+              className="button secondary small-button"
+            >
+              {t("toStudent")}
+            </button>
+          )}
+        </div>
+      </div>
       <label className="field">
         {t("name")}
         <input
@@ -144,37 +164,39 @@ export function EvolutionSetup({
           <fieldset>
             <legend>{t("matrix")}</legend>
             <p>{t("matrixRule")}</p>
-            {s.matrix.flatMap((row, i) =>
-              row.map((p, j) => (
-                <div className="ev-cell" key={i + "," + j}>
-                  <strong>
-                    {names[i]} / {names[j]}
-                  </strong>
-                  <div className="ev-fields">
-                    {p.map((v, k) => (
-                      <label key={k} className="field">
-                        {t(k === 0 ? "row" : "column")}
-                        <input
-                          required
-                          aria-label={[
-                            names[i],
-                            names[j],
-                            t(k === 0 ? "row" : "column"),
-                          ].join(" / ")}
-                          maxLength={20}
-                          value={v}
-                          onChange={(e) => {
-                            const matrix = structuredClone(s.matrix);
-                            matrix[i][j][k] = e.target.value;
-                            set({ ...s, matrix });
-                          }}
-                        />
-                      </label>
-                    ))}
+            <div className="ev-matrix-editor">
+              {s.matrix.flatMap((row, i) =>
+                row.map((p, j) => (
+                  <div className="ev-cell" key={i + "," + j}>
+                    <strong>
+                      {names[i]} / {names[j]}
+                    </strong>
+                    <div className="ev-fields">
+                      {p.map((v, k) => (
+                        <label key={k} className="field">
+                          {t(k === 0 ? "row" : "column")}
+                          <input
+                            required
+                            aria-label={[
+                              names[i],
+                              names[j],
+                              t(k === 0 ? "row" : "column"),
+                            ].join(" / ")}
+                            maxLength={20}
+                            value={v}
+                            onChange={(e) => {
+                              const matrix = structuredClone(s.matrix);
+                              matrix[i][j][k] = e.target.value;
+                              set({ ...s, matrix });
+                            }}
+                          />
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )),
-            )}
+                )),
+              )}
+            </div>
           </fieldset>
         </>
       ) : (

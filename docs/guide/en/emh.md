@@ -20,6 +20,8 @@ Both experiments place the limit and market buttons side by side for buying and 
 
 The conditions panel groups each student’s private dividends with their trading controls. The shared CDA book opens in list view (一覧) and can switch to a bar chart (棒グラフ). Both teachers and students see two columns per side, price and quantity. The teacher’s trade records and CSV export identify the buyer and seller for each trade. Your resting limits are identified by a highlighted row and あなた含む in the list, or a dot and outlined bar at that price in the chart. The book shows a cancel button for each side where you have a resting limit. Holdings, trading balance, and the current round profit appear as three cards in one row in the same panel.
 
+For long schedules, the round strip scrolls the active round into view on a round change.
+
 ## Experiment 1
 
 1. After authenticating at the teacher entry, alongside the title and room teacher password, set initial securities per participant per round (1–20, default 2), target market size (3–12, default 9), three type weights (integers 1–100 each, default 1:1:1), and the shared A/B period duration (1–30 minutes, default 4, rounded to whole seconds). While admission is open, these settings can still be edited and applied with **設定を保存**.

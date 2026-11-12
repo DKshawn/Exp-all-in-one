@@ -224,3 +224,284 @@
     padding-inline: 10px;
   }
 }
+.ev-setup {
+  max-width: 840px;
+  gap: 14px;
+  padding: clamp(14px, 2.5vw, 24px);
+}
+.ev-setup .ev-heading h1 {
+  margin: 0;
+}
+.ev-matrix-editor {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 14px;
+}
+.ev-matrix-editor .ev-cell {
+  background: var(--bg);
+  padding: 6px 10px;
+  border-radius: 8px;
+  margin-top: 4px;
+}
+.ev-matrix-editor .ev-cell input {
+  min-width: 0;
+  width: 100%;
+}
+@media (max-width: 480px) {
+  .ev-matrix-editor {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ev-setup .ev-fields {
+    gap: 6px;
+  }
+}
+.ev-room {
+  max-width: 1180px;
+  margin: 14px auto 32px;
+  gap: 10px;
+  padding-bottom: 12px;
+}
+.ev-room .ev-heading h1 {
+  font-size: clamp(17px, 2vw, 23px);
+  margin: 0;
+}
+.ev-room .ev-panel {
+  gap: 8px;
+  padding: 12px 14px;
+}
+.ev-room .ev-panel h2,
+.ev-room .ev-heading h2 {
+  font-size: 17px;
+}
+.ev-demo-bar {
+  display: block;
+  max-width: 1140px;
+  margin: 10px auto 6px;
+  padding: 8px 14px;
+}
+.ev-demo-bar .button,
+.ev-overview .button {
+  min-height: 32px;
+  padding: 5px 10px;
+  font-size: 13px;
+}
+.ev-demo-bar .demo-options > span {
+  white-space: nowrap;
+}
+.ev-overview .wide {
+  width: auto;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+.ev-overview .wide .session-overview {
+  width: 100%;
+  margin: 0;
+  gap: 6px 14px;
+}
+.ev-overview .wide .session-overview .round-strip {
+  max-width: min(100%, 400px);
+  overflow-x: auto;
+}
+.ev-overview .wide .session-overview .session-bar {
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+}
+.ev-overview .session-phase {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ev-overview h2 {
+  margin: 0;
+  font-size: 15px;
+}
+.ev-overview .control-buttons {
+  flex-wrap: wrap;
+}
+.ev-account {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.ev-account > div {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 5px 12px;
+  display: grid;
+  gap: 0;
+  min-width: 84px;
+}
+.ev-account span,
+.ev-payoffs dt {
+  font-size: 12px;
+  color: var(--muted);
+}
+.ev-account strong {
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+.ev-workbench {
+  display: grid;
+  grid-template-columns: minmax(245px, 0.8fr) minmax(0, 1.55fr);
+  align-items: start;
+  gap: 10px;
+}
+.ev-workbench .ev-history-scroll {
+  max-height: clamp(160px, 43vh, 420px);
+  overflow: auto;
+}
+.ev-history-scroll caption {
+  font-size: 16px;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.ev-history-scroll thead th {
+  position: sticky;
+  top: 0;
+  background: var(--lavender);
+}
+.ev-history-scroll tbody th {
+  background: var(--paper);
+}
+.ev-history-scroll td,
+.ev-history-scroll th {
+  padding: 5px 8px;
+}
+.ev-history-scroll td[colspan] {
+  white-space: normal;
+}
+.ev-decision {
+  gap: 6px;
+}
+.ev-decision fieldset {
+  padding: 6px 9px;
+}
+.ev-room .ev-rules {
+  gap: 5px;
+  margin-top: 6px;
+}
+.ev-room .ev-payoffs {
+  gap: 4px;
+  margin: 0;
+}
+.ev-room .ev-payoffs > div {
+  padding: 5px 8px;
+}
+.ev-roster-seats {
+  white-space: normal !important;
+}
+.ev-roster-seats span {
+  display: inline-block;
+  margin-right: 10px;
+}
+.ev .study-admission .field select {
+  width: auto;
+}
+@media (max-width: 760px) {
+  .ev-workbench {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ev-demo-bar {
+    margin-inline: 8px;
+  }
+  .ev-overview .wide .session-overview .round-strip {
+    max-width: 100%;
+  }
+  .ev-overview .control-buttons {
+    margin: 0;
+  }
+  .ev-room .ev-heading {
+    gap: 4px 8px;
+  }
+  .ev-account > div {
+    min-width: 0;
+    flex: 1;
+  }
+  .ev-workbench .ev-panel {
+    padding: 9px 10px;
+  }
+  .ev-demo-bar .demo-controls,
+  .ev-demo-bar .demo-actions,
+  .ev-demo-bar .demo-options {
+    gap: 5px 8px;
+  }
+}
+
+.ev-room {
+  grid-template-columns: minmax(0, 1fr);
+}
+.ev-room > * {
+  min-width: 0;
+}
+.ev-demo-bar.demo-panel {
+  margin-top: 8px;
+  padding: 8px 12px;
+}
+.ev-demo-bar .demo-options,
+.ev-demo-bar .demo-options .button,
+.ev-demo-bar .demo-actions {
+  width: auto;
+}
+.ev-demo-bar .demo-status .role-tag,
+.ev-demo-bar .role-tag {
+  font-size: 12px;
+}
+.ev-workbench .ev-task {
+  grid-column: 1;
+  grid-row: 1;
+}
+.ev-workbench .ev-history {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+.ev-workbench .ev-reference {
+  grid-column: 1;
+}
+@media (max-width: 760px) {
+  .ev-workbench .ev-task,
+  .ev-workbench .ev-history,
+  .ev-workbench .ev-reference {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .ev-room,
+  .ev-demo-bar.demo-panel {
+    margin-block: 7px;
+  }
+  .ev-workbench .ev-history-scroll {
+    max-height: clamp(135px, 25vh, 225px);
+  }
+  .ev-demo-bar .demo-controls {
+    justify-content: flex-start;
+  }
+}
+.ev-analysis .ev-scroll {
+  max-height: 54vh;
+  overflow: auto;
+}
+.ev-analysis .ev-scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.ev-analysis .ev-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ev-analysis .ev-filter select {
+  width: auto;
+}
+.ev-demo-bar.demo-panel .demo-actions .button {
+  width: auto;
+  flex: 0 0 auto;
+}
+@media (max-width: 760px) and (max-height: 720px) {
+  .ev-workbench.has-history .ev-history {
+    order: -1;
+  }
+  .ev-workbench.has-history .ev-history-scroll {
+    max-height: 118px;
+  }
+}

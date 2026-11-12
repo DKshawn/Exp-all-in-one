@@ -10,6 +10,8 @@ Student waiting screens share a consistent card design while retaining experimen
 
 The EMH order book shows price and quantity and marks your resting orders in both the list and bar chart. Teachers can find buyer and seller numbers in the trade records and CSV export. On each side, the limit and market buttons sit side by side. Experiment 2 shows each state’s dividend multiplied by its public probability and highlights the realized state on its card at round end. Unfilled limits queue by price, then arrival time, until period end. You can amend or cancel them. Draft bid and ask prices also stay in their fields throughout the period.
 
+Stochastic games support manual or timed admission, pause/resume, phase advance and early termination. Students can review personal rounds beside their decisions. The default practice roster contains one manual seat and five simulated participants.
+
 ## Get started
 
 ```mermaid

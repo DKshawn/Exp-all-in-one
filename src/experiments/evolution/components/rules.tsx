@@ -35,12 +35,11 @@ export function Language({ lang }: { lang: Lang }) {
     </select>
   );
 }
-export function Rules({ s, lang }: { s: Settings; lang: Lang }) {
+export function PayoffRules({ s, lang }: { s: Settings; lang: Lang }) {
   const t = (k: Parameters<typeof label>[1]) => label(lang, k),
     names = displayChoices(lang, s);
   return (
-    <section className="ev-rules">
-      <h3>{t(s.mode)}</h3>
+    <div className="ev-rules ev-payoff-rules">
       {s.mode === "coordination" ? (
         <>
           <p>{t("matrixRule")}</p>
@@ -77,9 +76,18 @@ export function Rules({ s, lang }: { s: Settings; lang: Lang }) {
             <b>{choices(s).join(" / ")}</b>
           </p>
           <p>{t("demandRule")}</p>
-          <p>{t("fixed")}</p>
         </>
       )}
+    </div>
+  );
+}
+export function Rules({ s, lang }: { s: Settings; lang: Lang }) {
+  const t = (k: Parameters<typeof label>[1]) => label(lang, k);
+  return (
+    <section className="ev-rules">
+      <h3>{t(s.mode)}</h3>
+      <PayoffRules s={s} lang={lang} />
+      {s.mode === "demand" && <p>{t("fixed")}</p>}
       <p>{t("random")}</p>
       <p>{t("missing")}</p>
       <p>{t("private")}</p>

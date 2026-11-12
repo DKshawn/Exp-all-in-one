@@ -80,6 +80,27 @@ for (const mode of ["coordination", "demand"] as const)
           page.getByRole("heading", { name: "Ready to start" }),
         ).toBeVisible();
         await page.getByRole("button", { name: "Confirm and start" }).click();
+        if (mode === "coordination") {
+          await page
+            .getByRole("button", { name: "Pause", exact: true })
+            .click();
+          await expect(
+            players[0].getByRole("heading", { name: "Paused" }),
+          ).toBeVisible();
+          await expect(players[0].getByRole("radio").first()).toBeDisabled();
+          await page.reload();
+          await page
+            .getByRole("button", { name: "Resume", exact: true })
+            .click();
+          await page.getByRole("button", { name: "Advance 30 s" }).click();
+          await page
+            .getByRole("dialog")
+            .getByRole("button", { name: "Advance 30 s" })
+            .click();
+          await expect(page.getByRole("timer")).toHaveText(
+            /^(?:01:00|00:[0-5][0-9])$/,
+          );
+        }
         for (let n = 1; n <= (mode === "demand" ? 2 : 1); n++) {
           const [first, second] = players;
           await first.getByRole("radio").first().check();
@@ -160,34 +181,85 @@ for (const mode of ["coordination", "demand"] as const)
       }
     },
   );
-test("demo switches roles, preserves the shared controls and keeps practice local", async ({
-  page,
-}) => {
-  await page.goto("/evolution/demo");
-  await enterTeacherPage(page);
-  await expect(
-    page.getByRole("link", { name: "DEMOモードを終了" }),
-  ).toHaveAttribute("href", "/teacher?experiment=evolution");
-  await page.getByLabel("表示言語").selectOption("zh-CN");
-  await page.getByLabel("博弈模式").selectOption("demand");
-  await page.getByLabel("演示人数").fill("3");
-  await fit(page);
-  await page.getByRole("button", { name: "创建演示" }).click();
-  await page.getByRole("button", { name: "截止入室" }).click();
-  await page.getByRole("button", { name: "确认并开始" }).click();
-  let byes = 0;
-  for (const id of ["1", "2", "3"]) {
-    await page.getByLabel("演示视角").selectOption(id);
-    if (await page.getByRole("heading", { name: "本轮轮空" }).count()) byes++;
-    else {
+
+for (const mode of ["coordination", "demand"] as const)
+  test(
+    mode +
+      " demo has automatic opponents, shared admission and a compact history",
+    async ({ page }, info) => {
+      await page.goto("/evolution/demo");
+      await enterTeacherPage(page);
+      await page.getByLabel("表示言語").selectOption("zh-CN");
+      await page.getByLabel("博弈模式").selectOption(mode);
+      await page.getByLabel("演示人数").fill("8");
+      await page.getByLabel("作答时限（秒）").fill("15");
+      await page.getByLabel("反馈时间（秒）").fill("8");
+      await page.getByLabel("轮数", { exact: true }).fill("25");
+      if (mode === "demand") {
+        await page.getByRole("button", { name: "查看学生页面" }).click();
+        await expect(page.locator(".student-waiting-card")).toBeVisible();
+        await page.getByRole("button", { name: "查看教师页面" }).click();
+      } else await page.getByRole("button", { name: "创建演示" }).click();
+      await expect(page.getByText(/模拟参与者\s*7/)).toBeVisible();
+      await page.getByLabel("独立群体数").selectOption("2");
+      await page.getByRole("button", { name: "启动截止计时" }).click();
+      await page.getByRole("button", { name: "暂停截止计时" }).click();
+      await page.getByRole("button", { name: "继续截止计时" }).click();
+      await page.getByRole("button", { name: "重置截止计时" }).click();
+      await page.getByRole("button", { name: "截止入室", exact: true }).click();
+      await expect(page.locator(".ev-roster-seats span")).toHaveCount(8);
+      await page.getByRole("button", { name: "重新开放入室" }).click();
+      await page.getByRole("button", { name: "截止入室", exact: true }).click();
+      await page.getByRole("button", { name: "查看学生页面" }).click();
+      await expect(page.locator(".student-waiting-card")).toBeVisible();
+      await page.getByRole("button", { name: "查看教师页面" }).click();
+      await page.getByRole("button", { name: "确认并开始" }).click();
+      await page.getByRole("button", { name: "暂停", exact: true }).click();
+      const time = await page.getByRole("timer").innerText();
+      await page.getByRole("button", { name: "查看学生页面" }).click();
+      await expect(page.getByRole("timer")).toHaveText(time);
+      await expect(page.getByRole("radio").first()).toBeDisabled();
+      await page.getByRole("button", { name: "查看教师页面" }).click();
+      await page.getByRole("button", { name: "继续", exact: true }).click();
+      await page.getByRole("button", { name: "查看学生页面" }).click();
       await page.getByRole("radio").first().check();
       await page.getByRole("button", { name: "确认提交" }).click();
-    }
-  }
-  expect(byes).toBe(1);
-  await page.getByLabel("演示视角").selectOption("teacher");
-  await fit(page);
-  await expect(page.getByRole("heading", { name: "逐轮结果" })).toBeVisible();
-  await page.reload();
-  await expect(page.getByRole("button", { name: "创建演示" })).toBeVisible();
-});
+      await expect(page.getByRole("heading", { name: "已结算" })).toBeVisible();
+      await expect(page.locator(".ev-payoffs dd").nth(1)).not.toHaveText("—");
+      await expect(page.locator(".round-step.active")).toHaveText("1");
+      for (let i = 0; i < 10; i++)
+        await page.getByRole("button", { name: "快进 30 秒" }).click();
+      await fit(page);
+      await page.setViewportSize({ width: 320, height: 640 });
+      const history = page.getByRole("region", { name: "个人记录" });
+      expect(await history.locator("tbody tr").count()).toBeGreaterThan(10);
+      await page.evaluate(() => window.scrollTo(0, 0));
+      expect(
+        await history.evaluate(
+          (el) =>
+            el.scrollHeight > el.clientHeight &&
+            el.getBoundingClientRect().top + 65 < innerHeight,
+        ),
+      ).toBe(true);
+      await page.setViewportSize({ width: 390, height: 844 });
+      expect(
+        await history.evaluate(
+          (el) => el.getBoundingClientRect().top + 65 < innerHeight,
+        ),
+      ).toBe(true);
+      await page.screenshot({
+        path: info.outputPath(mode + "-mobile-history.png"),
+      });
+      await page.getByRole("button", { name: "查看教师页面" }).click();
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.screenshot({ path: info.outputPath(mode + "-toolbar.png") });
+      await page.getByRole("button", { name: "终止实验" }).click();
+      await page
+        .getByRole("dialog")
+        .getByRole("button", { name: "终止实验" })
+        .click();
+      await expect(
+        page.getByRole("heading", { name: "实验结束" }),
+      ).toBeVisible();
+    },
+  );
