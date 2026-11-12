@@ -6,6 +6,8 @@ Teachers can end the current experiment by confirming the red **実験を終了*
 
 In Stochastic Evolutionary Games, teachers and students each choose their own display language in the page header. Group count remains editable during admission. Close manually or start the 5–3600 second admission timer (default 60). Pause, resume or reset it as needed. When time expires, admission closes if every group can pair at least two people. Otherwise it stays open. Reopen before starting to admit more participants and draw a new allocation at the next cutoff. [Rules and data](evolution.md)
 
+In EMH and Stochastic Evolutionary Games, teachers and students see completed rounds in bright green. The current round has a double ring, orange in demos and purple in formal rooms.
+
 Student waiting screens use a consistent design. In EMH, a five-second preparation countdown appears in the center of the student screen after the teacher starts, before trading begins.
 
 [Teacher entry](https://exp-all-in-one.vercel.app/teacher) · [Student entry](https://exp-all-in-one.vercel.app)

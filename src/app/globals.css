@@ -19,6 +19,9 @@
   --accent-hover: var(--formal-accent-hover);
   --demo-yellow: #f4cb51;
   --demo-ink: #40300a;
+  --round-complete: #27f531;
+  --round-current: var(--formal-accent);
+  --round-current-ink: var(--paper);
   --lavender: #eeeefd;
   --buy: #15807e;
   --buy-bg: #eef8f6;
@@ -1221,6 +1224,8 @@ summary.disclosure-button {
   --line: #e9dfc5;
   --accent: #805c00;
   --accent-hover: #624500;
+  --round-current: #f5a623;
+  --round-current-ink: var(--demo-ink);
   --lavender: #fff2c7;
   --study-settings-highlight: #fff3cf;
   --study-settings-surface: #fffbf0;

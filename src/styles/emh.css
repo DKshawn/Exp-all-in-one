@@ -805,8 +805,18 @@
   color: var(--faint);
 }
 .emh-app .round-step > span {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 1px dashed var(--muted);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--muted);
   font-size: 10px;
-  width: 12px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 .emh-app .round-step > div {
   display: flex;
@@ -818,26 +828,26 @@
   flex: 1;
   font-size: 9px;
   font-style: normal;
+  line-height: 1;
   background: var(--line);
   border-radius: 3px;
   display: grid;
   place-items: center;
   min-width: 24px;
 }
-.emh-app .round-step i.done {
-  background: var(--success-bg);
-  color: var(--success);
-}
-.emh-app .round-step i.active {
-  background: var(--accent);
-  color: white;
-}
-.emh-app .round-step.active > span {
-  color: var(--accent);
-  font-weight: 700;
-}
+.emh-app .round-step i.done,
 .emh-app .round-step.done > span {
-  color: var(--success);
+  background: var(--round-complete);
+  color: var(--ink);
+  border: 1px solid var(--green);
+}
+.emh-app .round-step i.active,
+.emh-app .round-step.active > span {
+  background: var(--round-current);
+  color: var(--round-current-ink);
+  border: 2px solid var(--accent);
+  box-shadow: inset 0 0 0 1px var(--paper);
+  font-weight: 700;
 }
 .emh-app .session-bar {
   border: 1px solid var(--line);
@@ -1889,27 +1899,9 @@
   min-width: 0;
 }
 .emh-app .wide .exp2-rounds .round-step > span {
-  display: grid;
-  place-items: center;
   width: 26px;
   height: 26px;
-  border-radius: 50%;
-  background: var(--surface);
-  color: var(--muted);
-  border: 1px dashed var(--muted);
   font-size: 12px;
-  font-variant-numeric: tabular-nums;
-}
-.emh-app .wide .exp2-rounds .round-step.done > span {
-  background: var(--buy);
-  color: white;
-  border: 1px solid var(--buy);
-}
-.emh-app .wide .exp2-rounds .round-step.active > span {
-  background: var(--formal-accent);
-  color: white;
-  border: 2px solid var(--formal-accent);
-  box-shadow: inset 0 0 0 1px white;
 }
 .emh-app .wide .exp2-stats {
   grid-template-columns: repeat(3, minmax(0, 1fr));

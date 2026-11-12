@@ -47,7 +47,7 @@ Enter the teacher key once at the teacher entry. The same browser stays signed i
 
 EMH labels prices, dividends, trading balances and profits in yen.
 
-After the teacher starts EMH, a five-second countdown appears directly above the personal conditions panel in its trading-screen position, highlighted with an arrow and border; trading opens when it ends. The highlighted round indicator shares one compact area with the trading clocks.
+After the teacher starts EMH, a five-second countdown appears directly above the personal conditions panel in its trading-screen position, highlighted with an arrow and border; trading opens when it ends. The round strip beside the clock is shared with Stochastic Evolutionary Games. Completed rounds are bright green; the current round is orange in demos and purple in formal rooms.
 
 EMH Demo Model supports both experiments. Experiment 2 defaults to a 12-person market and uses separate practice dividends and states. Students see their state-contingent dividends and probabilities. In both experiments, students see buy and sell controls in separate columns, market prices, and personal records together; teachers can expand or collapse conditions during play. Open `/emh/demo/preview` to view the demo at different screen sizes.
 
