@@ -88,7 +88,7 @@ Double Auction 中尚未产生相应记录时，会提示暂无数据。保存�
 
 ## 上课前试用
 
-从教师实验选择页的 **Demo Model** 打开统一列表并选择实验；直接打开下方链接同样需要教师登录。演示入口分别是 [Double Auction](https://exp-all-in-one.vercel.app/demo)、[EMH](https://exp-all-in-one.vercel.app/emh/demo) 和 [Judgement under Uncertainty](https://exp-all-in-one.vercel.app/judgment/demo)。Judgement 演示需先选择任务，不保存回答，计时限制暂停。更多操作见 [Demo Model 使用说明](demo.md)。
+从教师实验选择页的 **Demo Model** 打开统一列表并选择实验，页眉以无描边的金黄色文字标示演示模式。直接打开下方链接同样需要教师登录。演示入口分别是 [Double Auction](https://exp-all-in-one.vercel.app/demo)、[EMH](https://exp-all-in-one.vercel.app/emh/demo) 和 [Judgement under Uncertainty](https://exp-all-in-one.vercel.app/judgment/demo)。Judgement 演示需先选择任务，不保存回答，计时限制暂停。更多操作见 [Demo Model 使用说明](demo.md)。
 
 旧地址 `doubleauction.vercel.app` 保留路径和查询参数跳转至新地址；如果之前使用旧地址参加，需在新地址重新进入一次。
 

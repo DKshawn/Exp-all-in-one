@@ -88,7 +88,7 @@ Double Auction で対象の記録がまだない場合は、その旨が画面�
 
 ## 授業の前に試す
 
-教員の実験選択画面の **Demo Model** から一覧を開き、実験を選べます。下記のURLを直接開く場合も同じ教員ログインが必要です。入口は [Double Auction](https://exp-all-in-one.vercel.app/demo)、[EMH](https://exp-all-in-one.vercel.app/emh/demo)、[Judgement under Uncertainty](https://exp-all-in-one.vercel.app/judgment/demo) です。Judgement のデモは課題を選んで開始し、回答は保存せず、制限時間を停止した状態で確認します。詳しくは [Demo Model の使い方](demo.md) を参照してください。
+教員の実験選択画面の **Demo Model** からデモ一覧を開き、実験を選べます。ヘッダーの目印は縁取りのない金色の「DEMOモード」です。下記のURLを直接開く場合も同じ教員ログインが必要です。入口は [Double Auction](https://exp-all-in-one.vercel.app/demo)、[EMH](https://exp-all-in-one.vercel.app/emh/demo)、[Judgement under Uncertainty](https://exp-all-in-one.vercel.app/judgment/demo) です。Judgement のデモは課題を選んで開始し、回答は保存せず、制限時間を停止した状態で確認します。詳しくは [Demo Model の使い方](demo.md) を参照してください。
 
 旧アドレス `doubleauction.vercel.app` はパスとクエリを保って新アドレスへ転送します。旧アドレスで参加していた場合は、新アドレスで一度再入室してください。
 

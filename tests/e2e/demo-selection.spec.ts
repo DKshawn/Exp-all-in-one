@@ -179,6 +179,7 @@ test("demo mode labels and entry colors are consistent across experiments", asyn
     await expect(badge).toHaveText(label);
     await expect(badge).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
     await expect(badge).toHaveCSS("color", colors.background);
+    await expect(badge).toHaveCSS("-webkit-text-stroke-width", "0px");
   };
   await page.goto("/demo/select");
   await assertBadge("header .header-left .demo-header-tag", "DEMOモード");

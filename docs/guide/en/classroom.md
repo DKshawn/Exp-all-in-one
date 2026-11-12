@@ -88,7 +88,7 @@ To delete a room, click **このルームを削除** in its confirmation dialog.
 
 ## Try it before class
 
-Use **Demo Model** on the teacher experiment selection page to choose a demo from the shared list. Direct demo links use the same teacher login. The entries are [Double Auction](https://exp-all-in-one.vercel.app/demo), [EMH](https://exp-all-in-one.vercel.app/emh/demo), and [Judgement under Uncertainty](https://exp-all-in-one.vercel.app/judgment/demo). The Judgement demo starts after selecting tasks; answers are not saved and time limits are paused. See [Using Demo Model](demo.md) for details.
+Use **Demo Model** on the teacher experiment selection page to open the shared list, identified by the plain gold demo-mode label in the header. Direct demo links use the same teacher login. The entries are [Double Auction](https://exp-all-in-one.vercel.app/demo), [EMH](https://exp-all-in-one.vercel.app/emh/demo), and [Judgement under Uncertainty](https://exp-all-in-one.vercel.app/judgment/demo). The Judgement demo starts after selecting tasks; answers are not saved and time limits are paused. See [Using Demo Model](demo.md) for details.
 
 The old `doubleauction.vercel.app` address redirects to the new address while preserving the path and query. Anyone who previously joined through the old address needs to re-enter once at the new address.
 

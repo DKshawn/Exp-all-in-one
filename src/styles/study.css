@@ -761,12 +761,6 @@
   font-weight: 700;
   white-space: nowrap;
 }
-@media (forced-colors: none) {
-  .demo-header-tag {
-    -webkit-text-stroke: 1px var(--demo-ink);
-    paint-order: stroke fill;
-  }
-}
 .demo-caption .demo-count {
   padding: 3px 10px;
   font-size: 11px;
