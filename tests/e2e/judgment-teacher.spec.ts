@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { enterTeacherPage } from "./helpers/teacher-login";
+import { expectEndButton } from "./helpers/end-experiment";
 import type {
   StudentView,
   TeacherView,
@@ -86,8 +87,14 @@ test("Judgment task cards, translated details and demo controls stay usable acro
     .click();
   await expect(preview.locator(".student-progress")).toHaveText("1 / 86");
   await preview
-    .getByRole("button", { name: "Back to experiment settings", exact: true })
+    .getByRole("button", { name: "End experiment", exact: true })
     .click();
+  await page.keyboard.press("Escape");
+  await expect(preview.locator(".student-progress")).toHaveText("1 / 86");
+  await preview
+    .getByRole("button", { name: "End experiment", exact: true })
+    .click();
+  await page.getByRole("button", { name: "End run", exact: true }).click();
   await expect(
     page.locator(".judgment-study-option input:checked"),
   ).toHaveCount(14);
@@ -162,7 +169,7 @@ test("Judgment teacher workspace runs a lesson, locks settings, recovers and exp
 
     await page.getByRole("button", { name: "実施を開始", exact: true }).click();
     await expect(
-      page.getByRole("button", { name: "今回の実施を終了", exact: true }),
+      page.getByRole("button", { name: "実験を終了", exact: true }),
     ).toBeVisible();
     for (const input of await page
       .locator('.judgment-workspace input[type="checkbox"]')
@@ -189,7 +196,7 @@ test("Judgment teacher workspace runs a lesson, locks settings, recovers and exp
       .selectOption("en");
     await page.reload();
     await expect(
-      page.getByRole("button", { name: "End this run", exact: true }),
+      page.getByRole("button", { name: "End experiment", exact: true }),
     ).toBeVisible();
     await expect(
       page.locator(".judgment-study-option input:checked"),
@@ -245,23 +252,20 @@ test("Judgment teacher workspace runs a lesson, locks settings, recovers and exp
     expect(view.students[0].answered).toBe(view.students[0].totalTrials);
     expect(view.lesson!.settings.randomizeExperiments).toBe(true);
     expect(view.lesson!.settings.randomizeChoices).toBe(true);
+    await expectEndButton(page);
     await page.screenshot({
       path: info.outputPath("teacher-completed.png"),
       fullPage: true,
     });
-    await page
-      .getByRole("button", { name: "今回の実施を終了", exact: true })
-      .click();
+    await page.getByRole("button", { name: "実験を終了", exact: true }).click();
     await page
       .getByRole("dialog")
       .getByRole("button", { name: "戻る", exact: true })
       .click();
     await expect(
-      page.getByRole("button", { name: "今回の実施を終了", exact: true }),
+      page.getByRole("button", { name: "実験を終了", exact: true }),
     ).toBeVisible();
-    await page
-      .getByRole("button", { name: "今回の実施を終了", exact: true })
-      .click();
+    await page.getByRole("button", { name: "実験を終了", exact: true }).click();
     await page
       .getByRole("dialog")
       .getByRole("button", { name: "終了する", exact: true })
@@ -285,7 +289,7 @@ test("Judgment teacher workspace runs a lesson, locks settings, recovers and exp
       .getByRole("button", { name: "次の実施を開始", exact: true })
       .click();
     await expect(
-      page.getByRole("button", { name: "今回の実施を終了", exact: true }),
+      page.getByRole("button", { name: "実験を終了", exact: true }),
     ).toBeVisible();
     const next = (await (
       await page.request.get(`${base}/judgment?session=teacher`)

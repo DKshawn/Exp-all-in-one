@@ -117,6 +117,64 @@ async function classroom(
   return { teacher, students, get, command, act };
 }
 
+test("room finish is teacher-only, atomic across markets and idempotent across retries", async () => {
+  const c = await classroom(14, { ...DEFAULT_SETTINGS, rounds: 1 });
+  await c.command("assign");
+  await c.command("start");
+  for (const period of ["A", "B"]) {
+    const market = (await c.get(c.teacher.token, "teacher", 1)).state.market!;
+    assert.equal(market.period, period);
+    assert.equal(
+      (
+        await c.act(
+          c.teacher.token,
+          1,
+          { kind: "end-period", expectedPhase: market.phaseKey },
+          "teacher",
+        )
+      ).error,
+      undefined,
+    );
+  }
+  const earlier = (await c.get()).state.market!.results;
+  const paused = await c.command("pause-all");
+  const finish: RequestCommand = {
+    requestId: randomUUID(),
+    scope: "session",
+    command: { kind: "finish-all", expectedRevision: paused.state.revision },
+  };
+  assert.ok(commandSchema.safeParse(finish).success);
+  const denied = await emh.request(
+    c.teacher.code,
+    c.students[0].token,
+    "student",
+    undefined,
+    finish,
+  );
+  assert.equal(denied.error?.status, 403);
+  const send = () =>
+    emh.request(c.teacher.code, c.teacher.token, "teacher", 2, finish);
+  const ended = await send();
+  assert.equal(ended.error, undefined);
+  assert.equal(ended.state.status, "completed");
+  assert.deepEqual(
+    ended.state.markets.map((m) => [m.status, m.paused]),
+    [
+      ["completed", false],
+      ["completed", false],
+    ],
+  );
+  assert.deepEqual(
+    ended.state.market!.results.map((p) => [p.period, p.reason]),
+    [["A", "teacher-finish"]],
+  );
+  const retry = await send();
+  assert.equal(retry.error, undefined);
+  assert.equal(retry.state.revision, ended.state.revision);
+  assert.deepEqual(retry.state.market!.results, ended.state.market!.results);
+  assert.deepEqual((await c.get()).state.market!.results, earlier);
+});
+
 test("classroom starts all markets with one enforced countdown", async () => {
   const c = await classroom(14);
   await c.command("assign");

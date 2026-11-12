@@ -1,4 +1,5 @@
 import { signInTeacher } from "./helpers/teacher-login";
+import { expectEndButton } from "./helpers/end-experiment";
 import { expect, test, type Page } from "@playwright/test";
 
 test.beforeEach(async ({ page }) => {
@@ -867,6 +868,19 @@ test("EMH demo controls preserve the session while switching views, advancing an
   await expect(
     page.getByRole("listitem", { name: "第2ラウンド", exact: true }),
   ).toHaveAttribute("aria-current", "step");
+  await expect(
+    page.getByRole("button", { name: "実験を終了", exact: true }),
+  ).toHaveCount(0);
+  await panel.getByRole("button", { name: "教員画面を見る" }).click();
+  await (await expectEndButton(page)).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "終了する" })
+    .click();
+  await expect(
+    page.getByText("実験が終了しました。結果と記録を確認できます。"),
+  ).toBeVisible();
+  await panel.getByRole("button", { name: "学生画面を見る" }).click();
   await panel.getByRole("button", { name: "やり直す" }).click();
   await panel.getByRole("button", { name: "教員画面を見る" }).click();
   await expect(page.getByRole("heading", { name: "12人が入室" })).toBeVisible();

@@ -4,7 +4,7 @@
 
 面向课堂的统一实验平台，通过同一个入口开展 Double Auction、EMH、Judgement under Uncertainty 和随机演化博弈。界面默认使用日语。
 
-学生等待画面使用统一的卡片设计，并保留各实验的信息。
+学生等待画面使用统一的卡片设计，并保留各实验的信息。点击实验卡片即可进入。四个实验均可在教师端点击红色「结束实验」，确认后结束本次实验。
 
 [教师入口](https://exp-all-in-one.vercel.app/teacher) · [学生入口](https://exp-all-in-one.vercel.app)（教师入口使用独立地址）
 

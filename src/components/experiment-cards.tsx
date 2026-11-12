@@ -15,9 +15,6 @@ export function ExperimentCards({ mode }: { mode: "teacher" | "demo" }) {
           <h2>{experiment.title}</h2>
           <p>{experiment.description}</p>
           {"detail" in experiment && <span>{experiment.detail}</span>}
-          {mode === "demo" && (
-            <span className="button secondary small-button">デモを開く</span>
-          )}
         </Link>
       ))}
     </div>

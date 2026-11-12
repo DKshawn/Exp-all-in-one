@@ -4,7 +4,7 @@
 
 A classroom experiment platform for Double Auction, EMH, Judgement under Uncertainty and Stochastic Evolutionary Games. The interface opens in Japanese by default.
 
-Student waiting screens share a consistent card design while retaining experiment-specific information.
+Student waiting screens share a consistent card design while retaining experiment-specific information. Select an experiment by clicking its card. In all four experiments, teachers can end the current run with the red **End experiment** button and a confirmation.
 
 [Teacher entry](https://exp-all-in-one.vercel.app/teacher) · [Student entry](https://exp-all-in-one.vercel.app) (the teacher entry has a separate URL)
 

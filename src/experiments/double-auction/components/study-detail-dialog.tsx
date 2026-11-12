@@ -7,6 +7,7 @@ import { X } from "lucide-react";
 export function StudyDetailDialog({
   label,
   title = label,
+  closeLabel = "閉じる",
   children,
   triggerClassName = "text-button study-detail-trigger",
   disabled = false,
@@ -16,6 +17,7 @@ export function StudyDetailDialog({
 }: {
   label: string;
   title?: string;
+  closeLabel?: string;
   children: ReactNode;
   triggerClassName?: string;
   disabled?: boolean;
@@ -58,7 +60,7 @@ export function StudyDetailDialog({
             data-audit-button={`details.close:${title}`}
             onClick={() => dialog.current?.close()}
           >
-            <X size={16} /> 閉じる
+            <X size={16} /> {closeLabel}
           </button>
         </div>
         <div className="study-detail-content">{children}</div>

@@ -2,6 +2,8 @@
 
 [日本語](../ja/classroom.md) · [中文](../zh-CN/classroom.md) · [English](../en/classroom.md)
 
+Teachers can end the current experiment by confirming the red **実験を終了** button. In EMH and Double Auction this ends all markets in the room.
+
 In Stochastic Evolutionary Games, teachers and students each choose their own display language in the page header. Group count remains editable during admission. Close manually or start the 5–3600 second admission timer (default 60). Pause, resume or reset it as needed. When time expires, admission closes if every group can pair at least two people. Otherwise it stays open. Reopen before starting to admit more participants and draw a new allocation at the next cutoff. [Rules and data](evolution.md)
 
 Student waiting screens use a consistent design. In EMH, a five-second preparation countdown appears in the center of the student screen after the teacher starts, before trading begins.

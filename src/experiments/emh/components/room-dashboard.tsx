@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { RoundStrip, clockText as clock } from "@/components/round-strip";
 import { StudentWaitingCard } from "@/components/student-waiting-card";
+import { EmhEndExperiment } from "./end-experiment";
 import type { RoomView, TeacherAction } from "@/experiments/emh/types";
 import {
   ExportPanel,
@@ -84,8 +85,20 @@ export function RoomDashboard({
   const disabled = busy || !online || awaitingClock;
   const finalScore = room.results.some(
     (result) =>
-      result.year === room.year && (room.exp2 || result.period === "B"),
+      result.year === room.year &&
+      (room.exp2 ||
+        result.period === "B" ||
+        result.reason === "teacher-finish"),
   );
+  function periodClass(year: number, period: "A" | "B") {
+    if (room.results.some((r) => r.year === year && r.period === period))
+      return "done";
+    return room.status !== "completed" &&
+      room.year === year &&
+      room.period === period
+      ? "active"
+      : "";
+  }
   const lastPersonalTrade = room.trades.findLast(
     (trade) =>
       trade.year === room.year &&
@@ -282,7 +295,11 @@ export function RoomDashboard({
             <div className="session-overview">
               <RoundStrip
                 rounds={room.rounds}
-                current={room.year}
+                current={
+                  room.status === "completed"
+                    ? (room.results.at(-1)?.year ?? 0)
+                    : room.year
+                }
                 finished={room.status === "completed"}
                 label="ラウンドの進行"
                 roundLabel={(n) =>
@@ -293,34 +310,8 @@ export function RoomDashboard({
                   ? undefined
                   : (n) => (
                       <div>
-                        <i
-                          className={
-                            n < room.year ||
-                            (n === room.year &&
-                              (room.period === "B" ||
-                                room.status === "completed"))
-                              ? "done"
-                              : n === room.year
-                                ? "active"
-                                : ""
-                          }
-                        >
-                          A
-                        </i>
-                        <i
-                          className={
-                            n < room.year ||
-                            (n === room.year &&
-                              (room.status === "break" ||
-                                room.status === "completed"))
-                              ? "done"
-                              : n === room.year && room.period === "B"
-                                ? "active"
-                                : ""
-                          }
-                        >
-                          B
-                        </i>
+                        <i className={periodClass(n, "A")}>A</i>
+                        <i className={periodClass(n, "B")}>B</i>
                       </div>
                     )}
               </RoundStrip>
@@ -430,6 +421,17 @@ export function RoomDashboard({
                       >
                         期を終了
                       </button>
+                    )}
+                    {demo && (
+                      <EmhEndExperiment
+                        disabled={disabled}
+                        onFinish={async () => {
+                          await act({
+                            kind: "finish",
+                            expectedPhase: room.phaseKey,
+                          });
+                        }}
+                      />
                     )}
                   </div>
                 )}

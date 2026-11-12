@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { StudentWaitingCard } from "@/components/student-waiting-card";
+import { StudyDetailDialog } from "@/experiments/double-auction/components/study-detail-dialog";
 import Link from "next/link";
 import { label, displayChoices, type Key, type Lang } from "../locale";
 import type { Action } from "../engine";
@@ -342,6 +343,14 @@ export function Panels({ view: v, lang, busy, now, act, downloads }: Props) {
               {t("sec")}
             </strong>
           ) : null}
+          <StudyDetailDialog
+            label={t("rules")}
+            closeLabel={t("dismiss")}
+            className="ev-rules-dialog"
+            triggerClassName="button secondary small-button"
+          >
+            <Rules lang={lang} s={v.settings} />
+          </StudyDetailDialog>
         </StudentWaitingCard>
       ) : (
         mine && (
@@ -427,16 +436,6 @@ export function Panels({ view: v, lang, busy, now, act, downloads }: Props) {
           </>
         )
       )}
-      <details
-        key={waiting ? "lobby" : "live"}
-        className="panel ev-panel"
-        open={waiting}
-      >
-        <summary className="button secondary small-button">
-          {t("rules")}
-        </summary>
-        <Rules lang={lang} s={v.settings} />
-      </details>
     </main>
   );
 }

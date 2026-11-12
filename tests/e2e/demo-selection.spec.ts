@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { enterTeacherPage } from "./helpers/teacher-login";
+import { expectEndButton } from "./helpers/end-experiment";
 
 const demos = [
   {
@@ -18,7 +19,7 @@ const demos = [
     heading: "Judgement under Uncertainty",
   },
   {
-    title: "確率的進化ゲーム",
+    title: "Stochastic Evolutionary Games",
     url: /\/evolution\/demo$/,
     heading: "確率的進化ゲーム",
   },
@@ -86,7 +87,7 @@ test("demo brands return to the experiment selection from every view", async ({
 
 test("student home omits demo while the teacher hub links to the shared selection", async ({
   page,
-}) => {
+}, info) => {
   await page.goto("/");
   for (const width of [1440, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
@@ -106,14 +107,26 @@ test("student home omits demo while the teacher hub links to the shared selectio
   await expect(
     page.getByRole("heading", { name: "デモする実験を選ぶ" }),
   ).toBeVisible();
-  for (const width of [1440, 768, 390, 320]) {
+  for (const width of [1431, 768, 641, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
+    const titles = page.locator(".demo-experiment-grid h2");
+    await expect(titles).toHaveCount(4);
+    expect(
+      await titles.evaluateAll((els) =>
+        els.every((el) => el.scrollWidth <= el.clientWidth + 1),
+      ),
+    ).toBe(true);
+    if (width === 1431 || width === 320)
+      await page.screenshot({
+        path: info.outputPath(`demo-cards-${width}.png`),
+      });
   }
+  await expect(page.getByText("デモを開く", { exact: true })).toHaveCount(0);
   for (const demo of demos) {
     await page.getByRole("link", { name: new RegExp(demo.title) }).click();
     await expect(page).toHaveURL(demo.url);
@@ -216,7 +229,8 @@ test("demo mode labels and entry colors are consistent across experiments", asyn
     ".judgment-preview header .header-left .demo-header-tag",
     "DEMOモード",
   );
-  await page.getByRole("button", { name: "実験設定に戻る" }).click();
+  await (await expectEndButton(page)).click();
+  await page.getByRole("button", { name: "終了する", exact: true }).click();
   await page
     .getByRole("combobox", { name: "言語 / 语言 / Language" })
     .selectOption("en");
@@ -228,8 +242,9 @@ test("demo mode labels and entry colors are consistent across experiments", asyn
     "Demo mode",
   );
   await page
-    .getByRole("button", { name: "Back to experiment settings" })
+    .getByRole("button", { name: "End experiment", exact: true })
     .click();
+  await page.getByRole("button", { name: "End run", exact: true }).click();
   await page
     .getByRole("combobox", { name: "言語 / 语言 / Language" })
     .selectOption("zh");

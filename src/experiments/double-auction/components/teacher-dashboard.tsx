@@ -19,6 +19,7 @@ import { decimal } from "@/lib/client";
 import { equilibriumQuantity } from "@/experiments/double-auction/lib/equilibrium";
 import { PriceChart } from "./price-chart";
 import { ConfirmDialog } from "../../../components/confirm-dialog";
+import { EndExperimentButton } from "@/components/end-experiment-button";
 import { ExportDownloads } from "./export-downloads";
 import { MarketSettingsPanel } from "./market-settings";
 
@@ -110,13 +111,10 @@ export function TeacherDashboard({
             </button>
           )}
           {view.phase !== "finished" && (
-            <button
-              className="button danger"
+            <EndExperimentButton
               disabled={disabled}
               onClick={() => setConfirm("finish")}
-            >
-              実験を終了
-            </button>
+            />
           )}
         </div>
       </section>
@@ -376,6 +374,7 @@ export function TeacherDashboard({
       </details>
       {confirm && (
         <ConfirmDialog
+          danger={confirm === "finish"}
           title={
             confirm === "finish"
               ? "実験を終了しますか？"

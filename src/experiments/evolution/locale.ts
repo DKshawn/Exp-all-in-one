@@ -52,6 +52,7 @@ const messages = {
   side: ["側", "匹配侧", "Side"],
   round: ["ラウンド", "轮次", "Round"],
   rules: ["ルール", "规则", "Rules"],
+  dismiss: ["閉じる", "关闭", "Close"],
   code: ["ルームコード", "房间代码", "Room code"],
   random: [
     "各ラウンドで同じグループ内の相手を無作為に決めます。同じ相手と続けて組むこともあります。回答は確定後に変更できません。",
@@ -134,7 +135,7 @@ const messages = {
   skip: ["この回を締め切る", "提前结束本轮", "Close round early"],
   nextRound: ["次のラウンドへ", "进入下一轮", "Next round"],
   fast: ["30秒進める", "快进 30 秒", "Advance 30 s"],
-  end: ["実験を終了", "终止实验", "End experiment"],
+  end: ["実験を終了", "结束实验", "End experiment"],
   interrupted: ["教員が打ち切り", "教师提前结束", "Closed by teacher"],
   endPrompt: [
     "実験をここで終了します。確定済みの利得と提出済みの回答は保存されます。",

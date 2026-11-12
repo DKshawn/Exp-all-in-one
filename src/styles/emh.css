@@ -1895,10 +1895,21 @@
   height: 26px;
   border-radius: 50%;
   background: var(--surface);
-  border: 1px solid var(--line);
+  color: var(--muted);
+  border: 1px dashed var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.emh-app .wide .exp2-rounds .round-step.done > span {
+  background: var(--buy);
+  color: white;
+  border: 1px solid var(--buy);
 }
 .emh-app .wide .exp2-rounds .round-step.active > span {
-  border-color: var(--accent);
+  background: var(--formal-accent);
+  color: white;
+  border: 2px solid var(--formal-accent);
+  box-shadow: inset 0 0 0 1px white;
 }
 .emh-app .wide .exp2-stats {
   grid-template-columns: repeat(3, minmax(0, 1fr));

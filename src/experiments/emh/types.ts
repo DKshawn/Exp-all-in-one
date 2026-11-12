@@ -88,7 +88,7 @@ export interface PeriodResult {
   year: number;
   period: Period;
   endedAt: number;
-  reason: "deadline" | "inactivity" | "teacher";
+  reason: "deadline" | "inactivity" | "teacher" | "teacher-finish";
   payouts: Payout[];
   volume: number;
   meanPrice: number | null;
@@ -144,7 +144,14 @@ export type StudentAction =
   | { kind: "accept"; side: Side; quoteId: string; unitKey: string }
   | { kind: "cancel"; side: Side; quoteId: string; unitKey: string };
 export type TeacherAction = {
-  kind: "start" | "pause" | "resume" | "end-period" | "next-year" | "reveal";
+  kind:
+    | "start"
+    | "pause"
+    | "resume"
+    | "end-period"
+    | "next-year"
+    | "reveal"
+    | "finish";
   expectedPhase: string;
 };
 export type Action = StudentAction | TeacherAction;

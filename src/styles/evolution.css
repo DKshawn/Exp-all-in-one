@@ -57,6 +57,10 @@
   letter-spacing: 0.12em;
   color: var(--accent);
 }
+.ev .ev-rules-dialog {
+  width: min(640px, calc(100% - 32px));
+  text-align: start;
+}
 .ev-meta {
   border-top: 1px solid var(--line);
   padding-top: 12px;

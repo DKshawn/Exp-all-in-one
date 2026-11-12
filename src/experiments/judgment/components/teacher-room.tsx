@@ -8,6 +8,7 @@ import { JUDGMENT_NAME } from "../constants";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Header } from "@/components/shell";
+import { EndExperimentButton } from "@/components/end-experiment-button";
 import { api, ApiError, errorMessage } from "@/lib/client";
 import type {
   Language,
@@ -200,13 +201,11 @@ export function JudgmentTeacherRoom({
                     {t("学生画面をプレビュー")}
                   </button>
                   {running ? (
-                    <button
-                      className="button primary"
+                    <EndExperimentButton
+                      label={t("実験を終了")}
                       disabled={busy}
                       onClick={() => setEnding(true)}
-                    >
-                      {t("今回の実施を終了")}
-                    </button>
+                    />
                   ) : (
                     <button
                       className="button primary"
@@ -369,7 +368,7 @@ function EndDialog({
         <button className="button secondary" disabled={busy} onClick={onCancel}>
           {t("戻る")}
         </button>
-        <button className="button primary" disabled={busy} onClick={onConfirm}>
+        <button className="button danger" disabled={busy} onClick={onConfirm}>
           {t(busy ? "終了中…" : "終了する")}
         </button>
       </div>

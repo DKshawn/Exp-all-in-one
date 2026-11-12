@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { enterTeacherPage } from "./helpers/teacher-login";
+import { expectEndButton } from "./helpers/end-experiment";
 
 async function expectToolbarBelowHeader(page: Page) {
   const header = page.locator(".study-shell > header");
@@ -63,8 +64,21 @@ test("DA demo settings use the demo palette and toolbar follows the header", asy
   await expect(roster.locator(".study-roster-content")).toBeVisible();
   await closeRoster.click();
   await expect(roster.locator(".study-roster-content")).toBeHidden();
+  await expectEndButton(page);
   await page.getByRole("button", { name: "学生画面を見る" }).click();
   await expectToolbarBelowHeader(page);
+  await expect(
+    page.getByRole("button", { name: "実験を終了", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "教員画面を見る" }).click();
+  await page.getByRole("button", { name: "実験を終了", exact: true }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "終了する" })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "実験を終了", exact: true }),
+  ).toHaveCount(0);
 });
 
 test("DA size preview keeps the demo toolbar outside the simulated screen", async ({

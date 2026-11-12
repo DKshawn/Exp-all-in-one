@@ -34,6 +34,7 @@ export type SessionCommand = (
         | "start"
         | "pause-all"
         | "resume-all"
+        | "finish-all"
         | "reveal-all";
     }
   | { kind: "update-settings"; settings: EmhSettings }

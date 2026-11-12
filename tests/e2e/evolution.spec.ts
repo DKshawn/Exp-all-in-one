@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { enterTeacherPage } from "./helpers/teacher-login";
+import { expectEndButton } from "./helpers/end-experiment";
 
 async function fit(page: Page) {
   for (const width of [320, 390, 768, 1440]) {
@@ -30,7 +31,9 @@ for (const mode of ["coordination", "demand"] as const)
       await page.goto("/teacher");
       await enterTeacherPage(page);
       await fit(page);
-      await page.getByRole("link", { name: /確率的進化ゲーム/ }).click();
+      await page
+        .getByRole("link", { name: /Stochastic Evolutionary Games/ })
+        .click();
       await page.getByRole("banner").getByLabel("表示言語").selectOption("en");
       await expect(page.locator("form").getByLabel("Language")).toHaveCount(0);
       await page
@@ -77,12 +80,24 @@ for (const mode of ["coordination", "demand"] as const)
           await expect(language).toHaveValue("ja");
           await language.selectOption("en");
           await expect(p.getByText("Admission open").first()).toBeVisible();
+          await p.getByRole("button", { name: "Rules", exact: true }).click();
+          const rules = p.getByRole("dialog", { name: "Rules" });
+          await expect(
+            rules.getByRole("heading", {
+              name:
+                mode === "demand" ? "Nash demand game" : "Coordination game",
+            }),
+          ).toBeVisible();
+          await rules
+            .getByRole("button", { name: "Close", exact: true })
+            .click();
         }
         await page.getByRole("button", { name: "Close admission" }).click();
         await expect(
           page.getByRole("heading", { name: "Ready to start" }),
         ).toBeVisible();
         await page.getByRole("button", { name: "Confirm and start" }).click();
+        await expectEndButton(page, "End experiment");
         await expect(players[0].getByRole("radio").first()).toBeVisible();
         await expect(
           players[0].getByRole("button", { name: "Pause", exact: true }),
@@ -137,12 +152,6 @@ for (const mode of ["coordination", "demand"] as const)
           if (n === 1) {
             await fit(first);
             await first.setViewportSize({ width: 390, height: 844 });
-            if (mode === "coordination")
-              expect(
-                await first
-                  .locator(".ev-rules .ev-scroll")
-                  .evaluate((el) => el.scrollWidth <= el.clientWidth),
-              ).toBe(true);
             await first.screenshot({
               path: info.outputPath(mode + "-student.png"),
               fullPage: true,
@@ -228,8 +237,14 @@ for (const mode of ["coordination", "demand"] as const)
       await header.scrollIntoViewIfNeeded();
       await page.screenshot({ path: info.outputPath(mode + "-setup.png") });
       await page.getByRole("button", { name: "创建演示" }).click();
+      await expect(page.locator("main.ev-room > details")).toHaveCount(0);
+      if (mode === "coordination")
+        await page.screenshot({ path: info.outputPath("teacher-lobby.png") });
       await student.click();
       await expect(page.locator(".student-waiting-card")).toBeVisible();
+      await expect(page.locator("main.ev-room > details")).toHaveCount(0);
+      if (mode === "coordination")
+        await page.screenshot({ path: info.outputPath("student-lobby.png") });
       await expect(
         page.getByRole("heading", { name: "Review " + mode }),
       ).toBeVisible();
@@ -311,10 +326,10 @@ for (const mode of ["coordination", "demand"] as const)
       await page.getByRole("button", { name: "查看教师页面" }).click();
       await page.setViewportSize({ width: 1440, height: 900 });
       await page.screenshot({ path: info.outputPath(mode + "-toolbar.png") });
-      await page.getByRole("button", { name: "终止实验" }).click();
+      await (await expectEndButton(page, "结束实验")).click();
       await page
         .getByRole("dialog")
-        .getByRole("button", { name: "终止实验" })
+        .getByRole("button", { name: "结束实验" })
         .click();
       await expect(
         page.getByRole("heading", { name: "实验结束" }),

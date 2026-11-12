@@ -2,6 +2,8 @@
 
 [日本語](../ja/emh.md) · [中文](../zh-CN/emh.md) · [English](../en/emh.md)
 
+Confirm **実験を終了** in the teacher controls to end all markets, including paused markets. Each trading market cancels open orders and settles its current period at current holdings. The export records `teacher-finish`. If Experiment 1 ends in period A, the round includes A dividends and trading cash flow through the stop. Ending during the countdown or a break adds no period or payout.
+
 Student waiting screens share a consistent card design while retaining experiment-specific information.
 
 The [standalone AI student program](../../../ai-emh/README.en.md) accepts room links and hidden token input, adds `/v1` to local model server roots, and joins Experiment 2 with a configurable participant count and a local model or OpenAI. It never substitutes rule-based robots for missing model responses. The AI action log also records model request duration and reasons for skipped actions. The default output limit is 2048 tokens per model request. When an AI waits, the program monitors its student market view and requests a new decision after a market change.
@@ -59,7 +61,7 @@ Experiment 2 shows the student’s dividend per unit and public probability for 
 
 Students see all historical trade prices as numbers, without trend lines or counterpart identifiers, and can filter their own trades. Other participants' IDs and seat numbers are also removed from student API responses. Teachers retain full records, charts and exports. These rules apply to formal and demo screens in both experiments.
 
-Experiment 1 dividends occupy a private, student-specific area. The current round profit is trading cash flow plus dividends already received; unpaid dividends are excluded. Period A is provisional and the round profit becomes final at the end of B. Settlement rows explicitly distinguish provisional and final profits. Experiment 2 has one period and settles at round end. The realized state is highlighted on its card with an animation and an 実現 marker; the page scrolls to the card if it is outside the viewport, and reduced-motion settings suppress the animation.
+Experiment 1 dividends occupy a private, student-specific area. The current round profit is trading cash flow plus dividends already received; unpaid dividends are excluded. In a full round, period A is provisional and profit becomes final at the end of B. Settlement rows explicitly distinguish provisional and final profits. Experiment 2 has one period and settles at round end. The realized state is highlighted on its card with an animation and an 実現 marker; the page scrolls to the card if it is outside the viewport, and reduced-motion settings suppress the animation.
 
 Each trading interval can execute at most one unit. Separate timers show the interval and the whole period. An interval timeout starts the next interval; the configured consecutive no-trade limit or period deadline ends the period. Controls are disabled during server transitions, pauses and disconnections.
 

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { Pause, Play, SkipForward, Square } from "lucide-react";
+import { Pause, Play, SkipForward } from "lucide-react";
+import { EndExperimentButton } from "@/components/end-experiment-button";
 import { RoundStrip, clockText } from "@/components/round-strip";
 import { AdmissionTimer } from "@/components/admission-timer";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -117,14 +118,11 @@ export function SessionOverview({
                   <SkipForward size={16} />
                   {t(v.phase === "feedback" ? "nextRound" : "skip")}
                 </button>
-                <button
-                  className="button secondary danger-text"
+                <EndExperimentButton
+                  label={t("end")}
                   disabled={busy}
                   onClick={() => control("end")}
-                >
-                  <Square size={15} />
-                  {t("end")}
-                </button>
+                />
               </div>
             )}
           </div>
@@ -132,6 +130,7 @@ export function SessionOverview({
       </div>
       {confirm && (
         <ConfirmDialog
+          danger={confirm.kind === "end"}
           title={t(confirmLabel)}
           message={t(
             confirm.kind === "end"

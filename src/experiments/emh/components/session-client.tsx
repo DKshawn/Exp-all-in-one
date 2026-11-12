@@ -10,6 +10,7 @@ import type {
 } from "../session-types";
 import type { Action } from "../types";
 import { RoomDashboard } from "./room-dashboard";
+import { EmhEndExperiment } from "./end-experiment";
 import { SettingsFields } from "./settings-fields";
 import { SettingsSummary } from "./settings-summary";
 import { settingsSchema, type EmhSettings } from "../settings";
@@ -339,6 +340,21 @@ export function SessionClient({
                               ? "解説を公開済み"
                               : "全市場に解説を公開"}
                           </button>
+                          {state.status === "running" && (
+                            <EmhEndExperiment
+                              disabled={disabled}
+                              onFinish={async () => {
+                                await send({
+                                  scope: "session",
+                                  requestId: crypto.randomUUID(),
+                                  command: {
+                                    kind: "finish-all",
+                                    expectedRevision: state.revision,
+                                  },
+                                });
+                              }}
+                            />
+                          )}
                         </div>
                       </div>
                       <div

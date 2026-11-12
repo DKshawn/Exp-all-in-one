@@ -667,6 +667,10 @@ export function ResultsPanel({ room }: { room: RoomView }) {
           <tbody>
             {room.results.length ? (
               room.results.map((r) => {
+                const provisional =
+                  !room.exp2 &&
+                  r.period === "A" &&
+                  r.reason !== "teacher-finish";
                 const payout = r.payouts.find(
                   (p) => p.participantId === room.me?.id,
                 );
@@ -694,9 +698,9 @@ export function ResultsPanel({ room }: { room: RoomView }) {
                         <td className="emphasis">
                           {fmt(payout?.yearProfit)}
                           <span
-                            className={`score-status ${!room.exp2 && r.period === "A" ? "provisional" : "final"}`}
+                            className={`score-status ${provisional ? "provisional" : "final"}`}
                           >
-                            {!room.exp2 && r.period === "A" ? "暫定" : "確定"}
+                            {provisional ? "暫定" : "確定"}
                           </span>
                         </td>
                       </>

@@ -26,7 +26,7 @@ export const EXPERIMENT_CATALOG = [
   },
   {
     id: "evolution",
-    title: "確率的進化ゲーム",
+    title: "Stochastic Evolutionary Games",
     description: "各ラウンドで相手を組み替え、選択と利得の変化を観察する。",
     teacherHref: "/teacher?experiment=evolution",
     demoHref: "/evolution/demo",

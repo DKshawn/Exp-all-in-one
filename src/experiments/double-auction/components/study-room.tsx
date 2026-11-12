@@ -27,6 +27,7 @@ import {
 } from "./study-personal-trades";
 import { PriceChart } from "./price-chart";
 import { ConfirmDialog } from "../../../components/confirm-dialog";
+import { EndExperimentButton } from "@/components/end-experiment-button";
 import { StudySettingsEditor } from "./study-settings";
 import { StudyTimingEditor } from "./study-timing-settings";
 import { StudyProgramEditor } from "./study-program-settings";
@@ -983,17 +984,16 @@ function TeacherControls({
         )}
         {children}
         {view.phase !== "finished" && (
-          <button
-            className="button danger study-teacher-finish"
+          <EndExperimentButton
+            className="study-teacher-finish"
             disabled={disabled}
             onClick={() => setConfirm("finish")}
-          >
-            実験を終了
-          </button>
+          />
         )}
       </div>
       {confirm && (
         <ConfirmDialog
+          danger={confirm === "finish"}
           title={
             confirm === "finish"
               ? "実験を終了しますか？"

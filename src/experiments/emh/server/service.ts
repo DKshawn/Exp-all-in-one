@@ -373,14 +373,15 @@ export class EmhService {
                 input.command.expectedRevision === session.revision,
                 "名簿または進行が更新されました。確認してもう一度操作してください。",
               );
-              const kind = input.command.kind;
-              if (input.command.kind === "update-settings") {
+              const command = input.command;
+              const { kind } = command;
+              if (kind === "update-settings") {
                 check(
                   session.status === "open" && session.settingsLockedAt == null,
                   "割り当て確定後は条件を変更できません。開始前に割り当てを解除してください。",
                 );
                 if (session.experiment === "exp2") {
-                  const proposed = input.command.settings;
+                  const proposed = command.settings;
                   check(
                     proposed.rounds <= 6,
                     "実験2は1〜6ラウンドで設定してください。",
@@ -390,13 +391,13 @@ export class EmhService {
                 session.settings = settingsForExperiment(
                   session.experiment === "exp2"
                     ? {
-                        ...input.command.settings,
+                        ...command.settings,
                         exp2:
-                          input.command.settings.exp2 ??
+                          command.settings.exp2 ??
                           session.settings?.exp2 ??
                           structuredClone(FORMAL_EXP2_OPTIONS),
                       }
-                    : input.command.settings,
+                    : command.settings,
                   session.experiment === "exp2" ? "exp2" : "exp1",
                 );
               } else if (kind === "assign") {
@@ -507,14 +508,20 @@ export class EmhService {
                     markets.every((m) => m.state.status === "completed"),
                     "全市場の終了後に公開できます。",
                   );
-                const actionKind =
-                  kind === "pause-all"
-                    ? "pause"
-                    : kind === "resume-all"
-                      ? "resume"
-                      : kind === "reveal-all"
-                        ? "reveal"
-                        : "start";
+                if (kind === "finish-all")
+                  check(
+                    markets.some((m) => m.state.status !== "completed"),
+                    "全市場が終了しています。",
+                  );
+                const actionKind = (
+                  {
+                    "pause-all": "pause",
+                    "resume-all": "resume",
+                    "finish-all": "finish",
+                    "reveal-all": "reveal",
+                    start: "start",
+                  } as const
+                )[kind];
                 const next = structuredClone(markets);
                 // One room-wide draw keeps all markets on the same state each round.
                 if (actionKind === "start" && session.experiment === "exp2") {
@@ -532,6 +539,8 @@ export class EmhService {
                   }
                 }
                 for (const m of next) {
+                  if (actionKind === "finish" && m.state.status === "completed")
+                    continue;
                   if (
                     actionKind === "pause" &&
                     (m.state.status === "completed" ||
@@ -585,6 +594,10 @@ export class EmhService {
               check(
                 input.action.kind !== "start",
                 "ルーム全体から開始してください。",
+              );
+              check(
+                input.action.kind !== "finish",
+                "ルーム全体から終了してください。",
               );
               const next = structuredClone(market.state);
               act(next, actor, input.action, now, random);
