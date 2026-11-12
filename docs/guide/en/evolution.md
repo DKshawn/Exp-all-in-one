@@ -43,4 +43,4 @@ The teacher table shows one group over rounds. Choice shares count all submitted
 
 [Session 3-2, pp. 16–21](../../../material/Session3-2.pdf) introduces risk dominance and the Nash bargaining solution. The [KMR supplement, pp. 3–7 and 17–18](../../../material/Session3-2KMR補足.pdf) uses average payoffs, adaptation and rare mutations, with an illustrative population of 12 per side for the demand example. Here people observe a single private match per round. The experiment supplies neither best responses nor artificial mistakes. Risk-dominant coordination and equal division in the symmetric demand example are hypotheses to test. Custom parameters can change those predictions. Feedback, stable sides, attendance, timing, how to handle missing pairs and the analysis of convergence should be confirmed with the professor before data collection.
 
-[Classroom entry](classroom.md) · [Practice demo](demo.md) · [Local setup](development.md)
+[Classroom entry](classroom.md) · [Demo: create a room and switch views](demo.md) · [Local setup](development.md)

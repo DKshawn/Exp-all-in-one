@@ -207,8 +207,9 @@ for (const mode of ["coordination", "demand"] as const)
       const fast = bar.getByRole("button", { name: "快进 30 秒" });
       const form = page.locator("form.ev-setup");
       await expect(form.getByLabel("显示语言")).toHaveCount(0);
+      await expect(bar).toHaveCount(0);
       await expect(
-        form.getByRole("button", { name: "查看学生页面" }),
+        page.getByRole("button", { name: "查看学生页面" }),
       ).toHaveCount(0);
       await page.getByLabel("博弈模式").selectOption(mode);
       await page.getByLabel("演示人数").fill("8");
@@ -216,12 +217,6 @@ for (const mode of ["coordination", "demand"] as const)
       await page.getByLabel("反馈时间（秒）").fill("8");
       await page.getByLabel("轮数", { exact: true }).fill("25");
       await page.getByLabel("实验名称").fill("Review " + mode);
-      await student.click();
-      await expect(page.locator(".student-waiting-card")).toBeVisible();
-      await expect(
-        page.getByRole("heading", { name: "Review " + mode }),
-      ).toBeVisible();
-      await teacher.click();
       await header.getByLabel("显示语言").selectOption("en");
       await expect(
         form.getByRole("combobox", { name: "Game", exact: true }),
@@ -230,8 +225,15 @@ for (const mode of ["coordination", "demand"] as const)
       await expect(form.getByLabel("Room title")).toHaveValue("Review " + mode);
       await header.getByLabel("Language").selectOption("zh-CN");
       await fit(page);
+      await header.scrollIntoViewIfNeeded();
       await page.screenshot({ path: info.outputPath(mode + "-setup.png") });
       await page.getByRole("button", { name: "创建演示" }).click();
+      await student.click();
+      await expect(page.locator(".student-waiting-card")).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Review " + mode }),
+      ).toBeVisible();
+      await teacher.click();
       await expect(pause).toBeDisabled();
       await expect(fast).toBeDisabled();
       await expect(page.getByText(/模拟参与者\s*7/)).toBeVisible();
@@ -319,5 +321,8 @@ for (const mode of ["coordination", "demand"] as const)
       ).toBeVisible();
       await expect(pause).toBeDisabled();
       await expect(fast).toBeDisabled();
+      await bar.getByRole("button", { name: "返回配置" }).click();
+      await expect(form.getByLabel("博弈模式")).toHaveValue(mode);
+      await expect(bar).toHaveCount(0);
     },
   );

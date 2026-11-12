@@ -31,16 +31,14 @@ function DemoToolbar({
   lang,
   teacher,
   onSwitch,
-  canSwitch = true,
   bots,
   children,
 }: {
   lang: Lang;
   teacher: boolean;
   onSwitch: () => void;
-  canSwitch?: boolean;
-  bots?: number;
-  children?: ReactNode;
+  bots: number;
+  children: ReactNode;
 }) {
   return (
     <section
@@ -53,22 +51,15 @@ function DemoToolbar({
           <span className={`role-tag ${teacher ? "teacher" : "student"}`}>
             {label(lang, teacher ? "teacher" : "student")}
           </span>
-          <button
-            type="button"
-            className="button secondary"
-            disabled={!canSwitch}
-            onClick={onSwitch}
-          >
+          <button type="button" className="button secondary" onClick={onSwitch}>
             {teacher ? <UserRound size={16} /> : <GraduationCap size={16} />}
             {label(lang, teacher ? "toStudent" : "toTeacher")}
           </button>
-          {bots !== undefined && (
-            <span>
-              {label(lang, "bots")} <b>{bots}</b>
-            </span>
-          )}
+          <span>
+            {label(lang, "bots")} <b>{bots}</b>
+          </span>
         </div>
-        {children && <div className="demo-actions">{children}</div>}
+        <div className="demo-actions">{children}</div>
       </div>
     </section>
   );
@@ -77,12 +68,9 @@ function DemoToolbar({
 export function EvolutionDemo() {
   const lang = useLanguage();
   const draft = useSetupDraft();
-  const [room, setRoom] = useState<{
-    demo: EvolutionPractice;
-    preview: boolean;
-  } | null>(null);
-  function open(title: string, s: Settings, n: number, preview = false) {
-    setRoom({ demo: new EvolutionPractice(title, s, n, Date.now()), preview });
+  const [room, setRoom] = useState<EvolutionPractice | null>(null);
+  function create(title: string, s: Settings, n: number) {
+    setRoom(new EvolutionPractice(title, s, n, Date.now()));
   }
   return (
     <div className="demo-theme">
@@ -94,27 +82,11 @@ export function EvolutionDemo() {
         <EvolutionLanguage />
       </Header>
       {room ? (
-        <DemoRoom {...room} lang={lang} onSetup={() => setRoom(null)} />
+        <DemoRoom demo={room} lang={lang} onSetup={() => setRoom(null)} />
       ) : (
-        <>
-          <DemoToolbar
-            lang={lang}
-            teacher
-            canSwitch={draft.validDemo}
-            onSwitch={() => {
-              if (draft.parsed.success && draft.validDemo)
-                open(
-                  draft.title.trim() || label(lang, "title"),
-                  draft.parsed.data,
-                  draft.n,
-                  true,
-                );
-            }}
-          />
-          <main className="teacher-hub-main">
-            <SetupForm draft={draft} onDemo={open} />
-          </main>
-        </>
+        <main className="teacher-hub-main">
+          <SetupForm draft={draft} onDemo={create} />
+        </main>
       )}
     </div>
   );
@@ -122,23 +94,21 @@ export function EvolutionDemo() {
 
 function DemoRoom({
   demo,
-  preview,
   lang,
   onSetup,
 }: {
   demo: EvolutionPractice;
-  preview: boolean;
   lang: Lang;
   onSetup: () => void;
 }) {
-  const [teacher, setTeacher] = useState(!preview),
+  const [teacher, setTeacher] = useState(true),
     [{ now }, setClock] = useState({ now: demo.createdAt }),
     [err, setError] = useState("");
   const refresh = () => setClock({ now: demo.time(Date.now()) });
   const finished = demo.game.phase === "finished";
   const paused = demo.game.pausedAt != null;
   useEffect(() => {
-    if (preview || finished || paused) return;
+    if (finished || paused) return;
     const timer = setInterval(() => {
       const at = demo.time(Date.now());
       demo.advanceTo(at);
@@ -153,7 +123,7 @@ function DemoRoom({
       setClock({ now: at });
     }, 250);
     return () => clearInterval(timer);
-  }, [demo, teacher, finished, paused, preview]);
+  }, [demo, teacher, finished, paused]);
   function act(a: PracticeAction) {
     try {
       demo.act(a, Date.now());
@@ -216,36 +186,32 @@ function DemoRoom({
       <DemoToolbar
         lang={lang}
         teacher={teacher}
-        onSwitch={preview ? onSetup : () => setTeacher(!teacher)}
-        bots={preview ? undefined : demo.game.seats.length - 1}
+        onSwitch={() => setTeacher(!teacher)}
+        bots={demo.game.seats.length - 1}
       >
-        {!preview && (
-          <>
-            <button
-              className="button primary"
-              disabled={!active}
-              onClick={() => act({ kind: "playback", paused: !paused })}
-            >
-              {paused ? <Play size={16} /> : <Pause size={16} />}
-              {label(lang, paused ? "resume" : "pause")}
-            </button>
-            <button
-              className="button secondary"
-              disabled={!active || paused}
-              onClick={() => {
-                demo.fastForward(Date.now());
-                refresh();
-              }}
-            >
-              <SkipForward size={16} />
-              {label(lang, "fast")}
-            </button>
-            <button className="button secondary" onClick={onSetup}>
-              <RotateCcw size={16} />
-              {label(lang, "reset")}
-            </button>
-          </>
-        )}
+        <button
+          className="button primary"
+          disabled={!active}
+          onClick={() => act({ kind: "playback", paused: !paused })}
+        >
+          {paused ? <Play size={16} /> : <Pause size={16} />}
+          {label(lang, paused ? "resume" : "pause")}
+        </button>
+        <button
+          className="button secondary"
+          disabled={!active || paused}
+          onClick={() => {
+            demo.fastForward(Date.now());
+            refresh();
+          }}
+        >
+          <SkipForward size={16} />
+          {label(lang, "fast")}
+        </button>
+        <button className="button secondary" onClick={onSetup}>
+          <RotateCcw size={16} />
+          {label(lang, "reset")}
+        </button>
       </DemoToolbar>
       {err && (
         <p role="alert" className="error-message">
