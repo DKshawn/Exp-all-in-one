@@ -178,7 +178,7 @@ test("demo mode labels and entry colors are consistent across experiments", asyn
     const badge = page.locator(selector);
     await expect(badge).toHaveText(label);
     await expect(badge).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
-    await expect(badge).toHaveCSS("color", "rgb(128, 92, 0)");
+    await expect(badge).toHaveCSS("color", colors.background);
   };
   await page.goto("/demo/select");
   await assertBadge("header .header-left .demo-header-tag", "DEMOモード");
@@ -190,9 +190,11 @@ test("demo mode labels and entry colors are consistent across experiments", asyn
     "rgb(84, 86, 199)",
   );
   expect(formalAccent).toBe("#5456c7");
+  expect(colors.background).toBe("rgb(244, 203, 81)");
   for (const [path, create, teacherHref] of [
     ["/demo", "ルーム作成", "/teacher?experiment=institutions"],
     ["/emh/demo", "デモルームを作成", "/teacher?experiment=emh"],
+    ["/evolution/demo", "デモルームを作成", "/teacher?experiment=evolution"],
   ]) {
     await page.goto(path);
     await assertBadge("header .header-left .demo-header-tag", "DEMOモード");
@@ -228,6 +230,10 @@ test("demo mode labels and entry colors are consistent across experiments", asyn
   await assertBadge(
     ".judgment-preview header .header-left .demo-header-tag",
     "DEMOモード",
+  );
+  await expect(page.locator(".judgment-preview .student-progress")).toHaveCSS(
+    "background-color",
+    colors.background,
   );
   await (await expectEndButton(page)).click();
   await page.getByRole("button", { name: "終了する", exact: true }).click();

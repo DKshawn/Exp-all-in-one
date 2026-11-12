@@ -223,6 +223,10 @@ test("Exp2 demo runs the default 12-person market with practice information", as
   const roundIndicators = await page
     .locator(".exp2-rounds .round-step > span")
     .all();
+  await expect(roundIndicators[0]!).toHaveCSS(
+    "background-color",
+    "rgb(244, 203, 81)",
+  );
   const firstRound = await roundIndicators[0]!.boundingBox();
   const secondRound = await roundIndicators[1]!.boundingBox();
   expect(
@@ -487,6 +491,10 @@ test("Exp1 student demo shows the trading board, prices and records together", a
       .getByRole("listitem", { name: "第1ラウンド、A期" }),
   ).toHaveAttribute("aria-current", "step");
   await expect(page.locator(".round-step.active i.active")).toHaveText("A");
+  await expect(page.locator(".round-step.active i.active")).toHaveCSS(
+    "background-color",
+    "rgb(244, 203, 81)",
+  );
   await expect(page.locator(".session-phase")).not.toContainText("第1ラウンド");
   await expect(page.locator(".emh-conditions")).not.toContainText("見込利益");
   for (const name of ["注文板", "取引記録", "配当・損益の記録"]) {

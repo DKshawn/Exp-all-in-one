@@ -8,6 +8,18 @@ import {
 } from "./study-config";
 import type { RoomConfig, Phase } from "./types";
 
+export function isCurrentStudyPeriod(
+  phase: Phase,
+  market: Pick<StudyMarketView, "round" | "stage">,
+) {
+  return (
+    market.round > 0 &&
+    (phase === "running" || phase === "paused") &&
+    market.stage !== "waiting" &&
+    market.stage !== "done"
+  );
+}
+
 export function studyRemainingMs(
   phase: Phase,
   market: Pick<StudyMarketView, "deadline" | "remainingMs">,

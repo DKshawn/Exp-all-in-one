@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { decimal } from "@/lib/client";
 import { INSTITUTIONS } from "@/experiments/double-auction/lib/study-rules";
+import { isCurrentStudyPeriod } from "@/experiments/double-auction/lib/study-timing";
 import type { StudyView } from "@/experiments/double-auction/lib/study-types";
 import type {
   RoomConfig,
@@ -182,7 +183,15 @@ export function StudyMarketOverview({
                   <td>{INSTITUTIONS[institution].short}</td>
                   <td>
                     <span className="study-market-progress">
-                      <span>{market.round ? `第${market.round}期` : "—"}</span>
+                      <span
+                        aria-current={
+                          isCurrentStudyPeriod(phase, market)
+                            ? "step"
+                            : undefined
+                        }
+                      >
+                        {market.round ? `第${market.round}期` : "—"}
+                      </span>
                       <span
                         className="study-market-timer"
                         aria-label={`市場${market.id}・${status}・残り時間 ${time}`}

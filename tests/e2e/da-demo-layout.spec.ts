@@ -65,8 +65,15 @@ test("DA demo settings use the demo palette and toolbar follows the header", asy
   await closeRoster.click();
   await expect(roster.locator(".study-roster-content")).toBeHidden();
   await expectEndButton(page);
+  await expect(
+    page.locator('.study-market-progress [aria-current="step"]').first(),
+  ).toHaveCSS("background-color", "rgb(244, 203, 81)");
   await page.getByRole("button", { name: "学生画面を見る" }).click();
   await expectToolbarBelowHeader(page);
+  await expect(page.locator('.round-display [aria-current="step"]')).toHaveCSS(
+    "background-color",
+    "rgb(244, 203, 81)",
+  );
   await expect(
     page.getByRole("button", { name: "実験を終了", exact: true }),
   ).toHaveCount(0);

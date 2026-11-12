@@ -1224,7 +1224,7 @@ summary.disclosure-button {
   --line: #e9dfc5;
   --accent: #805c00;
   --accent-hover: #624500;
-  --round-current: #f5a623;
+  --round-current: var(--demo-yellow);
   --round-current-ink: var(--demo-ink);
   --lavender: #fff2c7;
   --study-settings-highlight: #fff3cf;
@@ -1239,6 +1239,15 @@ summary.disclosure-button {
   --accent-ink: #6d5000;
   --focus: #d5a72d;
   --surface-hover: #fff8e8;
+}
+.demo-theme .round-display [aria-current="step"],
+.demo-theme .study-market-progress [aria-current="step"],
+.demo-theme .judgment-preview .student-progress {
+  background: var(--round-current);
+  color: var(--round-current-ink);
+  border-radius: 0.35em;
+  padding-inline: 0.32em;
+  white-space: nowrap;
 }
 .demo-theme .brand-mark,
 .demo-theme .emh-app .brand-mark,

@@ -271,6 +271,12 @@ for (const mode of ["coordination", "demand"] as const)
       await pause.click();
       const time = await page.getByRole("timer").innerText();
       await student.click();
+      const resumeColor = await resume.evaluate(
+        (button) => getComputedStyle(button).backgroundColor,
+      );
+      await expect(
+        page.locator('.round-strip [aria-current="step"] > span'),
+      ).toHaveCSS("background-color", resumeColor);
       await page.clock.fastForward(60_000);
       await expect(page.getByRole("timer")).toHaveText(time);
       await expect(page.getByRole("radio").first()).toBeDisabled();

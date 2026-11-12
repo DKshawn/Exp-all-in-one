@@ -36,6 +36,7 @@ import {
   studyUnitProfit,
 } from "@/experiments/double-auction/lib/study-commission";
 import {
+  isCurrentStudyPeriod,
   studyTiming,
   studyCountdownLabel,
   studyRemainingMs,
@@ -463,8 +464,17 @@ export function StudyRoom({
               <div>
                 <span className="phase-label">{stageLabel}</span>
                 <strong>
-                  第 <b>{market.round || "—"}</b> 期{" "}
-                  <small>/ {view.config.rounds}</small>
+                  第{" "}
+                  <b
+                    aria-current={
+                      isCurrentStudyPeriod(view.phase, market)
+                        ? "step"
+                        : undefined
+                    }
+                  >
+                    {market.round || "—"}
+                  </b>{" "}
+                  期 <small>/ {view.config.rounds}</small>
                 </strong>
               </div>
               <span className="vertical-line" />

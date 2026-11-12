@@ -2,7 +2,7 @@
 
 [日本語](../ja/judgment.md) · [中文](../zh-CN/judgment.md) · [English](../en/judgment.md)
 
-In the demo, confirming **End experiment** returns you to task selection with your choices preserved.
+The demo highlights the current item number in gold. Confirming **End experiment** in the demo returns you to task selection with your choices preserved.
 
 Student waiting screens share a consistent card design while retaining experiment-specific information.
 
