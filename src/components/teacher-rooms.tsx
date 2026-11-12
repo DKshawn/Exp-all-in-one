@@ -214,7 +214,7 @@ export function TeacherRooms({
                     <span>作成 {dateFormat.format(room.createdAt)}</span>
                     <span>
                       {room.experiment !== "judgment" &&
-                        `${room.marketCount}市場 · `}
+                        `${room.marketCount}${room.experiment === "evolution" ? "グループ" : "市場"} · `}
                       参加者 {room.participantCount}
                       {!room.flexibleAdmission && `/${room.capacity}`}人
                     </span>
@@ -224,13 +224,18 @@ export function TeacherRooms({
                       ) : (
                         <>
                           第{room.round}/{room.totalRounds}
-                          {room.experiment === "emh" ? "ラウンド" : "期"}
+                          {room.experiment === "emh" ||
+                          room.experiment === "evolution"
+                            ? "ラウンド"
+                            : "期"}
                         </>
                       )}
                     </span>
                   </div>
                   <div className="teacher-room-institutions">
-                    {room.experiment === "judgment" ? (
+                    {room.experiment === "evolution" ? (
+                      <span>確率的進化ゲーム</span>
+                    ) : room.experiment === "judgment" ? (
                       <span>{JUDGMENT_NAME}</span>
                     ) : room.experiment === "emh" ? (
                       <span>EMH · 資産市場実験</span>

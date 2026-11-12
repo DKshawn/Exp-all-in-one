@@ -1,6 +1,6 @@
 import { database, type Database, type Sql } from "./database";
 
-export type Experiment = "institutions" | "emh" | "judgment";
+export type Experiment = "institutions" | "emh" | "judgment" | "evolution";
 export async function claimCode(tx: Sql, code: string, experiment: Experiment) {
   const result = await tx.query(
     "INSERT INTO lab_room_registry (code, experiment) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING code",

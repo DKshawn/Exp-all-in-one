@@ -18,7 +18,7 @@
 }
 .experiment-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
   margin: 24px 0 40px;
 }
@@ -38,7 +38,8 @@
   background: var(--lavender);
 }
 .experiment-card h2 {
-  font-size: 24px;
+  font-size: clamp(16px, 2.5vw, 24px);
+  white-space: nowrap;
   color: var(--accent);
 }
 .experiment-card p {
@@ -178,6 +179,9 @@
   }
   .experiment-card {
     padding: 22px;
+  }
+  .experiment-card h2 {
+    font-size: clamp(15px, 4.6vw, 22px);
   }
   .demo-experiment-grid {
     gap: 12px;

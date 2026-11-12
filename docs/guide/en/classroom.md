@@ -2,6 +2,8 @@
 
 [日本語](../ja/classroom.md) · [中文](../zh-CN/classroom.md) · [English](../en/classroom.md)
 
+In Stochastic Evolutionary Games, close enrollment, review actual group sizes and confirm start. Participants can re-enter with the original nickname and PIN. [Rules and data](evolution.md)
+
 Student waiting screens use a consistent design. In EMH, a five-second preparation countdown appears in the center of the student screen after the teacher starts, before trading begins.
 
 [Teacher entry](https://exp-all-in-one.vercel.app/teacher) · [Student entry](https://exp-all-in-one.vercel.app)

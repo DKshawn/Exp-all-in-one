@@ -2,7 +2,7 @@
 
 [日本語](README.md) · [中文](README.zh-CN.md) · [English](README.en.md)
 
-面向课堂的统一实验平台，通过同一个入口开展 Double Auction、EMH 和 Judgement under Uncertainty。界面默认使用日语。
+面向课堂的统一实验平台，通过同一个入口开展 Double Auction、EMH、Judgement under Uncertainty 和随机演化博弈。界面默认使用日语。
 
 学生等待画面使用统一的卡片设计，并保留各实验的信息。
 
@@ -72,6 +72,7 @@ Judgement 教师页面和 Demo 共用任务卡片、已选列表和操作区，�
 | Double Auction              | 比较 CDA、Call Market、Posted Offer 三种制度，按实际人数分配市场与角色        | [流程与规则](docs/guide/zh-CN/double-auction.md) | [Demo Model](https://exp-all-in-one.vercel.app/demo)          |
 | EMH                         | 两种实验可设置轮数、每轮、单次交易和休息时间；实验2可设置人数、内部信息及分红 | [流程与规则](docs/guide/zh-CN/emh.md)            | [Demo Model](https://exp-all-in-one.vercel.app/emh/demo)      |
 | Judgement under Uncertainty | 14项判断与认知偏差任务，支持条件分配、任务与选项顺序、计时及日中英显示        | [流程与数据](docs/guide/zh-CN/judgment.md)       | [Demo Model](https://exp-all-in-one.vercel.app/judgment/demo) |
+| 随机演化博弈                | 协调或 Nash 需求博弈、匿名随机配对、逐群演化与原始数据导出                    | [规则与数据](docs/guide/zh-CN/evolution.md)      | `/evolution/demo`                                             |
 
 ## 开发与资料
 

@@ -2,6 +2,8 @@
 
 [日本語](../ja/development.md) · [中文](../zh-CN/development.md) · [English](../en/development.md)
 
+確率的進化ゲームは共通マイグレーターと4個の `evolution_` テーブルを使います。`npx tsx --test tests/evolution.test.ts` でエンジンとPGlite、`npx playwright test evolution.spec.ts` で2つの正式実験とデモを検証します。 [ルールとデータ](evolution.md)
+
 ## ローカル起動
 
 Codex の「Edit project」では Source folders に `C:\Users\dksha\Documents\project\Exp-all-in-one` だけを登録し、Make primary に設定します。旧 `EMH` と `Judgment_under_Uncertainty` は開発用に追加しません。以前のチャットには旧作業ディレクトリが残る場合があるため、コマンドの作業ディレクトリと `git rev-parse --show-toplevel` を確認してください。教員UIの旧ブランチは [移植元の記録](../../upstream/judgment/teacher-management-20261102/README.md) を参照し、変更は統合リポジトリだけで行います。

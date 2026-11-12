@@ -1,5 +1,6 @@
 import { DemoEntryLink } from "@/components/demo-entry-link";
 import { TeacherHub } from "@/components/teacher-hub";
+import { EvolutionSetup } from "@/experiments/evolution/components/setup";
 import { TeacherReentry } from "@/components/teacher-reentry";
 import { EmhCreateForm } from "@/experiments/emh/components/create-form";
 import { JudgmentCreateForm } from "@/experiments/judgment/components/create-form";
@@ -63,7 +64,9 @@ export default async function Teacher({
   }
   if (!code && !returnRoom && legacy !== "1" && experiment !== "institutions") {
     const selectedExperiment =
-      experiment === "emh" || experiment === "judgment";
+      experiment === "emh" ||
+      experiment === "judgment" ||
+      experiment === "evolution";
     return (
       <>
         <Header
@@ -87,7 +90,9 @@ export default async function Teacher({
             <div
               className={`teacher-hub-main teacher-entry-content${experiment === "judgment" ? " judgment-entry-content" : ""}`}
             >
-              {experiment === "judgment" ? (
+              {experiment === "evolution" ? (
+                <EvolutionSetup ready={status.ready} />
+              ) : experiment === "judgment" ? (
                 <JudgmentCreateForm status={status} studies={studies} />
               ) : (
                 <EmhCreateForm

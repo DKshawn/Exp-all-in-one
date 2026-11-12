@@ -17,6 +17,11 @@ const demos = [
     url: /\/judgment\/demo$/,
     heading: "Judgement under Uncertainty",
   },
+  {
+    title: "確率的進化ゲーム",
+    url: /\/evolution\/demo$/,
+    heading: "確率的進化ゲーム",
+  },
 ];
 
 test("demo brands return to the experiment selection from every view", async ({
@@ -36,7 +41,12 @@ test("demo brands return to the experiment selection from every view", async ({
   await expect(page.locator("header .brand")).toHaveAttribute("href", "/");
   await page.goto("/demo/select");
   await returnsToSelection();
-  for (const path of ["/demo", "/emh/demo", "/judgment/demo"]) {
+  for (const path of [
+    "/demo",
+    "/emh/demo",
+    "/judgment/demo",
+    "/evolution/demo",
+  ]) {
     await page.goto(path);
     await returnsToSelection();
   }
@@ -121,7 +131,7 @@ test("student home omits demo while the teacher hub links to the shared selectio
   await expect(
     page.getByRole("link", { name: "戻る", exact: true }),
   ).toHaveCount(0);
-  for (const experiment of ["institutions", "emh", "judgment"]) {
+  for (const experiment of ["institutions", "emh", "judgment", "evolution"]) {
     await page.goto(`/teacher?experiment=${experiment}`);
     await expect(
       page.getByRole("link", { name: "戻る", exact: true }),
@@ -240,6 +250,7 @@ test("demo exit uses the formal color and returns to teacher setup", async ({
     ["/demo", "/teacher?experiment=institutions"],
     ["/emh/demo", "/teacher?experiment=emh"],
     ["/judgment/demo", "/teacher?experiment=judgment"],
+    ["/evolution/demo", "/teacher?experiment=evolution"],
     ["/demo/preview", "/teacher?experiment=institutions"],
     ["/emh/demo/preview", "/teacher?experiment=emh"],
   ]) {

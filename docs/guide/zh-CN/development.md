@@ -2,6 +2,8 @@
 
 [日本語](../ja/development.md) · [中文](../zh-CN/development.md) · [English](../en/development.md)
 
+随机演化博弈使用平台迁移器及四张 `evolution_` 表。`npx tsx --test tests/evolution.test.ts` 检查引擎和 PGlite，`npx playwright test evolution.spec.ts` 验证两种正式实验和演示。 [规则与数据](evolution.md)
+
 ## 本地启动
 
 在 Codex 的 Edit project 中，Source folders 只保留 `C:\Users\dksha\Documents\project\Exp-all-in-one`，并设为 Make primary。不要再把旧 `EMH` 或 `Judgment_under_Uncertainty` 添加为开发目录。已有聊天可能仍记录旧工作目录，因此执行命令前核对工作目录和 `git rev-parse --show-toplevel`。旧教师页面分支的来源见[迁移记录](../../upstream/judgment/teacher-management-20261102/README.md)，后续只修改统一仓库。

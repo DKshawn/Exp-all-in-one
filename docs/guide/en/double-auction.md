@@ -135,4 +135,4 @@ Old three-good CDA rooms continue and support re-entry with their original rules
 
 ---
 
-[Home](../../../README.en.md) · [Classroom guide](classroom.md) · [Demo Model](demo.md) · [EMH asset market experiment](emh.md) · [Judgement under Uncertainty](judgment.md) · [Development, deployment and verification](development.md)
+[Home](../../../README.en.md) · [Classroom guide](classroom.md) · [Demo Model](demo.md) · [EMH asset market experiment](emh.md) · [Judgement under Uncertainty](judgment.md) · [Development, deployment and verification](development.md) · [Stochastic Evolutionary Games](evolution.md)

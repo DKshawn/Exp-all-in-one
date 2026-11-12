@@ -135,4 +135,4 @@ K、L均为至少1的整数，K+L不得超过一侧总单位数，d>0；生成�
 
 ---
 
-[首页](../../../README.zh-CN.md) · [课堂使用流程](classroom.md) · [Demo Model](demo.md) · [EMH 资产市场实验](emh.md) · [Judgement under Uncertainty](judgment.md) · [开发、部署与验证](development.md)
+[首页](../../../README.zh-CN.md) · [课堂使用流程](classroom.md) · [Demo Model](demo.md) · [EMH 资产市场实验](emh.md) · [Judgement under Uncertainty](judgment.md) · [开发、部署与验证](development.md) · [随机演化博弈](evolution.md)

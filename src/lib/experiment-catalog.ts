@@ -24,4 +24,11 @@ export const EXPERIMENT_CATALOG = [
     teacherHref: "/teacher?experiment=judgment",
     demoHref: "/judgment/demo",
   },
+  {
+    id: "evolution",
+    title: "確率的進化ゲーム",
+    description: "各ラウンドで相手を組み替え、選択と利得の変化を観察する。",
+    teacherHref: "/teacher?experiment=evolution",
+    demoHref: "/evolution/demo",
+  },
 ] as const;

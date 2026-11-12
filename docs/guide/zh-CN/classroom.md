@@ -2,6 +2,8 @@
 
 [日本語](../ja/classroom.md) · [中文](../zh-CN/classroom.md) · [English](../en/classroom.md)
 
+随机演化博弈先截止入室，检查各群体实际人数，再确认开始。参与者可用原昵称和 PIN 重新入室。 [规则与数据](evolution.md)
+
 学生等待画面采用统一设计。EMH 在教师开始后先在学生画面中央显示5秒准备倒计时，结束后才开始交易。
 
 [教师入口](https://exp-all-in-one.vercel.app/teacher) · [学生入口](https://exp-all-in-one.vercel.app)

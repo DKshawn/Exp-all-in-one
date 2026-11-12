@@ -125,4 +125,4 @@ CDA と EMH は「一覧」と「棒グラフ」を切り替えられる注文�
 
 ---
 
-[ホーム](../../../README.md) · [授業での使い方](classroom.md) · [Demo Model](demo.md) · [EMH 資産市場実験](emh.md) · [Judgement under Uncertainty](judgment.md) · [開発・デプロイ・検証](development.md)
+[ホーム](../../../README.md) · [授業での使い方](classroom.md) · [Demo Model](demo.md) · [EMH 資産市場実験](emh.md) · [Judgement under Uncertainty](judgment.md) · [開発・デプロイ・検証](development.md) · [確率的進化ゲーム](evolution.md)

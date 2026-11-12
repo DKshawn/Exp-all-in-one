@@ -2,6 +2,8 @@
 
 [日本語](../ja/development.md) · [中文](../zh-CN/development.md) · [English](../en/development.md)
 
+Stochastic games use the shared migrator and four `evolution_` tables. Run `npx tsx --test tests/evolution.test.ts` for engine and PGlite checks, and `npx playwright test evolution.spec.ts` for both classroom flows and the demo. [Rules and data](evolution.md)
+
 ## Local setup
 
 In Codex **Edit project**, keep only `C:\Users\dksha\Documents\project\Exp-all-in-one` under **Source folders** and choose **Make primary**. Do not attach the old `EMH` or `Judgment_under_Uncertainty` copies for development. Existing chats may retain their recorded working directory, so verify the command directory and `git rev-parse --show-toplevel` before work. The old teacher branch is documented in the [port record](../../upstream/judgment/teacher-management-20261102/README.md); make subsequent changes only in the unified repository.

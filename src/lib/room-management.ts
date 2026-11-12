@@ -2,7 +2,7 @@ import type { Phase } from "../experiments/double-auction/lib/types";
 import type { Institution } from "../experiments/double-auction/lib/study-types";
 
 export type RoomSummary = {
-  experiment?: "institutions" | "emh" | "judgment";
+  experiment?: import("./server/experiment-registry").Experiment;
   code: string;
   title: string;
   createdAt: number;

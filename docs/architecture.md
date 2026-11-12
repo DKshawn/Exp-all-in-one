@@ -24,6 +24,13 @@ migrator applies them in one transaction under an advisory lock. Existing auctio
 tables and persisted room formats are retained. Local development uses PGlite
 unless a loopback PostgreSQL URL is supplied.
 
+Stochastic Evolutionary Games lives in `src/experiments/evolution`. Its
+`evolution_` tables keep room state, credentials and presence, login attempts,
+and completed rounds. The room lock serializes cutoff, matching, decisions and
+deadline transitions across server instances. Role-specific projections exclude
+other seats from student responses. The practice demo runs the same engine in
+browser memory. See the [protocol and export guide](guide/en/evolution.md).
+
 ## Checks
 
 ```sh
