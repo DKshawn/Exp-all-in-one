@@ -23,6 +23,32 @@ import {
 import { personal, summaries } from "../src/experiments/evolution/views";
 import { rawRows } from "../src/experiments/evolution/views";
 import { responsesCsv } from "../src/experiments/evolution/export";
+import { EvolutionPractice } from "../src/experiments/evolution/practice";
+
+test("demo playback can pause across a phase boundary and resume the remaining feedback time", () => {
+  const demo = new EvolutionPractice(
+    "Review",
+    { ...defaults("demand"), rounds: 2, seconds: 5, feedbackSeconds: 3 },
+    2,
+    0,
+  );
+  demo.act({ kind: "close" }, 0);
+  demo.act({ kind: "start" }, 1000);
+  // The last UI tick still showed decisions. Pausing after their deadline holds feedback.
+  demo.act({ kind: "playback", paused: true }, 6500);
+  assert.equal(demo.game.phase, "feedback");
+  const result = personal(demo.game.round!, demo.human);
+  demo.fastForward(66500);
+  demo.advanceTo(demo.time(66500));
+  assert.equal(demo.time(66500), 66500);
+  assert.deepEqual(personal(demo.game.round!, demo.human), result);
+  demo.act({ kind: "playback", paused: false }, 66500);
+  assert.equal(phaseDeadline(demo.game), 69000);
+  demo.advanceTo(68999);
+  assert.equal(demo.game.phase, "feedback");
+  demo.advanceTo(69000);
+  assert.equal(demo.game.round?.number, 2);
+});
 
 test("both payoff models, orientation and exact input boundaries", () => {
   const c = defaults("coordination");

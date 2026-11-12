@@ -1,6 +1,7 @@
 import { DemoEntryLink } from "@/components/demo-entry-link";
 import { TeacherHub } from "@/components/teacher-hub";
 import { EvolutionSetup } from "@/experiments/evolution/components/setup";
+import { EvolutionLanguage } from "@/experiments/evolution/components/language";
 import { TeacherReentry } from "@/components/teacher-reentry";
 import { EmhCreateForm } from "@/experiments/emh/components/create-form";
 import { JudgmentCreateForm } from "@/experiments/judgment/components/create-form";
@@ -74,6 +75,7 @@ export default async function Teacher({
           leading={selectedExperiment ? <TeacherSelectionNav /> : undefined}
         >
           {!selectedExperiment && <DemoEntryLink />}
+          {experiment === "evolution" && <EvolutionLanguage />}
           <Link className="button secondary small-button" href="/">
             学生の入室画面
           </Link>

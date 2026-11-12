@@ -89,23 +89,25 @@ export function SessionOverview({
             )}
             {v.role === "teacher" && v.phase !== "finished" && (
               <div className="control-buttons">
-                <button
-                  className="button secondary"
-                  disabled={busy}
-                  onClick={() => control(paused ? "resume" : "pause")}
-                >
-                  {paused ? <Play size={16} /> : <Pause size={16} />}{" "}
-                  {t(paused ? "resume" : "pause")}
-                </button>
                 {v.code !== "DEMO" && (
-                  <button
-                    className="button secondary"
-                    disabled={busy || paused}
-                    onClick={() => control("shorten")}
-                  >
-                    <SkipForward size={16} />
-                    {t("fast")}
-                  </button>
+                  <>
+                    <button
+                      className="button secondary"
+                      disabled={busy}
+                      onClick={() => control(paused ? "resume" : "pause")}
+                    >
+                      {paused ? <Play size={16} /> : <Pause size={16} />}{" "}
+                      {t(paused ? "resume" : "pause")}
+                    </button>
+                    <button
+                      className="button secondary"
+                      disabled={busy || paused}
+                      onClick={() => control("shorten")}
+                    >
+                      <SkipForward size={16} />
+                      {t("fast")}
+                    </button>
+                  </>
                 )}
                 <button
                   className="button secondary"

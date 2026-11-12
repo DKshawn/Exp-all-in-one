@@ -1,40 +1,6 @@
 "use client";
-import { useSyncExternalStore } from "react";
 import { label, displayChoices, type Lang } from "../locale";
 import { choices, type Settings } from "../settings";
-const storageKey = "evolution-language";
-function subscribe(fn: () => void) {
-  window.addEventListener("storage", fn);
-  window.addEventListener(storageKey, fn);
-  return () => {
-    window.removeEventListener("storage", fn);
-    window.removeEventListener(storageKey, fn);
-  };
-}
-function language(): Lang {
-  const v = localStorage.getItem(storageKey);
-  return v === "en" || v === "zh-CN" ? v : "ja";
-}
-export function useLanguage() {
-  return useSyncExternalStore(subscribe, language, () => "ja" as Lang);
-}
-export function Language({ lang }: { lang: Lang }) {
-  return (
-    <select
-      className="ev-lang"
-      aria-label={label(lang, "language")}
-      value={lang}
-      onChange={(e) => {
-        localStorage.setItem(storageKey, e.target.value);
-        window.dispatchEvent(new Event(storageKey));
-      }}
-    >
-      <option value="ja">日本語</option>
-      <option value="zh-CN">中文</option>
-      <option value="en">English</option>
-    </select>
-  );
-}
 export function PayoffRules({ s, lang }: { s: Settings; lang: Lang }) {
   const t = (k: Parameters<typeof label>[1]) => label(lang, k),
     names = displayChoices(lang, s);

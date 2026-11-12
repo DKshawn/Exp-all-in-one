@@ -7,7 +7,7 @@ import type { Action } from "../engine";
 import type { View } from "../views";
 import { label } from "../locale";
 import { Panels } from "./panels";
-import { useLanguage } from "./rules";
+import { EvolutionLanguage, useLanguage } from "./language";
 export function EvolutionRoom({
   code,
   role,
@@ -75,7 +75,9 @@ export function EvolutionRoom({
   const href = role === "teacher" ? "/teacher?code=" + code : "/?code=" + code;
   return (
     <>
-      <Header homeHref={role === "teacher" ? "/teacher" : "/"} />
+      <Header homeHref={role === "teacher" ? "/teacher" : "/"}>
+        <EvolutionLanguage />
+      </Header>
       {error && (
         <div role="alert" className="ev ev-error error-message">
           {error}{" "}

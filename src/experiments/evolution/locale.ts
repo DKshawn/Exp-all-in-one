@@ -174,7 +174,7 @@ const messages = {
     "本轮结算后在这里查看记录。",
     "Your results appear here as each round settles.",
   ],
-  demoView: ["デモ表示", "演示视角", "Demo view"],
+  demoView: ["デモ操作", "演示工具栏", "Demo controls"],
   reset: ["設定に戻る", "返回配置", "Back to setup"],
   returnRoom: ["再入室", "重新入室", "Re-enter room"],
   loading: ["読み込み中…", "加载中…", "Loading…"],

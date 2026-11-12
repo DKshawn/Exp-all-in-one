@@ -6,7 +6,7 @@ import { label, displayChoices, type Key, type Lang } from "../locale";
 import type { Action } from "../engine";
 import type { View, Personal } from "../views";
 import { Admission, SessionOverview } from "./session-controls";
-import { Language, PayoffRules, Rules } from "./rules";
+import { PayoffRules, Rules } from "./rules";
 
 type Props = {
   view: View;
@@ -238,12 +238,9 @@ export function Panels({ view: v, lang, busy, now, act, downloads }: Props) {
     <main className="ev ev-room" lang={lang}>
       <div className="ev-heading">
         <h1>{v.title}</h1>
-        <div className="ev-options">
-          <span className="ev-code">
-            {t("code")} <b>{v.code}</b>
-          </span>
-          <Language lang={lang} />
-        </div>
+        <span className="ev-code">
+          {t("code")} <b>{v.code}</b>
+        </span>
       </div>
       {waiting ? (
         <section className="ev-heading">

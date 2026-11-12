@@ -4,7 +4,7 @@
 
 ## Run a classroom session
 
-1. At `/teacher`, select **確率的進化ゲーム**. Select Japanese, Chinese or English. Choose the game, name the room, check the payoff preview and set a room password. Game, payoff and round settings lock on creation.
+1. At `/teacher`, select **確率的進化ゲーム**. Choose the game, name the room, check the payoff preview and set a room password. Game, payoff and round settings lock on creation. Teachers and students each choose Japanese, Chinese or English in the page header. This preference is saved in their own browser.
 2. Share the room code and student entry `/`. Students join with a nickname and four-digit PIN. They can review the rules while waiting.
 3. Check actual enrollment and projected group sizes, then close admission. Closing randomly assigns the roster to fixed, balanced groups. Each group needs at least two people. In the demand game each group also receives fixed, nearly equal A/B sides. In an odd group a random draw determines which side has the extra person. Check the allocation and confirm start.
 4. Each round, choose privately and confirm once. A submitted choice survives reload and re-entry. Both players see their own and their partner’s choice and payoff as soon as the pair settles, plus their own cumulative payoff. Personal round history stays available. Teachers see the group tables and can download data during or after the session.

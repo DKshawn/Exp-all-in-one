@@ -12,6 +12,8 @@ import {
 import { summaries, type Summary } from "./views";
 import { choices, type Settings } from "./settings";
 
+export type PracticeAction = Action | { kind: "playback"; paused: boolean };
+
 export class EvolutionPractice {
   readonly human = "1";
   readonly game;
@@ -81,12 +83,27 @@ export class EvolutionPractice {
       this.advanceTo(this.time(real));
     }
   }
-  act(action: Action, real: number) {
+  act(action: PracticeAction, real: number) {
     const now = this.time(real),
       g = this.game;
     this.advanceTo(now);
     const previous = g.round,
       pausedAt = g.pausedAt;
+    if (action.kind === "playback") {
+      // The toolbar controls the demo clock even if a phase just changed between ticks.
+      if (
+        !previous ||
+        (g.phase !== "playing" && g.phase !== "feedback") ||
+        action.paused === (pausedAt != null)
+      )
+        return;
+      action = {
+        kind: action.paused ? "pause" : "resume",
+        phase: g.phase,
+        round: previous.number,
+        revision: g.controls?.length ?? 0,
+      };
+    }
     if (action.kind === "choose")
       choose(g, this.human, action.round, action.choice, now);
     else teacherAction(g, action, now);

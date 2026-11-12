@@ -865,8 +865,8 @@ test("EMH demo controls preserve the session while switching views, advancing an
   );
   await panel.getByRole("button", { name: "次の期へ" }).click();
   await expect(
-    page.getByText("第2ラウンド", { exact: true }).first(),
-  ).toBeVisible();
+    page.getByRole("listitem", { name: "第2ラウンド", exact: true }),
+  ).toHaveAttribute("aria-current", "step");
   await panel.getByRole("button", { name: "やり直す" }).click();
   await panel.getByRole("button", { name: "教員画面を見る" }).click();
   await expect(page.getByRole("heading", { name: "12人が入室" })).toBeVisible();

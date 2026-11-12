@@ -4,7 +4,7 @@ The demo list and screens use a yellow theme, with a demo-mode text label beside
 
 [日本語](../ja/demo.md) · [中文](../zh-CN/demo.md) · [English](../en/demo.md)
 
-At `/evolution/demo`, open the student view directly from setup or create a teacher demo. By default you control one seat and five simulated participants submit independently drawn choices. The toolbar switches views, advances 30 seconds or returns to setup. Switching views preserves your seat and progress. Reloading clears practice. Demo downloads contain practice data only. [Rules and data](evolution.md)
+At `/evolution/demo`, use the toolbar above the setup form to preview the student waiting screen. Return to the teacher view to continue editing your draft. Select **Create demo**, close admission and confirm the start. By default you control one seat and five simulated participants choose independently at random. During decisions and feedback, the same toolbar offers **Pause**, **Resume** and **Advance 30 s** in either view. Pause freezes the clock and simulated participants so you can read both payoffs in the student view. Switching views keeps the demo paused. Only teachers can pause a formal session. The language selector in the header affects only your browser. Reloading clears practice; demo downloads contain practice data only. [Rules and data](evolution.md)
 
 Sign in at the teacher entry and open **Demo Model** to choose an experiment at `/demo/select`. Opening a demo or screen-size preview directly first takes you to teacher login, then returns you to that page. A student room session grants access only to the classroom experiment.
 

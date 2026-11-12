@@ -12,7 +12,7 @@ async function fit(page: Page) {
     ).toBe(true);
     const overflow = await page
       .locator(
-        "main button:visible, main .button:visible, .experiment-card h2:visible",
+        "main button:visible, main .button:visible, .ev-demo-bar button:visible, header .button:visible, .experiment-card h2:visible",
       )
       .evaluateAll((els) =>
         els
@@ -31,7 +31,8 @@ for (const mode of ["coordination", "demand"] as const)
       await enterTeacherPage(page);
       await fit(page);
       await page.getByRole("link", { name: /確率的進化ゲーム/ }).click();
-      await page.getByLabel("表示言語").selectOption("en");
+      await page.getByRole("banner").getByLabel("表示言語").selectOption("en");
+      await expect(page.locator("form").getByLabel("Language")).toHaveCount(0);
       await page
         .getByRole("combobox", { name: "Game", exact: true })
         .selectOption(mode);
@@ -72,7 +73,9 @@ for (const mode of ["coordination", "demand"] as const)
           await p.locator('input[name="pin"]').fill("4321");
           await p.getByRole("button", { name: "入室する" }).click();
           await expect(p).toHaveURL(/\/room\//);
-          await p.getByLabel("表示言語").selectOption("en");
+          const language = p.getByRole("banner").getByLabel("表示言語");
+          await expect(language).toHaveValue("ja");
+          await language.selectOption("en");
           await expect(p.getByText("Admission open").first()).toBeVisible();
         }
         await page.getByRole("button", { name: "Close admission" }).click();
@@ -80,6 +83,10 @@ for (const mode of ["coordination", "demand"] as const)
           page.getByRole("heading", { name: "Ready to start" }),
         ).toBeVisible();
         await page.getByRole("button", { name: "Confirm and start" }).click();
+        await expect(players[0].getByRole("radio").first()).toBeVisible();
+        await expect(
+          players[0].getByRole("button", { name: "Pause", exact: true }),
+        ).toHaveCount(0);
         if (mode === "coordination") {
           await page
             .getByRole("button", { name: "Pause", exact: true })
@@ -189,17 +196,44 @@ for (const mode of ["coordination", "demand"] as const)
     async ({ page }, info) => {
       await page.goto("/evolution/demo");
       await enterTeacherPage(page);
-      await page.getByLabel("表示言語").selectOption("zh-CN");
+      await page.clock.install();
+      const header = page.getByRole("banner");
+      await header.getByLabel("表示言語").selectOption("zh-CN");
+      const bar = page.getByRole("region", { name: "演示工具栏" });
+      const student = bar.getByRole("button", { name: "查看学生页面" });
+      const teacher = bar.getByRole("button", { name: "查看教师页面" });
+      const pause = bar.getByRole("button", { name: "暂停", exact: true });
+      const resume = bar.getByRole("button", { name: "继续", exact: true });
+      const fast = bar.getByRole("button", { name: "快进 30 秒" });
+      const form = page.locator("form.ev-setup");
+      await expect(form.getByLabel("显示语言")).toHaveCount(0);
+      await expect(
+        form.getByRole("button", { name: "查看学生页面" }),
+      ).toHaveCount(0);
       await page.getByLabel("博弈模式").selectOption(mode);
       await page.getByLabel("演示人数").fill("8");
       await page.getByLabel("作答时限（秒）").fill("15");
       await page.getByLabel("反馈时间（秒）").fill("8");
       await page.getByLabel("轮数", { exact: true }).fill("25");
-      if (mode === "demand") {
-        await page.getByRole("button", { name: "查看学生页面" }).click();
-        await expect(page.locator(".student-waiting-card")).toBeVisible();
-        await page.getByRole("button", { name: "查看教师页面" }).click();
-      } else await page.getByRole("button", { name: "创建演示" }).click();
+      await page.getByLabel("实验名称").fill("Review " + mode);
+      await student.click();
+      await expect(page.locator(".student-waiting-card")).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Review " + mode }),
+      ).toBeVisible();
+      await teacher.click();
+      await header.getByLabel("显示语言").selectOption("en");
+      await expect(
+        form.getByRole("combobox", { name: "Game", exact: true }),
+      ).toHaveValue(mode);
+      await expect(form.getByLabel("Demo participants")).toHaveValue("8");
+      await expect(form.getByLabel("Room title")).toHaveValue("Review " + mode);
+      await header.getByLabel("Language").selectOption("zh-CN");
+      await fit(page);
+      await page.screenshot({ path: info.outputPath(mode + "-setup.png") });
+      await page.getByRole("button", { name: "创建演示" }).click();
+      await expect(pause).toBeDisabled();
+      await expect(fast).toBeDisabled();
       await expect(page.getByText(/模拟参与者\s*7/)).toBeVisible();
       await page.getByLabel("独立群体数").selectOption("2");
       await page.getByRole("button", { name: "启动截止计时" }).click();
@@ -210,23 +244,45 @@ for (const mode of ["coordination", "demand"] as const)
       await expect(page.locator(".ev-roster-seats span")).toHaveCount(8);
       await page.getByRole("button", { name: "重新开放入室" }).click();
       await page.getByRole("button", { name: "截止入室", exact: true }).click();
-      await page.getByRole("button", { name: "查看学生页面" }).click();
+      await student.click();
       await expect(page.locator(".student-waiting-card")).toBeVisible();
-      await page.getByRole("button", { name: "查看教师页面" }).click();
+      await teacher.click();
       await page.getByRole("button", { name: "确认并开始" }).click();
-      await page.getByRole("button", { name: "暂停", exact: true }).click();
+      await expect(
+        page.getByRole("button", { name: "暂停", exact: true }),
+      ).toHaveCount(1);
+      await pause.click();
       const time = await page.getByRole("timer").innerText();
-      await page.getByRole("button", { name: "查看学生页面" }).click();
+      await student.click();
+      await page.clock.fastForward(60_000);
       await expect(page.getByRole("timer")).toHaveText(time);
       await expect(page.getByRole("radio").first()).toBeDisabled();
-      await page.getByRole("button", { name: "查看教师页面" }).click();
-      await page.getByRole("button", { name: "继续", exact: true }).click();
-      await page.getByRole("button", { name: "查看学生页面" }).click();
+      await expect(fast).toBeDisabled();
+      await resume.click();
       await page.getByRole("radio").first().check();
       await page.getByRole("button", { name: "确认提交" }).click();
+      await expect(
+        page.getByRole("heading", { name: "轮间反馈" }),
+      ).toBeVisible();
+      await pause.click();
       await expect(page.getByRole("heading", { name: "已结算" })).toBeVisible();
       await expect(page.locator(".ev-payoffs dd").nth(1)).not.toHaveText("—");
+      const payoffs = await page.locator(".ev-payoffs dd").allTextContents();
+      const feedbackTime = await page.getByRole("timer").innerText();
+      await teacher.click();
+      await expect(resume).toBeEnabled();
+      await expect(fast).toBeDisabled();
+      await student.click();
+      await page.clock.fastForward(120_000);
       await expect(page.locator(".round-step.active")).toHaveText("1");
+      await expect(page.getByRole("timer")).toHaveText(feedbackTime);
+      await expect(page.locator(".ev-payoffs dd")).toHaveText(payoffs);
+      await page.screenshot({
+        path: info.outputPath(mode + "-paused-feedback.png"),
+      });
+      await resume.click();
+      await page.clock.fastForward(9_000);
+      await expect(page.locator(".round-step.active")).toHaveText("2");
       for (let i = 0; i < 10; i++)
         await page.getByRole("button", { name: "快进 30 秒" }).click();
       await fit(page);
@@ -261,5 +317,7 @@ for (const mode of ["coordination", "demand"] as const)
       await expect(
         page.getByRole("heading", { name: "实验结束" }),
       ).toBeVisible();
+      await expect(pause).toBeDisabled();
+      await expect(fast).toBeDisabled();
     },
   );

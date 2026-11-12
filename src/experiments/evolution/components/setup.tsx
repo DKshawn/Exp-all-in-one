@@ -10,31 +10,45 @@ import {
   type Mode,
 } from "../settings";
 import { label, displayChoices, type Key } from "../locale";
-import { Language, Rules, useLanguage } from "./rules";
+import { Rules } from "./rules";
+import { useLanguage } from "./language";
 
-export function EvolutionSetup({
-  ready = true,
-  onDemo,
-}: {
-  ready?: boolean;
-  onDemo?: (title: string, s: Settings, n: number, student: boolean) => void;
-}) {
-  const lang = useLanguage(),
-    t = (k: Key) => label(lang, k),
-    router = useRouter();
+export function useSetupDraft() {
   const [s, set] = useState(() => defaults("coordination")),
     [title, setTitle] = useState(""),
-    [password, setPassword] = useState(""),
     [text, setText] = useState("1/3, 1/2, 2/3"),
-    [n, setN] = useState(6),
-    [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
-  const names = displayChoices(lang, s);
+    [n, setN] = useState(6);
   const candidate =
     s.mode === "demand"
       ? { ...s, options: text.split(/[,，]/).map((x) => x.trim()) }
       : s;
   const parsed = settingsSchema.safeParse(candidate);
+  const validDemo = parsed.success && Number.isInteger(n) && n >= 2 && n <= 128;
+  return { s, set, title, setTitle, text, setText, n, setN, parsed, validDemo };
+}
+
+export function EvolutionSetup({ ready }: { ready: boolean }) {
+  const draft = useSetupDraft();
+  return <SetupForm draft={draft} ready={ready} />;
+}
+
+export function SetupForm({
+  draft,
+  ready = true,
+  onDemo,
+}: {
+  draft: ReturnType<typeof useSetupDraft>;
+  ready?: boolean;
+  onDemo?: (title: string, s: Settings, n: number) => void;
+}) {
+  const lang = useLanguage(),
+    t = (k: Key) => label(lang, k),
+    router = useRouter();
+  const { s, set, title, setTitle, text, setText, n, setN, parsed } = draft;
+  const [password, setPassword] = useState(""),
+    [busy, setBusy] = useState(false),
+    [error, setError] = useState("");
+  const names = displayChoices(lang, s);
   const problem = parsed.success
     ? ""
     : t(
@@ -53,13 +67,7 @@ export function EvolutionSetup({
     if (!parsed.success) return;
     const roomTitle = title.trim() || t("title");
     if (onDemo) {
-      const submitter = (e.nativeEvent as SubmitEvent).submitter;
-      onDemo(
-        roomTitle,
-        parsed.data,
-        n,
-        submitter instanceof HTMLButtonElement && submitter.value === "student",
-      );
+      if (draft.validDemo) onDemo(roomTitle, parsed.data, n);
       return;
     }
     setBusy(true);
@@ -80,19 +88,6 @@ export function EvolutionSetup({
     <form lang={lang} className="emh-create ev ev-setup" onSubmit={create}>
       <div className="ev-heading">
         <h1>{t("title")}</h1>
-        <div className="ev-options">
-          <Language lang={lang} />
-          {onDemo && (
-            <button
-              type="submit"
-              value="student"
-              disabled={!parsed.success}
-              className="button secondary small-button"
-            >
-              {t("toStudent")}
-            </button>
-          )}
-        </div>
       </div>
       <label className="field">
         {t("name")}
@@ -263,7 +258,9 @@ export function EvolutionSetup({
         </p>
       )}
       <button
-        disabled={busy || !ready || !parsed.success}
+        disabled={
+          busy || !ready || !parsed.success || (!!onDemo && !draft.validDemo)
+        }
         className="button primary full"
       >
         {t(onDemo ? "demoCreate" : "create")}
