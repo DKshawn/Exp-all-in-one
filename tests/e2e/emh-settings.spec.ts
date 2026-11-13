@@ -9,6 +9,7 @@ import { readFileSync } from "node:fs";
 import { verificationTarget } from "../../scripts/verification-target";
 import { enterTeacherPage } from "./helpers/teacher-login";
 import { expectEndButton } from "./helpers/end-experiment";
+import { expectCopiedJoinLink } from "./helpers/copy-join-link";
 import type {
   RequestCommand,
   SessionView,
@@ -54,6 +55,7 @@ test("EMH conditions persist, lock with allocation, and govern six rounds and ex
       .click();
     await expect(page).toHaveURL(/\/room\/[A-Z0-9]+\?entry=teacher/);
     code = new URL(page.url()).pathname.split("/")[2];
+    await expectCopiedJoinLink(page, `/?code=${code}`);
     const path = `/api/rooms/${code}`;
     const state = async (
       request = page.request,
@@ -275,6 +277,7 @@ test("EMH conditions persist, lock with allocation, and govern six rounds and ex
       confirmed.markets[0].conditions.assignment,
     );
     const active = await state();
+    await expectCopiedJoinLink(page, `/room/${code}`);
     expect(active.market!.periodSeconds).toBe(120);
     expect(
       active.market!.participants.reduce((total, p) => total + p.holdings, 0),

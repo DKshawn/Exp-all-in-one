@@ -4,8 +4,6 @@ import Image from "next/image";
 import { useState } from "react";
 import {
   BarChart3,
-  Check,
-  Copy,
   Download,
   Info,
   Pause,
@@ -19,7 +17,9 @@ import { decimal } from "@/lib/client";
 import { equilibriumQuantity } from "@/experiments/double-auction/lib/equilibrium";
 import { PriceChart } from "./price-chart";
 import { ConfirmDialog } from "../../../components/confirm-dialog";
+import { CopyJoinLinkButton } from "@/components/copy-join-link-button";
 import { EndExperimentButton } from "@/components/end-experiment-button";
+import { studentJoinHref } from "@/lib/room-navigation";
 import { ExportDownloads } from "./export-downloads";
 import { MarketSettingsPanel } from "./market-settings";
 
@@ -33,31 +33,15 @@ export function TeacherDashboard({
   disabled: boolean;
 }) {
   const teacher = view.teacher!;
-  const [copied, setCopied] = useState(false);
   const [confirm, setConfirm] = useState<"end-round" | "finish" | null>(null);
-  const [copyError, setCopyError] = useState("");
   const [editingMarkets, setEditingMarkets] = useState(false);
-  async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(
-        `${location.origin}/?code=${view.code}`,
-      );
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    } catch {
-      setCopyError(`参加コード ${view.code} を学生に共有してください。`);
-    }
-  }
   return (
     <>
       <section className="panel teacher-controls">
         <div className="room-invite">
           <span className="invite-label">学生用ルームコード</span>
           <strong>{view.code}</strong>
-          <button className="button secondary small-button" onClick={copyLink}>
-            {copied ? <Check size={15} /> : <Copy size={15} />}
-            {copied ? "コピーしました" : "参加リンク"}
-          </button>
+          <CopyJoinLinkButton href={studentJoinHref(view.code)} />
         </div>
         <div className="teacher-actions">
           <span className="participant-count">
@@ -118,7 +102,6 @@ export function TeacherDashboard({
           )}
         </div>
       </section>
-      {copyError && <p className="callout">{copyError}</p>}
       {view.phase === "waiting" && (
         <div className="callout">
           <Info size={17} />

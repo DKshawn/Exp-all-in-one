@@ -2,7 +2,6 @@ import { choices, type Settings } from "./settings";
 export type Lang = "ja" | "zh-CN" | "en";
 const messages = {
   title: ["確率的進化ゲーム", "随机演化博弈", "Stochastic Evolutionary Games"],
-  invite: ["学生の入室リンク", "学生入室链接", "Student entry link"],
   language: ["表示言語", "显示语言", "Language"],
   name: ["実験名", "实验名称", "Room title"],
   mode: ["ゲーム", "博弈模式", "Game"],

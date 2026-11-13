@@ -451,6 +451,11 @@ summary.disclosure-button {
   font-size: 12px;
   font-weight: 400;
 }
+.field.join-link-fallback {
+  margin: 0;
+  min-width: 0;
+  width: min(100%, 24rem);
+}
 .field input.code-input {
   font-size: 18px;
   letter-spacing: 0.16em;

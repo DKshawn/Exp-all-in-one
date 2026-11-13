@@ -6,6 +6,8 @@ Confirm **実験を終了** in the teacher controls to end all markets, includin
 
 Student waiting screens share a consistent card design while retaining experiment-specific information.
 
+In the formal teacher view, **参加リンクをコピー** copies the student entry during admission and the student room address after the market starts.
+
 The [standalone AI student program](../../../ai-emh/README.en.md) accepts room links and hidden token input, adds `/v1` to local model server roots, and joins Experiment 2 with a configurable participant count and a local model or OpenAI. It never substitutes rule-based robots for missing model responses. The AI action log also records model request duration and reasons for skipped actions. The default output limit is 2048 tokens per model request. When an AI waits, the program monitors its student market view and requests a new decision after a market change.
 
 An optional LM Studio fast mode disables extended reasoning; complete fenced JSON blocks are also supported.

@@ -1,4 +1,5 @@
 import { signInTeacher } from "./helpers/teacher-login";
+import { expectCopiedJoinLink } from "./helpers/copy-join-link";
 import { expect, test, type BrowserContext } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 import type { RoomView } from "../../src/experiments/double-auction/lib/types";
@@ -42,6 +43,7 @@ test("teacher edits private market conditions, students receive them, and starti
 
     await page.setViewportSize({ width: 1440, height: 1080 });
     await page.goto(`/room/${code}?entry=teacher`);
+    await expectCopiedJoinLink(page, `/?code=${code}`);
     await page.getByRole("button", { name: "設定を変更", exact: true }).click();
     const settingsPanel = page.getByRole("region", {
       name: "価値・費用の設定",

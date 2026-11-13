@@ -2,7 +2,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Check,
-  Copy,
   Pause,
   Play,
   SkipForward,
@@ -12,6 +11,7 @@ import {
   Eye,
 } from "lucide-react";
 import { RoundStrip, clockText as clock } from "@/components/round-strip";
+import { CopyJoinLinkButton } from "@/components/copy-join-link-button";
 import { StudentWaitingCard } from "@/components/student-waiting-card";
 import { EmhEndExperiment } from "./end-experiment";
 import type { RoomView, TeacherAction } from "@/experiments/emh/types";
@@ -58,7 +58,6 @@ export function RoomDashboard({
   const now = useClock(room.serverNow);
   const reference = room.pausedAt ?? now;
   const [tab, setTab] = useState<"market" | "results" | "people">("market");
-  const [copied, setCopied] = useState(false);
   const [confirmation, setConfirmation] = useState<{
     kind: "end-period" | "reveal";
     phase: string;
@@ -119,17 +118,6 @@ export function RoomDashboard({
               : "取引中";
   const control = (kind: TeacherAction["kind"]) =>
     act({ kind, expectedPhase: room.phaseKey });
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(
-        `${window.location.origin}/room/${room.code}`,
-      );
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setCopied(false);
-    }
-  }
   return (
     <>
       {!teacher && countdown && (
@@ -188,9 +176,10 @@ export function RoomDashboard({
               {online ? status : "再接続中"}
             </span>
             {teacher && !demo && (
-              <button className="button secondary small" onClick={copy}>
-                {copied ? <Check size={15} /> : <Copy size={15} />}参加リンク
-              </button>
+              <CopyJoinLinkButton
+                href={`/room/${room.code}`}
+                className="small"
+              />
             )}
           </div>
         </div>

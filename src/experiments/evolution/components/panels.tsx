@@ -1,8 +1,9 @@
 "use client";
 import { useState } from "react";
+import { CopyJoinLinkButton } from "@/components/copy-join-link-button";
 import { StudentWaitingCard } from "@/components/student-waiting-card";
 import { StudyDetailDialog } from "@/experiments/double-auction/components/study-detail-dialog";
-import Link from "next/link";
+import { studentJoinHref } from "@/lib/room-navigation";
 import { label, displayChoices, type Key, type Lang } from "../locale";
 import type { Action } from "../engine";
 import type { View, Personal } from "../views";
@@ -262,13 +263,10 @@ export function Panels({ view: v, lang, busy, now, act, downloads }: Props) {
               <div className="ev-heading">
                 <h2>{t("roster")}</h2>
                 {v.code !== "DEMO" && (
-                  <Link
-                    className="button secondary small-button"
-                    target="_blank"
-                    href={"/?code=" + v.code}
-                  >
-                    {t("invite")}
-                  </Link>
+                  <CopyJoinLinkButton
+                    href={studentJoinHref(v.code)}
+                    lang={lang}
+                  />
                 )}
               </div>
               <Admission view={v} lang={lang} now={now} busy={busy} act={act} />

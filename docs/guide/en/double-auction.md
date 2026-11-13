@@ -4,6 +4,8 @@
 
 Student waiting screens share a consistent card design while retaining experiment-specific information.
 
+In a formal room, **参加リンクをコピー** copies the student entry with the room code filled in. [Student entry instructions](classroom.md)
+
 [Demo Model](https://exp-all-in-one.vercel.app/demo) · [Demo controls](demo.md)
 
 Open the screen-size demo at `/demo/preview`. On narrow screens, choose a size from the dropdown; demo progress is retained.

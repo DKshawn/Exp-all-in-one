@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { enterTeacherPage } from "./helpers/teacher-login";
 import { expectEndButton } from "./helpers/end-experiment";
+import { expectCopiedJoinLink } from "./helpers/copy-join-link";
 
 async function fit(page: Page) {
   for (const width of [320, 390, 768, 1440]) {
@@ -82,6 +83,56 @@ for (const mode of ["coordination", "demand"] as const)
       await page.getByRole("button", { name: "Create room" }).click();
       await expect(page).toHaveURL(/\/room\/[A-Z2-9]{6}\?entry=teacher/);
       const code = new URL(page.url()).pathname.split("/").pop()!;
+      const joinUrl = await expectCopiedJoinLink(
+        page,
+        "/?code=" + code,
+        "Copy join link",
+        "Link copied",
+      );
+      if (mode === "coordination") {
+        const language = page.getByRole("banner").getByRole("combobox");
+        await language.selectOption("ja");
+        await expect(
+          page.getByRole("button", { name: "参加リンクをコピー", exact: true }),
+        ).toBeVisible();
+        await fit(page);
+        await page.setViewportSize({ width: 320, height: 900 });
+        await page.locator(".ev-panel .ev-heading").screenshot({
+          path: info.outputPath("join-link-mobile.png"),
+        });
+        await language.selectOption("zh-CN");
+        // Simulate a browser without clipboard access, then retry with the real API.
+        await page.evaluate(() =>
+          Object.defineProperty(navigator, "clipboard", {
+            configurable: true,
+            value: undefined,
+          }),
+        );
+        const copy = page.getByRole("button", {
+          name: "复制入室链接",
+          exact: true,
+        });
+        await copy.click();
+        const manual = page.getByRole("textbox", { name: "手动复制链接" });
+        await expect(manual).toHaveValue(joinUrl);
+        await manual.focus();
+        expect(
+          await manual.evaluate((e: HTMLInputElement) =>
+            e.value.slice(e.selectionStart!, e.selectionEnd!),
+          ),
+        ).toBe(joinUrl);
+        await page.evaluate(() =>
+          Reflect.deleteProperty(navigator, "clipboard"),
+        );
+        await expectCopiedJoinLink(
+          page,
+          "/?code=" + code,
+          "复制入室链接",
+          "已复制",
+        );
+        await expect(manual).toHaveCount(0);
+        await language.selectOption("en");
+      }
       await expect(
         page.getByRole("button", { name: "Close admission" }),
       ).toBeDisabled();
@@ -92,7 +143,8 @@ for (const mode of ["coordination", "demand"] as const)
       try {
         const players = await Promise.all(contexts.map((c) => c.newPage()));
         for (const [i, p] of players.entries()) {
-          await p.goto("/?code=" + code);
+          await p.goto(joinUrl);
+          await expect(p.locator('input[name="code"]')).toHaveValue(code);
           await p
             .getByLabel(/ニックネーム/)
             .first()
@@ -104,6 +156,9 @@ for (const mode of ["coordination", "demand"] as const)
           await expect(language).toHaveValue("ja");
           await language.selectOption("en");
           await expect(p.getByText("Admission open").first()).toBeVisible();
+          await expect(
+            p.getByRole("button", { name: "Copy join link" }),
+          ).toHaveCount(0);
           await p.getByRole("button", { name: "Rules", exact: true }).click();
           const rules = p.getByRole("dialog", { name: "Rules" });
           await expect(
@@ -306,6 +361,9 @@ for (const mode of ["coordination", "demand"] as const)
       await header.scrollIntoViewIfNeeded();
       await page.screenshot({ path: info.outputPath(mode + "-setup.png") });
       await page.getByRole("button", { name: "创建演示" }).click();
+      await expect(
+        page.getByRole("button", { name: "复制入室链接" }),
+      ).toHaveCount(0);
       await expect(page.locator("main.ev-room > details")).toHaveCount(0);
       if (mode === "coordination")
         await page.screenshot({ path: info.outputPath("teacher-lobby.png") });

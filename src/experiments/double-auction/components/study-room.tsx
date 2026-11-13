@@ -10,9 +10,9 @@ import {
   UsersRound,
   Wifi,
   WifiOff,
-  Copy,
 } from "lucide-react";
 import { Header } from "../../../components/shell";
+import { CopyJoinLinkButton } from "@/components/copy-join-link-button";
 import { StudyDetailDialog } from "./study-detail-dialog";
 import { StudyViewport } from "./study-viewport";
 import { ExportDownloads } from "./export-downloads";
@@ -65,7 +65,7 @@ import type {
   StudyStage,
 } from "@/experiments/double-auction/lib/study-types";
 import type { Command, RoomView } from "@/experiments/double-auction/lib/types";
-import { teacherSetupHref } from "@/lib/room-navigation";
+import { studentJoinHref, teacherSetupHref } from "@/lib/room-navigation";
 import { DEMO_TEACHER_HREFS } from "@/lib/demo-navigation";
 import type { ExportProvider } from "@/experiments/double-auction/lib/exports";
 
@@ -903,8 +903,7 @@ function TeacherControls({
   preparing: boolean;
   children: ReactNode;
 }) {
-  const [confirm, setConfirm] = useState<"finish" | "end-round" | null>(null),
-    [copied, setCopied] = useState(false);
+  const [confirm, setConfirm] = useState<"finish" | "end-round" | null>(null);
   return (
     <section className="panel study-section study-teacher-controls">
       <div className="study-section-heading">
@@ -918,26 +917,13 @@ function TeacherControls({
         </span>
       </div>
       <div className="study-actions">
-        <button
-          className="button secondary"
-          disabled={demo}
-          title={
+        <CopyJoinLinkButton
+          href={studentJoinHref(view.code)}
+          className=""
+          disabledReason={
             demo ? "ひとりデモのため、他の人を招待できません。" : undefined
           }
-          onClick={async () => {
-            try {
-              await navigator.clipboard.writeText(
-                `${location.origin}/?code=${view.code}`,
-              );
-              setCopied(true);
-            } catch {
-              setCopied(false);
-            }
-          }}
-        >
-          <Copy size={15} />
-          {copied ? "コピーしました" : "参加リンクをコピー"}
-        </button>
+        />
         {!preparing && ["waiting", "review"].includes(view.phase) && (
           <button
             className="button success"

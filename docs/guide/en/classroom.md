@@ -45,7 +45,7 @@ Students need the student entry, room code, and their own entry details. Do not 
 
 ## 2. Share the entry and let students join
 
-Share the six-character room code shown in the teacher view and the student entry with the class, or use the participation link offered on screen. In this example, **参加リンクをコピー** copies a link with the room code already filled in.
+In Double Auction, EMH and Stochastic Evolutionary Games, click **参加リンクをコピー** in the teacher's room and share the copied address with the class. During admission it opens the student entry with the six-character code filled in. If the browser blocks clipboard access, select the address shown and copy it manually.
 
 ![Teacher controls example: room code, attendance, copy participation link, and Dashboard](../images/share-room.png)
 
