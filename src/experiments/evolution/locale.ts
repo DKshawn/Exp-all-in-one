@@ -30,7 +30,6 @@ const messages = {
     "需求之和不超过总额时，各得所求；超过总额时，双方收益均为 0。",
     "If the two demands sum to at most the available amount, each receives their demand. Otherwise both earn zero.",
   ],
-  preview: ["設定プレビュー", "配置预览", "Preview"],
   password: ["教員パスワード", "教师房间密码", "Room password"],
   create: ["ルームを作成", "创建房间", "Create room"],
   demoCreate: ["デモルームを作成", "创建演示", "Create demo"],

@@ -4,7 +4,7 @@
 
 ## Run a classroom session
 
-1. At `/teacher`, select **Stochastic Evolutionary Games**. Choose the game, name the room, check the payoff preview and set a room password. Game, payoff and round settings lock on creation. Teachers and students each choose Japanese, Chinese or English in the page header. This preference is saved in their own browser.
+1. At `/teacher`, select **Stochastic Evolutionary Games**. Choose the game, name the room, set the payoffs and enter a room password. Game, payoff and round settings lock on creation. Teachers and students each choose Japanese, Chinese or English in the page header. This preference is saved in their own browser.
 2. Share the room code and student entry `/`. Students join with a nickname and four-digit PIN. They can open **Rules** in the waiting card to check the rules and payoffs for this room.
 3. Check actual enrollment and projected group sizes, then close admission. Closing randomly assigns the roster to fixed, balanced groups. Each group needs at least two people. In the demand game each group also receives fixed, nearly equal A/B sides. In an odd group a random draw determines which side has the extra person. Check the allocation and confirm start.
 4. Each round, choose privately and confirm once. A submitted choice survives reload and re-entry. Both players see their own and their partner’s choice and payoff as soon as the pair settles, plus their own cumulative payoff. Personal round history stays available. Teachers see the group tables and can download data during or after the session.
@@ -22,7 +22,7 @@ Completed rounds are bright green. The current round has a double ring and is go
 | Decision time          | 30 seconds | 5–600 |
 | Between-round feedback | 8 seconds  | 3–120 |
 
-- **Coordination.** Two editable strategy names and four editable ordered pairs. Rows and columns default to Stag, Hare. The cells in row order are (4,4), (0,3), (3,0), (2,2). Positions are redrawn with each match. A player sees their row or column position, which matters for an asymmetric matrix.
+- **Coordination.** In formal and demo setup, changing a strategy name updates both the row and column headings. Enter the two payoffs directly in each cell, with the row player's payoff on the left and the column player's payoff on the right. Rows and columns default to Stag, Hare. The cells in row order are (4,4), (0,3), (3,0), (2,2). Positions are redrawn with each match. A player sees their row or column position, which matters for an asymmetric matrix.
 - **Nash demand.** Both sides use the same total and the same 2–12 distinct demands from zero to the total. Defaults are 1 and {1/3, 1/2, 2/3}. At or below the total each earns their demand. Above it both earn zero. Integers, decimals and fractions with a positive denominator use exact rational arithmetic. For example, 0.1 and 0.2 both succeed against a total of 0.3.
 
 ## Matching, deadlines and absence

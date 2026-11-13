@@ -84,8 +84,7 @@
 .ev th,
 .ev td,
 .ev button,
-.ev dt,
-.ev summary {
+.ev dt {
   white-space: nowrap;
 }
 .ev-fields,
@@ -98,12 +97,6 @@
 .ev select {
   min-width: 0;
 }
-.ev-cell {
-  margin-top: 12px;
-}
-.ev-cell > strong {
-  overflow-wrap: anywhere;
-}
 .ev-rules,
 .ev-decision {
   display: grid;
@@ -114,13 +107,6 @@
 }
 .ev p {
   line-height: 1.55;
-}
-.ev details {
-  display: block;
-}
-.ev details summary {
-  cursor: pointer;
-  width: max-content;
 }
 .ev-scroll {
   overflow-x: auto;
@@ -217,9 +203,6 @@
   .ev-setup .ev-fields {
     grid-template-columns: 1fr;
   }
-  .ev-cell .ev-fields {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
   .ev-setup .field {
     font-size: 14px;
   }
@@ -236,24 +219,42 @@
 .ev-setup .ev-heading h1 {
   margin: 0;
 }
-.ev-matrix-editor {
+.ev-payoff-matrix {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px 14px;
-}
-.ev-matrix-editor .ev-cell {
-  background: var(--bg);
-  padding: 6px 10px;
-  border-radius: 8px;
-  margin-top: 4px;
-}
-.ev-matrix-editor .ev-cell input {
+  gap: 6px;
   min-width: 0;
-  width: 100%;
+}
+.ev-payoff-matrix p {
+  font-size: 13px;
+  color: var(--muted);
+}
+.ev-payoff-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2em;
+}
+.ev-payoff-pair input {
+  field-sizing: content;
+  min-width: 2.4em;
+  padding: 5px 3px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
 }
 @media (max-width: 480px) {
-  .ev-matrix-editor {
-    grid-template-columns: minmax(0, 1fr);
+  .ev-setup .ev-payoff-matrix :is(th, td) {
+    padding: 5px 3px;
+  }
+  .ev-payoff-pair {
+    gap: 1px;
+  }
+  .ev-payoff-pair input {
+    font-size: 16px;
+    min-width: 1.65em;
+    padding-inline: 2px;
   }
   .ev-setup .ev-fields {
     gap: 6px;

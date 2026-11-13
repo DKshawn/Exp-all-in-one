@@ -10,7 +10,7 @@ import {
   type Mode,
 } from "../settings";
 import { label, displayChoices, type Key } from "../locale";
-import { Rules } from "./rules";
+import { PayoffMatrix } from "./rules";
 import { useLanguage } from "./language";
 
 export function useSetupDraft() {
@@ -156,43 +156,15 @@ export function SetupForm({
               ))}
             </div>
           </fieldset>
-          <fieldset>
-            <legend>{t("matrix")}</legend>
-            <p>{t("matrixRule")}</p>
-            <div className="ev-matrix-editor">
-              {s.matrix.flatMap((row, i) =>
-                row.map((p, j) => (
-                  <div className="ev-cell" key={i + "," + j}>
-                    <strong>
-                      {names[i]} / {names[j]}
-                    </strong>
-                    <div className="ev-fields">
-                      {p.map((v, k) => (
-                        <label key={k} className="field">
-                          {t(k === 0 ? "row" : "column")}
-                          <input
-                            required
-                            aria-label={[
-                              names[i],
-                              names[j],
-                              t(k === 0 ? "row" : "column"),
-                            ].join(" / ")}
-                            maxLength={20}
-                            value={v}
-                            onChange={(e) => {
-                              const matrix = structuredClone(s.matrix);
-                              matrix[i][j][k] = e.target.value;
-                              set({ ...s, matrix });
-                            }}
-                          />
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )),
-              )}
-            </div>
-          </fieldset>
+          <PayoffMatrix
+            s={s}
+            lang={lang}
+            onPayoffChange={(row, column, position, value) => {
+              const matrix = structuredClone(s.matrix);
+              matrix[row][column][position] = value;
+              set({ ...s, matrix });
+            }}
+          />
         </>
       ) : (
         <>
@@ -214,14 +186,10 @@ export function SetupForm({
               onChange={(e) => setText(e.target.value)}
             />
           </label>
+          <p>{t("demandRule")}</p>
         </>
       )}
-      {parsed.success ? (
-        <details open>
-          <summary className="button secondary">{t("preview")}</summary>
-          <Rules s={parsed.data} lang={lang} />
-        </details>
-      ) : (
+      {!parsed.success && (
         <p className="error-message" role="alert">
           {problem}
         </p>

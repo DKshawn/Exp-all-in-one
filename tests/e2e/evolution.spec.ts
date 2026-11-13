@@ -46,6 +46,7 @@ for (const mode of ["coordination", "demand"] as const)
       await page.getByLabel("Decision time (s)").fill("90");
       await page.getByLabel("Feedback time (s)").fill("3");
       await page.getByLabel("Room password").fill("review-password");
+      await expect(page.getByText("Preview", { exact: true })).toHaveCount(0);
       if (mode === "demand") {
         await page.getByLabel("Available amount").fill("0.3");
         await page.getByLabel("Demands (comma-separated)").fill("0.1, 1/10");
@@ -53,6 +54,29 @@ for (const mode of ["coordination", "demand"] as const)
           page.getByRole("button", { name: "Create room" }),
         ).toBeDisabled();
         await page.getByLabel("Demands (comma-separated)").fill("0.1, 0.2");
+      } else {
+        const matrix = page.getByRole("table", { name: "Payoff matrix" });
+        const validation = page.locator("form.ev-setup").getByRole("alert");
+        await expect(matrix.getByRole("textbox")).toHaveCount(8);
+        await page.getByLabel("Choice 1", { exact: true }).fill("Pine");
+        await expect(
+          matrix.getByRole("rowheader", { name: "Pine" }),
+        ).toBeVisible();
+        await expect(
+          matrix.getByRole("columnheader", { name: "Pine" }),
+        ).toBeVisible();
+        const rowPay = matrix.getByLabel("Pine / Hare / Row", { exact: true });
+        await rowPay.fill("1/0");
+        await expect(validation).toHaveText(/eight valid payoffs/);
+        await expect(
+          page.getByRole("button", { name: "Create room" }),
+        ).toBeDisabled();
+        await rowPay.fill("-1/3");
+        await matrix.getByLabel("Pine / Hare / Column").fill("1.5");
+        await expect(validation).toHaveCount(0);
+        await matrix.screenshot({
+          path: info.outputPath("formal-payoff-matrix.png"),
+        });
       }
       await fit(page);
       await page.getByRole("button", { name: "Create room" }).click();
@@ -88,6 +112,13 @@ for (const mode of ["coordination", "demand"] as const)
                 mode === "demand" ? "Nash demand game" : "Coordination game",
             }),
           ).toBeVisible();
+          if (mode === "coordination") {
+            const matrix = rules.getByRole("table", { name: "Payoff matrix" });
+            await expect(matrix.getByRole("textbox")).toHaveCount(0);
+            await expect(
+              matrix.getByRole("row", { name: /^Pine/ }).getByRole("cell"),
+            ).toHaveText(["(4, 4)", "(-1/3, 1.5)"]);
+          }
           await rules
             .getByRole("button", { name: "Close", exact: true })
             .click();
@@ -188,6 +219,23 @@ for (const mode of ["coordination", "demand"] as const)
           expect(
             data.participants.map((p: { side: string }) => p.side).sort(),
           ).toEqual(["A", "B"]);
+        } else {
+          expect(data.settings.matrix).toEqual([
+            [
+              ["4", "4"],
+              ["-1/3", "1.5"],
+            ],
+            [
+              ["3", "0"],
+              ["2", "2"],
+            ],
+          ]);
+          const row = data.rows.find(
+            (r: { position: string }) => r.position === "row",
+          );
+          expect([row.pay, row.opponentPay]).toEqual(
+            row.choice === 0 ? ["-1/3", "3/2"] : ["3", "0"],
+          );
         }
         expect(
           data.rows.every((r: { status: string }) => r.status === "settled"),
@@ -207,6 +255,18 @@ for (const mode of ["coordination", "demand"] as const)
       await enterTeacherPage(page);
       await page.clock.install();
       const header = page.getByRole("banner");
+      if (mode === "coordination") {
+        const matrix = page.getByRole("table", { name: "利得表" });
+        for (const width of [320, 390, 1204]) {
+          await page.setViewportSize({ width, height: 900 });
+          const bounds = await matrix.boundingBox();
+          expect(bounds!.x).toBeGreaterThanOrEqual(0);
+          expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width);
+          await matrix.screenshot({
+            path: info.outputPath(`demo-payoff-matrix-${width}.png`),
+          });
+        }
+      }
       await header.getByLabel("表示言語").selectOption("zh-CN");
       const bar = page.getByRole("region", { name: "演示工具栏" });
       const student = bar.getByRole("button", { name: "查看学生页面" });
@@ -221,6 +281,12 @@ for (const mode of ["coordination", "demand"] as const)
         page.getByRole("button", { name: "查看学生页面" }),
       ).toHaveCount(0);
       await page.getByLabel("博弈模式").selectOption(mode);
+      await expect(form.getByText("配置预览", { exact: true })).toHaveCount(0);
+      if (mode === "coordination") {
+        const matrix = form.getByRole("table", { name: "收益矩阵" });
+        await expect(matrix.getByRole("textbox")).toHaveCount(8);
+        await matrix.getByLabel("鹿 / 兔 / 行方").fill("2/3");
+      }
       await page.getByLabel("演示人数").fill("8");
       await page.getByLabel("作答时限（秒）").fill("15");
       await page.getByLabel("反馈时间（秒）").fill("8");
@@ -232,6 +298,9 @@ for (const mode of ["coordination", "demand"] as const)
       ).toHaveValue(mode);
       await expect(form.getByLabel("Demo participants")).toHaveValue("8");
       await expect(form.getByLabel("Room title")).toHaveValue("Review " + mode);
+      if (mode === "coordination") {
+        await expect(form.getByLabel("Stag / Hare / Row")).toHaveValue("2/3");
+      }
       await header.getByLabel("Language").selectOption("zh-CN");
       await fit(page);
       await header.scrollIntoViewIfNeeded();
@@ -242,6 +311,20 @@ for (const mode of ["coordination", "demand"] as const)
         await page.screenshot({ path: info.outputPath("teacher-lobby.png") });
       await student.click();
       await expect(page.locator(".student-waiting-card")).toBeVisible();
+      if (mode === "coordination") {
+        await page.getByRole("button", { name: "规则", exact: true }).click();
+        const matrix = page
+          .getByRole("dialog")
+          .getByRole("table", { name: "收益矩阵" });
+        await expect(
+          matrix.getByRole("cell", { name: "(2/3, 3)", exact: true }),
+        ).toBeVisible();
+        await expect(matrix.getByRole("textbox")).toHaveCount(0);
+        await page
+          .getByRole("dialog")
+          .getByRole("button", { name: "关闭" })
+          .click();
+      }
       await expect(page.locator("main.ev-room > details")).toHaveCount(0);
       if (mode === "coordination")
         await page.screenshot({ path: info.outputPath("student-lobby.png") });
