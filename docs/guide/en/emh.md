@@ -2,6 +2,8 @@
 
 [日本語](../ja/emh.md) · [中文](../zh-CN/emh.md) · [English](../en/emh.md)
 
+The displayed seconds follow the server deadlines. The clock stays still in the lobby and during pauses.
+
 Confirm **実験を終了** in the teacher controls to end all markets, including paused markets. Each trading market cancels open orders and settles its current period at current holdings. The export records `teacher-finish`. If Experiment 1 ends in period A, the round includes A dividends and trading cash flow through the stop. Ending during the countdown or a break adds no period or payout.
 
 Student waiting screens share a consistent card design while retaining experiment-specific information.

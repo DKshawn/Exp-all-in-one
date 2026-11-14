@@ -2,6 +2,8 @@
 
 [日本語](../ja/development.md) · [中文](../zh-CN/development.md) · [English](../en/development.md)
 
+ブラウザー互換性とスマートフォンの取引操作は、Chromium・Firefox・WebKit で確認します。 `npx playwright install chromium firefox webkit` · `npm run test:e2e -- classroom-compat.spec.ts shared-order-book.spec.ts`
+
 確率的進化ゲームは共通マイグレーターと4個の `evolution_` テーブルを使います。`npx tsx --test tests/evolution.test.ts` でエンジンとPGlite、`npx playwright test evolution.spec.ts` で2つの正式実験とデモを検証します。 [ルールとデータ](evolution.md)
 
 ## ローカル起動

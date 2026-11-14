@@ -2,6 +2,8 @@
 
 [日本語](../ja/judgment.md) · [中文](../zh-CN/judgment.md) · [English](../en/judgment.md)
 
+To rank an item, drag it or select the item and then its rank. Static questions record elapsed time on response without continually redrawing the form.
+
 The demo highlights the current item number in gold. Confirming **End experiment** in the demo returns you to task selection with your choices preserved.
 
 Student waiting screens share a consistent card design while retaining experiment-specific information.

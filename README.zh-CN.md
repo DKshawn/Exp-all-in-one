@@ -2,6 +2,8 @@
 
 [日本語](README.md) · [中文](README.zh-CN.md) · [English](README.en.md)
 
+手机上的 Double Auction 学生可以按原尺寸操作订单和盘口，上下滚动查看记录。即使浏览器限制保存语言偏好，随机演化博弈仍支持切换语言。
+
 面向课堂的统一实验平台，通过同一个入口开展 Double Auction、EMH、Judgement under Uncertainty 和随机演化博弈。界面默认使用日语。
 
 学生等待画面使用统一的卡片设计，并保留各实验的信息。点击实验卡片即可进入。四个实验均可在教师端点击红色「结束实验」，确认后结束本次实验。

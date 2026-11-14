@@ -2,6 +2,8 @@
 
 [日本語](README.md) · [中文](README.zh-CN.md) · [English](README.en.md)
 
+On phones, Double Auction students can scroll through their orders and the market book at native size. Stochastic game participants can switch languages even when their browser blocks preference storage.
+
 A classroom experiment platform for Double Auction, EMH, Judgement under Uncertainty and Stochastic Evolutionary Games. The interface opens in Japanese by default.
 
 Student waiting screens share a consistent card design while retaining experiment-specific information. Select an experiment by clicking its card. In all four experiments, teachers can end the current run with the red **End experiment** button and a confirmation.

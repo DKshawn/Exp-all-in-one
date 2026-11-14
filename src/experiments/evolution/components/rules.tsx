@@ -1,5 +1,5 @@
 "use client";
-import { Fragment, useId } from "react";
+import { Fragment, useId, type CSSProperties } from "react";
 import { label, displayChoices, type Lang } from "../locale";
 import type { Settings } from "../settings";
 
@@ -59,6 +59,11 @@ export function PayoffMatrix({
                               required
                               maxLength={20}
                               size={Math.max(1, value.length)}
+                              style={
+                                {
+                                  "--payoff-width": `${value.length}ch`,
+                                } as CSSProperties
+                              }
                               value={value}
                               onChange={(e) =>
                                 onPayoffChange(i, j, position, e.target.value)

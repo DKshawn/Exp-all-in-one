@@ -2,6 +2,8 @@
 
 [日本語](../ja/development.md) · [中文](../zh-CN/development.md) · [English](../en/development.md)
 
+浏览器兼容性和手机交易操作使用 Chromium、Firefox、WebKit 验证。 `npx playwright install chromium firefox webkit` · `npm run test:e2e -- classroom-compat.spec.ts shared-order-book.spec.ts`
+
 随机演化博弈使用平台迁移器及四张 `evolution_` 表。`npx tsx --test tests/evolution.test.ts` 检查引擎和 PGlite，`npx playwright test evolution.spec.ts` 验证两种正式实验和演示。 [规则与数据](evolution.md)
 
 ## 本地启动

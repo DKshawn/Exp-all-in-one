@@ -111,17 +111,20 @@ function History({
               <td colSpan={7}>{t("empty")}</td>
             </tr>
           )}
-          {rows.toReversed().map((x) => (
-            <tr key={x.round}>
-              <th>{x.round}</th>
-              <td>{t(x.status)}</td>
-              <td>{name(x.choice)}</td>
-              <td>{name(x.otherChoice)}</td>
-              <td>{x.pay ?? "—"}</td>
-              <td>{x.otherPay ?? "—"}</td>
-              <td>{x.total}</td>
-            </tr>
-          ))}
+          {rows
+            .slice()
+            .reverse()
+            .map((x) => (
+              <tr key={x.round}>
+                <th>{x.round}</th>
+                <td>{t(x.status)}</td>
+                <td>{name(x.choice)}</td>
+                <td>{name(x.otherChoice)}</td>
+                <td>{x.pay ?? "—"}</td>
+                <td>{x.otherPay ?? "—"}</td>
+                <td>{x.total}</td>
+              </tr>
+            ))}
         </tbody>
       </table>
     </div>
@@ -185,7 +188,8 @@ function Analysis({
           </thead>
           <tbody>
             {view.history
-              .toReversed()
+              .slice()
+              .reverse()
               .filter((x) => x.group === group)
               .map((x) => (
                 <tr key={x.round}>

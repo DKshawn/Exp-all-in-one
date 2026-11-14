@@ -4,6 +4,8 @@ The demo list and screens use a yellow theme, with the demo-mode label in plain 
 
 [日本語](../ja/demo.md) · [中文](../zh-CN/demo.md) · [English](../en/demo.md)
 
+The Double Auction student demo uses the same vertically scrolling trading screen as a formal room at widths of 760 CSS pixels or less.
+
 Select the **Stochastic Evolutionary Games** card on `/demo/select`. At `/evolution/demo`, configure the game and select **Create demo** to enter the teacher lobby. The toolbar now offers **View student screen**, even while admission is open. Switch back to the teacher view to close admission and confirm the start. By default you control one seat and five simulated participants choose independently at random. During decisions and feedback, the same toolbar offers **Pause**, **Resume** and **Advance 30 s** in either view. Pause freezes the clock and simulated participants so you can read both payoffs in the student view. Switching views keeps the demo paused. Only teachers can pause a formal session. The language selector in the header affects only your browser. Reloading clears practice; demo downloads contain practice data only. [Rules and data](evolution.md)
 
 Sign in at the teacher entry and open **Demo Model** to choose an experiment at `/demo/select`. Opening a demo or screen-size preview directly first takes you to teacher login, then returns you to that page. A student room session grants access only to the classroom experiment.

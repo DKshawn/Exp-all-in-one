@@ -9,11 +9,18 @@ async function expectToolbarBelowHeader(page: Page) {
     await page.setViewportSize({ width, height: 900 });
     await expect(header).toBeVisible();
     await expect(toolbar).toBeVisible();
-    const headerBox = await header.boundingBox();
-    const toolbarBox = await toolbar.boundingBox();
-    expect(toolbarBox!.y).toBeGreaterThanOrEqual(
-      headerBox!.y + headerBox!.height,
-    );
+    // Read both rectangles in the same frame after the viewport resize.
+    await expect
+      .poll(() =>
+        toolbar.evaluate((el) => {
+          const header = el.closest(".study-shell")!.querySelector("header")!;
+          return (
+            el.getBoundingClientRect().top -
+            header.getBoundingClientRect().bottom
+          );
+        }),
+      )
+      .toBeGreaterThanOrEqual(-1);
   }
   await page.setViewportSize({ width: 1366, height: 900 });
 }

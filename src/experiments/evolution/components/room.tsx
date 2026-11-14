@@ -51,16 +51,29 @@ export function EvolutionRoom({
       if (!controller.signal.aborted) timer = setTimeout(poll, 1500);
     }
     void poll();
-    const ticker = setInterval(
-      () => setNow(clock.current.now + performance.now() - clock.current.at),
-      250,
-    );
     return () => {
       controller.abort();
       clearTimeout(timer);
-      clearInterval(ticker);
     };
   }, [update, finished]);
+  // Polls and heartbeats continue even when no countdown is on screen.
+  const deadline =
+    v && v.pausedAt === null && !finished
+      ? (v.admission.deadline ?? v.deadline)
+      : null;
+  useEffect(() => {
+    if (deadline == null) return;
+    let timer: ReturnType<typeof setTimeout>;
+    function tick() {
+      const time = clock.current.now + performance.now() - clock.current.at;
+      setNow(time);
+      const remaining = deadline! - time;
+      if (remaining > 0)
+        timer = setTimeout(tick, Math.ceil(remaining % 1000 || 1000));
+    }
+    tick();
+    return () => clearTimeout(timer);
+  }, [deadline, v?.now]);
   async function act(a: Action) {
     if (inAction.current) return;
     inAction.current = true;

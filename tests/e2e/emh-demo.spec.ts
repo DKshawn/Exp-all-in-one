@@ -141,7 +141,7 @@ test("EMH Demo shares formal settings and confirms or releases them before tradi
   await page
     .getByRole("button", { name: "学生画面を見る", exact: true })
     .click();
-  await expect(page.locator(".stat-grid")).toContainText("円");
+  await expect(page.locator(".emh-personal-account")).toContainText("円");
   for (const dividend of await page
     .locator(".emh-conditions .private-dividends")
     .all()) {
@@ -672,13 +672,14 @@ for (const experiment of ["exp1", "exp2"] as const) {
     await expect(book.locator("tr.study-own-order")).toHaveCount(2);
     await expect(book.getByRole("button", { name: /取り消す/ })).toHaveCount(2);
     await page.getByRole("button", { name: "次の期へ" }).click();
-    await expect(
-      page
-        .getByText(experiment === "exp1" ? "Period B" : "第2ラウンド", {
-          exact: true,
-        })
-        .first(),
-    ).toBeVisible();
+    if (experiment === "exp1")
+      await expect(
+        page.getByText("Period B", { exact: true }).first(),
+      ).toBeVisible();
+    else
+      await expect(
+        page.locator('.round-strip [aria-current="step"]'),
+      ).toHaveAttribute("aria-label", "第2ラウンド");
     await expect(bid).toHaveValue("");
     await expect(ask).toHaveValue("");
     await expect(book.locator("tr.study-own-order")).toHaveCount(0);

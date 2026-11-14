@@ -3,6 +3,8 @@ import { useSyncExternalStore } from "react";
 import { label, type Lang } from "../locale";
 
 const storageKey = "evolution-language";
+let tabLanguage: Lang = "ja";
+let useTabPreference = false;
 function subscribe(fn: () => void) {
   window.addEventListener("storage", fn);
   window.addEventListener(storageKey, fn);
@@ -12,8 +14,13 @@ function subscribe(fn: () => void) {
   };
 }
 function language(): Lang {
-  const v = localStorage.getItem(storageKey);
-  return v === "en" || v === "zh-CN" ? v : "ja";
+  if (useTabPreference) return tabLanguage;
+  try {
+    const v = localStorage.getItem(storageKey);
+    return v === "en" || v === "zh-CN" ? v : "ja";
+  } catch {
+    return tabLanguage;
+  }
 }
 export function useLanguage() {
   return useSyncExternalStore(subscribe, language, () => "ja" as Lang);
@@ -27,7 +34,14 @@ export function EvolutionLanguage() {
       aria-label={label(lang, "language")}
       value={lang}
       onChange={(e) => {
-        localStorage.setItem(storageKey, e.target.value);
+        tabLanguage = e.target.value as Lang;
+        try {
+          localStorage.setItem(storageKey, tabLanguage);
+          useTabPreference = false;
+        } catch {
+          // Reads may still succeed and return an older saved preference.
+          useTabPreference = true;
+        }
         window.dispatchEvent(new Event(storageKey));
       }}
     >

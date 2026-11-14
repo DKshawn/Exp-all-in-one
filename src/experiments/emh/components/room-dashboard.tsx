@@ -26,16 +26,35 @@ import {
   type RunAction,
 } from "./market-panels";
 
-export function useClock(serverNow: number) {
+function useClock(
+  serverNow: number,
+  phaseEnd: number | null,
+  unitEnd: number | null,
+) {
   const [now, setNow] = useState(serverNow);
   useEffect(() => {
-    const received = Date.now();
-    const timer = setInterval(
-      () => setNow(serverNow + Date.now() - received),
-      200,
-    );
-    return () => clearInterval(timer);
-  }, [serverNow]);
+    const received = performance.now();
+    let timer: ReturnType<typeof setTimeout>;
+    // Period and unit counters can have different second boundaries.
+    function schedule(time: number) {
+      const delays = [phaseEnd, unitEnd].flatMap((end) =>
+        end !== null && end > time
+          ? [Math.ceil((end - time) % 1000 || 1000)]
+          : [],
+      );
+      if (delays.length)
+        timer = setTimeout(
+          () => {
+            const current = serverNow + performance.now() - received;
+            setNow(current);
+            schedule(current);
+          },
+          Math.min(...delays),
+        );
+    }
+    schedule(serverNow);
+    return () => clearTimeout(timer);
+  }, [serverNow, phaseEnd, unitEnd]);
   return Math.max(serverNow, now);
 }
 const remaining = (deadline: number | null, now: number) =>
@@ -55,7 +74,21 @@ export function RoomDashboard({
   demo?: boolean;
   showReveal?: boolean;
 }) {
-  const now = useClock(room.serverNow);
+  const phaseEnd =
+    room.status === "countdown"
+      ? room.countdownEndsAt
+      : room.status === "break"
+        ? room.breakEndsAt
+        : room.status === "trading"
+          ? room.periodEndsAt
+          : null;
+  const now = useClock(
+    room.serverNow,
+    room.pausedAt === null ? phaseEnd : null,
+    room.pausedAt === null && room.status === "trading"
+      ? room.unitEndsAt
+      : null,
+  );
   const reference = room.pausedAt ?? now;
   const [tab, setTab] = useState<"market" | "results" | "people">("market");
   const [confirmation, setConfirmation] = useState<{

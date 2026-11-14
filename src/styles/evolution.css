@@ -236,6 +236,7 @@
 .ev-payoff-pair input {
   field-sizing: content;
   min-width: 2.4em;
+  max-inline-size: 22ch;
   padding: 5px 3px;
   border: 1px solid var(--line);
   border-radius: 6px;
@@ -254,6 +255,7 @@
   .ev-payoff-pair input {
     font-size: 16px;
     min-width: 1.65em;
+    inline-size: clamp(3ch, calc(var(--payoff-width) + 0.5em), 12ch);
     padding-inline: 2px;
   }
   .ev-setup .ev-fields {

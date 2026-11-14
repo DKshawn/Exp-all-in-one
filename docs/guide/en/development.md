@@ -2,6 +2,8 @@
 
 [日本語](../ja/development.md) · [中文](../zh-CN/development.md) · [English](../en/development.md)
 
+Browser compatibility and mobile trading checks run in Chromium, Firefox and WebKit. `npx playwright install chromium firefox webkit` · `npm run test:e2e -- classroom-compat.spec.ts shared-order-book.spec.ts`
+
 Stochastic games use the shared migrator and four `evolution_` tables. Run `npx tsx --test tests/evolution.test.ts` for engine and PGlite checks, and `npx playwright test evolution.spec.ts` for both classroom flows and the demo. [Rules and data](evolution.md)
 
 ## Local setup

@@ -65,7 +65,7 @@ test("CDA shared book retains anonymous prices, own markers and immediate execut
     for (const nickname of ["BookA", "BookB"]) {
       const context = await browser.newContext({
         baseURL,
-        viewport: { width: 1366, height: 900 },
+        viewport: { width: contexts.length ? 320 : 390, height: 844 },
       });
       contexts.push(context);
       expect(
@@ -96,6 +96,20 @@ test("CDA shared book retains anonymous prices, own markers and immediate execut
       exact: true,
     });
     await expect(submit).toBeEnabled({ timeout: 20000 });
+    for (const participant of participants) {
+      const order = participant.page.getByRole("button", {
+        name: "指値注文",
+        exact: true,
+      });
+      await expect
+        .poll(async () => (await order.boundingBox())?.height ?? 0)
+        .toBeGreaterThanOrEqual(24);
+      expect(
+        await participant.page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
+    }
     await seller.page.getByLabel(/1単位目の売りたい価格/).fill("100");
     await submit.click();
     await expect(
