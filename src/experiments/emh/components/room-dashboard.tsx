@@ -2,7 +2,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Check,
-  Copy,
   Pause,
   Play,
   SkipForward,
@@ -11,7 +10,10 @@ import {
   Radio,
   Eye,
 } from "lucide-react";
+import { RoundStrip, clockText as clock } from "@/components/round-strip";
+import { CopyJoinLinkButton } from "@/components/copy-join-link-button";
 import { StudentWaitingCard } from "@/components/student-waiting-card";
+import { EmhEndExperiment } from "./end-experiment";
 import type { RoomView, TeacherAction } from "@/experiments/emh/types";
 import {
   ExportPanel,
@@ -24,24 +26,39 @@ import {
   type RunAction,
 } from "./market-panels";
 
-export function useClock(serverNow: number) {
+function useClock(
+  serverNow: number,
+  phaseEnd: number | null,
+  unitEnd: number | null,
+) {
   const [now, setNow] = useState(serverNow);
   useEffect(() => {
-    const received = Date.now();
-    const timer = setInterval(
-      () => setNow(serverNow + Date.now() - received),
-      200,
-    );
-    return () => clearInterval(timer);
-  }, [serverNow]);
+    const received = performance.now();
+    let timer: ReturnType<typeof setTimeout>;
+    // Period and unit counters can have different second boundaries.
+    function schedule(time: number) {
+      const delays = [phaseEnd, unitEnd].flatMap((end) =>
+        end !== null && end > time
+          ? [Math.ceil((end - time) % 1000 || 1000)]
+          : [],
+      );
+      if (delays.length)
+        timer = setTimeout(
+          () => {
+            const current = serverNow + performance.now() - received;
+            setNow(current);
+            schedule(current);
+          },
+          Math.min(...delays),
+        );
+    }
+    schedule(serverNow);
+    return () => clearTimeout(timer);
+  }, [serverNow, phaseEnd, unitEnd]);
   return Math.max(serverNow, now);
 }
 const remaining = (deadline: number | null, now: number) =>
   Math.max(0, Math.ceil(((deadline ?? now) - now) / 1000));
-const clock = (seconds: number) =>
-  `${Math.floor(seconds / 60)
-    .toString()
-    .padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`;
 export function RoomDashboard({
   room,
   act,
@@ -57,10 +74,23 @@ export function RoomDashboard({
   demo?: boolean;
   showReveal?: boolean;
 }) {
-  const now = useClock(room.serverNow);
+  const phaseEnd =
+    room.status === "countdown"
+      ? room.countdownEndsAt
+      : room.status === "break"
+        ? room.breakEndsAt
+        : room.status === "trading"
+          ? room.periodEndsAt
+          : null;
+  const now = useClock(
+    room.serverNow,
+    room.pausedAt === null ? phaseEnd : null,
+    room.pausedAt === null && room.status === "trading"
+      ? room.unitEndsAt
+      : null,
+  );
   const reference = room.pausedAt ?? now;
   const [tab, setTab] = useState<"market" | "results" | "people">("market");
-  const [copied, setCopied] = useState(false);
   const [confirmation, setConfirmation] = useState<{
     kind: "end-period" | "reveal";
     phase: string;
@@ -87,8 +117,20 @@ export function RoomDashboard({
   const disabled = busy || !online || awaitingClock;
   const finalScore = room.results.some(
     (result) =>
-      result.year === room.year && (room.exp2 || result.period === "B"),
+      result.year === room.year &&
+      (room.exp2 ||
+        result.period === "B" ||
+        result.reason === "teacher-finish"),
   );
+  function periodClass(year: number, period: "A" | "B") {
+    if (room.results.some((r) => r.year === year && r.period === period))
+      return "done";
+    return room.status !== "completed" &&
+      room.year === year &&
+      room.period === period
+      ? "active"
+      : "";
+  }
   const lastPersonalTrade = room.trades.findLast(
     (trade) =>
       trade.year === room.year &&
@@ -109,17 +151,6 @@ export function RoomDashboard({
               : "取引中";
   const control = (kind: TeacherAction["kind"]) =>
     act({ kind, expectedPhase: room.phaseKey });
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(
-        `${window.location.origin}/room/${room.code}`,
-      );
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setCopied(false);
-    }
-  }
   return (
     <>
       {!teacher && countdown && (
@@ -178,9 +209,10 @@ export function RoomDashboard({
               {online ? status : "再接続中"}
             </span>
             {teacher && !demo && (
-              <button className="button secondary small" onClick={copy}>
-                {copied ? <Check size={15} /> : <Copy size={15} />}参加リンク
-              </button>
+              <CopyJoinLinkButton
+                href={`/room/${room.code}`}
+                className="small"
+              />
             )}
           </div>
         </div>
@@ -283,59 +315,28 @@ export function RoomDashboard({
         ) : (
           <>
             <div className="session-overview">
-              <div
-                className={`round-strip ${room.exp2 ? "exp2-rounds" : ""}`}
-                role="list"
-                aria-label="ラウンドの進行"
+              <RoundStrip
+                rounds={room.rounds}
+                current={
+                  room.status === "completed"
+                    ? (room.results.at(-1)?.year ?? 0)
+                    : room.year
+                }
+                finished={room.status === "completed"}
+                label="ラウンドの進行"
+                roundLabel={(n) =>
+                  `第${n}ラウンド${room.experiment !== "exp2" && n === room.year && room.status !== "completed" ? `、${room.period}期` : ""}`
+                }
               >
-                {Array.from({ length: room.rounds }, (_, i) => (
-                  <div
-                    key={i}
-                    role="listitem"
-                    aria-label={`第${i + 1}ラウンド${room.experiment !== "exp2" && i + 1 === room.year && room.status !== "completed" ? `、${room.period}期` : ""}`}
-                    aria-current={
-                      i + 1 === room.year && room.status !== "completed"
-                        ? "step"
-                        : undefined
-                    }
-                    className={`round-step ${i + 1 < room.year || room.status === "completed" ? "done" : i + 1 === room.year ? "active" : ""}`}
-                  >
-                    <span>{i + 1}</span>
-                    {room.experiment !== "exp2" && (
+                {room.experiment === "exp2"
+                  ? undefined
+                  : (n) => (
                       <div>
-                        <i
-                          className={
-                            i + 1 < room.year ||
-                            (i + 1 === room.year &&
-                              (room.period === "B" ||
-                                room.status === "completed"))
-                              ? "done"
-                              : i + 1 === room.year
-                                ? "active"
-                                : ""
-                          }
-                        >
-                          A
-                        </i>
-                        <i
-                          className={
-                            i + 1 < room.year ||
-                            (i + 1 === room.year &&
-                              (room.status === "break" ||
-                                room.status === "completed"))
-                              ? "done"
-                              : i + 1 === room.year && room.period === "B"
-                                ? "active"
-                                : ""
-                          }
-                        >
-                          B
-                        </i>
+                        <i className={periodClass(n, "A")}>A</i>
+                        <i className={periodClass(n, "B")}>B</i>
                       </div>
                     )}
-                  </div>
-                ))}
-              </div>
+              </RoundStrip>
               <div className="session-bar">
                 <div className="session-phase">
                   <strong>
@@ -442,6 +443,17 @@ export function RoomDashboard({
                       >
                         期を終了
                       </button>
+                    )}
+                    {demo && (
+                      <EmhEndExperiment
+                        disabled={disabled}
+                        onFinish={async () => {
+                          await act({
+                            kind: "finish",
+                            expectedPhase: room.phaseKey,
+                          });
+                        }}
+                      />
                     )}
                   </div>
                 )}

@@ -373,14 +373,15 @@ export class EmhService {
                 input.command.expectedRevision === session.revision,
                 "名簿または進行が更新されました。確認してもう一度操作してください。",
               );
-              const kind = input.command.kind;
-              if (input.command.kind === "update-settings") {
+              const command = input.command;
+              const { kind } = command;
+              if (kind === "update-settings") {
                 check(
                   session.status === "open" && session.settingsLockedAt == null,
                   "割り当て確定後は条件を変更できません。開始前に割り当てを解除してください。",
                 );
                 if (session.experiment === "exp2") {
-                  const proposed = input.command.settings;
+                  const proposed = command.settings;
                   check(
                     proposed.rounds <= 6,
                     "実験2は1〜6ラウンドで設定してください。",
@@ -390,13 +391,13 @@ export class EmhService {
                 session.settings = settingsForExperiment(
                   session.experiment === "exp2"
                     ? {
-                        ...input.command.settings,
+                        ...command.settings,
                         exp2:
-                          input.command.settings.exp2 ??
+                          command.settings.exp2 ??
                           session.settings?.exp2 ??
                           structuredClone(FORMAL_EXP2_OPTIONS),
                       }
-                    : input.command.settings,
+                    : command.settings,
                   session.experiment === "exp2" ? "exp2" : "exp1",
                 );
               } else if (kind === "assign") {
@@ -507,14 +508,20 @@ export class EmhService {
                     markets.every((m) => m.state.status === "completed"),
                     "全市場の終了後に公開できます。",
                   );
-                const actionKind =
-                  kind === "pause-all"
-                    ? "pause"
-                    : kind === "resume-all"
-                      ? "resume"
-                      : kind === "reveal-all"
-                        ? "reveal"
-                        : "start";
+                if (kind === "finish-all")
+                  check(
+                    markets.some((m) => m.state.status !== "completed"),
+                    "全市場が終了しています。",
+                  );
+                const actionKind = (
+                  {
+                    "pause-all": "pause",
+                    "resume-all": "resume",
+                    "finish-all": "finish",
+                    "reveal-all": "reveal",
+                    start: "start",
+                  } as const
+                )[kind];
                 const next = structuredClone(markets);
                 // One room-wide draw keeps all markets on the same state each round.
                 if (actionKind === "start" && session.experiment === "exp2") {
@@ -532,6 +539,8 @@ export class EmhService {
                   }
                 }
                 for (const m of next) {
+                  if (actionKind === "finish" && m.state.status === "completed")
+                    continue;
                   if (
                     actionKind === "pause" &&
                     (m.state.status === "completed" ||
@@ -586,6 +595,10 @@ export class EmhService {
                 input.action.kind !== "start",
                 "ルーム全体から開始してください。",
               );
+              check(
+                input.action.kind !== "finish",
+                "ルーム全体から終了してください。",
+              );
               const next = structuredClone(market.state);
               act(next, actor, input.action, now, random);
               await saveMarket(tx, code, market.market_id, next);
@@ -622,6 +635,7 @@ export class EmhService {
       code: string;
       title: string;
       created_at: string;
+      experiment: Session["experiment"] | null;
       status: string;
       count: number;
       markets: number;
@@ -629,6 +643,7 @@ export class EmhService {
       finished: boolean;
       paused: boolean;
     }>(`SELECT s.code,s.state->>'title' title,s.state->>'createdAt' created_at,s.state->>'status' status,
+      s.state->>'experiment' AS experiment,
       jsonb_array_length(s.state->'members') count, jsonb_array_length(s.state->'allocation') markets,
       COALESCE(m.round,0) round,COALESCE(m.finished,false) finished,COALESCE(m.paused,false) paused
       FROM emh_sessions s LEFT JOIN LATERAL (SELECT max((state->>'year')::int) round,bool_and(state->>'status'='completed') finished,bool_or(state->>'pausedAt' IS NOT NULL) paused FROM emh_markets WHERE room_code=s.code) m ON true`);
@@ -637,6 +652,7 @@ export class EmhService {
       title: r.title,
       createdAt: Number(r.created_at),
       experiment: "emh",
+      variant: r.experiment === "exp2" ? "exp2" : "exp1",
       phase: r.finished
         ? "finished"
         : r.paused

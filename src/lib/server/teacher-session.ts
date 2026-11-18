@@ -56,6 +56,7 @@ const demoPages = new Set([
   "/emh/demo",
   "/emh/demo/preview",
   "/judgment/demo",
+  "/evolution/demo",
 ]);
 
 export function teacherPageAvailable(path: string) {

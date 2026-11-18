@@ -18,7 +18,7 @@
 }
 .experiment-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
   margin: 24px 0 40px;
 }
@@ -38,7 +38,8 @@
   background: var(--lavender);
 }
 .experiment-card h2 {
-  font-size: 24px;
+  font-size: clamp(16px, 2.5vw, 24px);
+  white-space: nowrap;
   color: var(--accent);
 }
 .experiment-card p {
@@ -47,9 +48,6 @@
 .experiment-card > span {
   font-size: 12px;
   color: var(--muted);
-}
-.demo-experiment-grid .experiment-card > .button {
-  align-self: flex-start;
 }
 .emh-create {
   display: grid;
@@ -76,6 +74,11 @@
 }
 .teacher-hub-main > .teacher-rooms-heading h1 {
   margin-bottom: 0;
+}
+@media (max-width: 380px) {
+  main.teacher-hub-main {
+    padding-inline: 16px;
+  }
 }
 .emh-app .emh-session {
   padding-block: 28px 50px;
@@ -179,6 +182,9 @@
   .experiment-card {
     padding: 22px;
   }
+  .experiment-card h2 {
+    font-size: clamp(15px, 4.6vw, 22px);
+  }
   .demo-experiment-grid {
     gap: 12px;
     margin: 16px 0 24px;
@@ -188,7 +194,7 @@
     padding: 16px;
   }
   .demo-experiment-grid .experiment-card h2 {
-    font-size: 18px;
+    font-size: clamp(15px, 4.65vw, 18px);
     line-height: 1.3;
   }
   .demo-experiment-grid .experiment-card p {

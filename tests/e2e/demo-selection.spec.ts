@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { enterTeacherPage } from "./helpers/teacher-login";
+import { expectEndButton } from "./helpers/end-experiment";
 
 const demos = [
   {
@@ -16,6 +17,11 @@ const demos = [
     title: "Judgement under Uncertainty",
     url: /\/judgment\/demo$/,
     heading: "Judgement under Uncertainty",
+  },
+  {
+    title: "Stochastic Evolutionary Games",
+    url: /\/evolution\/demo$/,
+    heading: "確率的進化ゲーム",
   },
 ];
 
@@ -36,7 +42,12 @@ test("demo brands return to the experiment selection from every view", async ({
   await expect(page.locator("header .brand")).toHaveAttribute("href", "/");
   await page.goto("/demo/select");
   await returnsToSelection();
-  for (const path of ["/demo", "/emh/demo", "/judgment/demo"]) {
+  for (const path of [
+    "/demo",
+    "/emh/demo",
+    "/judgment/demo",
+    "/evolution/demo",
+  ]) {
     await page.goto(path);
     await returnsToSelection();
   }
@@ -76,7 +87,7 @@ test("demo brands return to the experiment selection from every view", async ({
 
 test("student home omits demo while the teacher hub links to the shared selection", async ({
   page,
-}) => {
+}, info) => {
   await page.goto("/");
   for (const width of [1440, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
@@ -96,14 +107,26 @@ test("student home omits demo while the teacher hub links to the shared selectio
   await expect(
     page.getByRole("heading", { name: "デモする実験を選ぶ" }),
   ).toBeVisible();
-  for (const width of [1440, 768, 390, 320]) {
+  for (const width of [1431, 768, 641, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
+    const titles = page.locator(".demo-experiment-grid h2");
+    await expect(titles).toHaveCount(4);
+    expect(
+      await titles.evaluateAll((els) =>
+        els.every((el) => el.scrollWidth <= el.clientWidth + 1),
+      ),
+    ).toBe(true);
+    if (width === 1431 || width === 320)
+      await page.screenshot({
+        path: info.outputPath(`demo-cards-${width}.png`),
+      });
   }
+  await expect(page.getByText("デモを開く", { exact: true })).toHaveCount(0);
   for (const demo of demos) {
     await page.getByRole("link", { name: new RegExp(demo.title) }).click();
     await expect(page).toHaveURL(demo.url);
@@ -121,7 +144,7 @@ test("student home omits demo while the teacher hub links to the shared selectio
   await expect(
     page.getByRole("link", { name: "戻る", exact: true }),
   ).toHaveCount(0);
-  for (const experiment of ["institutions", "emh", "judgment"]) {
+  for (const experiment of ["institutions", "emh", "judgment", "evolution"]) {
     await page.goto(`/teacher?experiment=${experiment}`);
     await expect(
       page.getByRole("link", { name: "戻る", exact: true }),
@@ -155,7 +178,8 @@ test("demo mode labels and entry colors are consistent across experiments", asyn
     const badge = page.locator(selector);
     await expect(badge).toHaveText(label);
     await expect(badge).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
-    await expect(badge).toHaveCSS("color", "rgb(128, 92, 0)");
+    await expect(badge).toHaveCSS("color", colors.background);
+    await expect(badge).toHaveCSS("-webkit-text-stroke-width", "0px");
   };
   await page.goto("/demo/select");
   await assertBadge("header .header-left .demo-header-tag", "DEMOモード");
@@ -167,9 +191,11 @@ test("demo mode labels and entry colors are consistent across experiments", asyn
     "rgb(84, 86, 199)",
   );
   expect(formalAccent).toBe("#5456c7");
+  expect(colors.background).toBe("rgb(244, 203, 81)");
   for (const [path, create, teacherHref] of [
     ["/demo", "ルーム作成", "/teacher?experiment=institutions"],
     ["/emh/demo", "デモルームを作成", "/teacher?experiment=emh"],
+    ["/evolution/demo", "デモルームを作成", "/teacher?experiment=evolution"],
   ]) {
     await page.goto(path);
     await assertBadge("header .header-left .demo-header-tag", "DEMOモード");
@@ -206,7 +232,12 @@ test("demo mode labels and entry colors are consistent across experiments", asyn
     ".judgment-preview header .header-left .demo-header-tag",
     "DEMOモード",
   );
-  await page.getByRole("button", { name: "実験設定に戻る" }).click();
+  await expect(page.locator(".judgment-preview .student-progress")).toHaveCSS(
+    "background-color",
+    colors.background,
+  );
+  await (await expectEndButton(page)).click();
+  await page.getByRole("button", { name: "終了する", exact: true }).click();
   await page
     .getByRole("combobox", { name: "言語 / 语言 / Language" })
     .selectOption("en");
@@ -218,8 +249,9 @@ test("demo mode labels and entry colors are consistent across experiments", asyn
     "Demo mode",
   );
   await page
-    .getByRole("button", { name: "Back to experiment settings" })
+    .getByRole("button", { name: "End experiment", exact: true })
     .click();
+  await page.getByRole("button", { name: "End run", exact: true }).click();
   await page
     .getByRole("combobox", { name: "言語 / 语言 / Language" })
     .selectOption("zh");
@@ -240,6 +272,7 @@ test("demo exit uses the formal color and returns to teacher setup", async ({
     ["/demo", "/teacher?experiment=institutions"],
     ["/emh/demo", "/teacher?experiment=emh"],
     ["/judgment/demo", "/teacher?experiment=judgment"],
+    ["/evolution/demo", "/teacher?experiment=evolution"],
     ["/demo/preview", "/teacher?experiment=institutions"],
     ["/emh/demo/preview", "/teacher?experiment=emh"],
   ]) {

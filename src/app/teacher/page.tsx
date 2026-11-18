@@ -1,5 +1,7 @@
 import { DemoEntryLink } from "@/components/demo-entry-link";
 import { TeacherHub } from "@/components/teacher-hub";
+import { EvolutionSetup } from "@/experiments/evolution/components/setup";
+import { EvolutionLanguage } from "@/experiments/evolution/components/language";
 import { TeacherReentry } from "@/components/teacher-reentry";
 import { EmhCreateForm } from "@/experiments/emh/components/create-form";
 import { JudgmentCreateForm } from "@/experiments/judgment/components/create-form";
@@ -15,14 +17,16 @@ import { requireTeacherPage } from "@/lib/server/teacher-page-access";
 import { TeacherLogout } from "@/components/teacher-login";
 import { FORMAL_EXP2_OPTIONS } from "@/experiments/emh/server/default-config";
 
-function TeacherSelectionNav({ children }: { children?: React.ReactNode }) {
+function TeacherSelectionNav({ returnRoom }: { returnRoom?: string }) {
   return (
     <nav className="header-leading-nav" aria-label="教員の操作">
-      <Link className="button secondary small-button" href="/teacher">
+      <Link
+        className="button secondary small-button"
+        href={returnRoom ? teacherRoomHref(returnRoom) : "/teacher"}
+      >
         <ArrowLeft size={15} />
-        戻る
+        {returnRoom ? `ルーム ${returnRoom} に戻る` : "戻る"}
       </Link>
-      {children}
     </nav>
   );
 }
@@ -61,16 +65,26 @@ export default async function Teacher({
       </>
     );
   }
-  if (!code && !returnRoom && legacy !== "1" && experiment !== "institutions") {
+  if (returnRoom || (legacy !== "1" && experiment !== "institutions")) {
     const selectedExperiment =
-      experiment === "emh" || experiment === "judgment";
+      !returnRoom &&
+      (experiment === "emh" ||
+        experiment === "judgment" ||
+        experiment === "evolution");
     return (
       <>
         <Header
           homeHref="/teacher"
-          leading={selectedExperiment ? <TeacherSelectionNav /> : undefined}
+          leading={
+            selectedExperiment || returnRoom ? (
+              <TeacherSelectionNav returnRoom={returnRoom} />
+            ) : undefined
+          }
         >
           {!selectedExperiment && <DemoEntryLink />}
+          {selectedExperiment && experiment === "evolution" && (
+            <EvolutionLanguage />
+          )}
           <Link className="button secondary small-button" href="/">
             学生の入室画面
           </Link>
@@ -87,7 +101,9 @@ export default async function Teacher({
             <div
               className={`teacher-hub-main teacher-entry-content${experiment === "judgment" ? " judgment-entry-content" : ""}`}
             >
-              {experiment === "judgment" ? (
+              {experiment === "evolution" ? (
+                <EvolutionSetup ready={status.ready} />
+              ) : experiment === "judgment" ? (
                 <JudgmentCreateForm status={status} studies={studies} />
               ) : (
                 <EmhCreateForm
@@ -105,21 +121,7 @@ export default async function Teacher({
   }
   return (
     <>
-      <Header
-        homeHref="/teacher"
-        leading={
-          <TeacherSelectionNav>
-            {returnRoom && (
-              <Link
-                className="button secondary small-button"
-                href={teacherRoomHref(returnRoom)}
-              >
-                ルーム {returnRoom} に戻る
-              </Link>
-            )}
-          </TeacherSelectionNav>
-        }
-      >
+      <Header homeHref="/teacher" leading={<TeacherSelectionNav />}>
         {status.keyRequired && <TeacherLogout />}
       </Header>
       <main
@@ -128,8 +130,6 @@ export default async function Teacher({
         }
       >
         <TeacherForm
-          initialCode={code}
-          initialTab={returnRoom ? "manage" : undefined}
           status={status}
           legacy={legacy === "1"}
           conditionPreset={{

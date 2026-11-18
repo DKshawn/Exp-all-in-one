@@ -1,4 +1,5 @@
 import { signInTeacher } from "./helpers/teacher-login";
+import { expectEndButton } from "./helpers/end-experiment";
 import { expect, test, type Page } from "@playwright/test";
 
 test.beforeEach(async ({ page }) => {
@@ -140,7 +141,7 @@ test("EMH Demo shares formal settings and confirms or releases them before tradi
   await page
     .getByRole("button", { name: "学生画面を見る", exact: true })
     .click();
-  await expect(page.locator(".stat-grid")).toContainText("円");
+  await expect(page.locator(".emh-personal-account")).toContainText("円");
   for (const dividend of await page
     .locator(".emh-conditions .private-dividends")
     .all()) {
@@ -222,6 +223,10 @@ test("Exp2 demo runs the default 12-person market with practice information", as
   const roundIndicators = await page
     .locator(".exp2-rounds .round-step > span")
     .all();
+  await expect(roundIndicators[0]!).toHaveCSS(
+    "background-color",
+    "rgb(244, 203, 81)",
+  );
   const firstRound = await roundIndicators[0]!.boundingBox();
   const secondRound = await roundIndicators[1]!.boundingBox();
   expect(
@@ -486,6 +491,10 @@ test("Exp1 student demo shows the trading board, prices and records together", a
       .getByRole("listitem", { name: "第1ラウンド、A期" }),
   ).toHaveAttribute("aria-current", "step");
   await expect(page.locator(".round-step.active i.active")).toHaveText("A");
+  await expect(page.locator(".round-step.active i.active")).toHaveCSS(
+    "background-color",
+    "rgb(244, 203, 81)",
+  );
   await expect(page.locator(".session-phase")).not.toContainText("第1ラウンド");
   await expect(page.locator(".emh-conditions")).not.toContainText("見込利益");
   for (const name of ["注文板", "取引記録", "配当・損益の記録"]) {
@@ -663,13 +672,14 @@ for (const experiment of ["exp1", "exp2"] as const) {
     await expect(book.locator("tr.study-own-order")).toHaveCount(2);
     await expect(book.getByRole("button", { name: /取り消す/ })).toHaveCount(2);
     await page.getByRole("button", { name: "次の期へ" }).click();
-    await expect(
-      page
-        .getByText(experiment === "exp1" ? "Period B" : "第2ラウンド", {
-          exact: true,
-        })
-        .first(),
-    ).toBeVisible();
+    if (experiment === "exp1")
+      await expect(
+        page.getByText("Period B", { exact: true }).first(),
+      ).toBeVisible();
+    else
+      await expect(
+        page.locator('.round-strip [aria-current="step"]'),
+      ).toHaveAttribute("aria-label", "第2ラウンド");
     await expect(bid).toHaveValue("");
     await expect(ask).toHaveValue("");
     await expect(book.locator("tr.study-own-order")).toHaveCount(0);
@@ -865,8 +875,21 @@ test("EMH demo controls preserve the session while switching views, advancing an
   );
   await panel.getByRole("button", { name: "次の期へ" }).click();
   await expect(
-    page.getByText("第2ラウンド", { exact: true }).first(),
+    page.getByRole("listitem", { name: "第2ラウンド", exact: true }),
+  ).toHaveAttribute("aria-current", "step");
+  await expect(
+    page.getByRole("button", { name: "実験を終了", exact: true }),
+  ).toHaveCount(0);
+  await panel.getByRole("button", { name: "教員画面を見る" }).click();
+  await (await expectEndButton(page)).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "終了する" })
+    .click();
+  await expect(
+    page.getByText("実験が終了しました。結果と記録を確認できます。"),
   ).toBeVisible();
+  await panel.getByRole("button", { name: "学生画面を見る" }).click();
   await panel.getByRole("button", { name: "やり直す" }).click();
   await panel.getByRole("button", { name: "教員画面を見る" }).click();
   await expect(page.getByRole("heading", { name: "12人が入室" })).toBeVisible();

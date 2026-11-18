@@ -10,9 +10,9 @@ import {
   UsersRound,
   Wifi,
   WifiOff,
-  Copy,
 } from "lucide-react";
 import { Header } from "../../../components/shell";
+import { CopyJoinLinkButton } from "@/components/copy-join-link-button";
 import { StudyDetailDialog } from "./study-detail-dialog";
 import { StudyViewport } from "./study-viewport";
 import { ExportDownloads } from "./export-downloads";
@@ -27,6 +27,7 @@ import {
 } from "./study-personal-trades";
 import { PriceChart } from "./price-chart";
 import { ConfirmDialog } from "../../../components/confirm-dialog";
+import { EndExperimentButton } from "@/components/end-experiment-button";
 import { StudySettingsEditor } from "./study-settings";
 import { StudyTimingEditor } from "./study-timing-settings";
 import { StudyProgramEditor } from "./study-program-settings";
@@ -35,6 +36,7 @@ import {
   studyUnitProfit,
 } from "@/experiments/double-auction/lib/study-commission";
 import {
+  isCurrentStudyPeriod,
   studyTiming,
   studyCountdownLabel,
   studyRemainingMs,
@@ -63,7 +65,7 @@ import type {
   StudyStage,
 } from "@/experiments/double-auction/lib/study-types";
 import type { Command, RoomView } from "@/experiments/double-auction/lib/types";
-import { teacherSetupHref } from "@/lib/room-navigation";
+import { studentJoinHref, teacherSetupHref } from "@/lib/room-navigation";
 import { DEMO_TEACHER_HREFS } from "@/lib/demo-navigation";
 import type { ExportProvider } from "@/experiments/double-auction/lib/exports";
 
@@ -414,7 +416,7 @@ export function StudyRoom({
                   : undefined
               }
             >
-              教員の管理・設定へ
+              {demo ? "教員の管理・設定へ" : "ルーム管理"}
             </Link>
           )}
           {roomStatus}
@@ -462,8 +464,17 @@ export function StudyRoom({
               <div>
                 <span className="phase-label">{stageLabel}</span>
                 <strong>
-                  第 <b>{market.round || "—"}</b> 期{" "}
-                  <small>/ {view.config.rounds}</small>
+                  第{" "}
+                  <b
+                    aria-current={
+                      isCurrentStudyPeriod(view.phase, market)
+                        ? "step"
+                        : undefined
+                    }
+                  >
+                    {market.round || "—"}
+                  </b>{" "}
+                  期 <small>/ {view.config.rounds}</small>
                 </strong>
               </div>
               <span className="vertical-line" />
@@ -892,8 +903,7 @@ function TeacherControls({
   preparing: boolean;
   children: ReactNode;
 }) {
-  const [confirm, setConfirm] = useState<"finish" | "end-round" | null>(null),
-    [copied, setCopied] = useState(false);
+  const [confirm, setConfirm] = useState<"finish" | "end-round" | null>(null);
   return (
     <section className="panel study-section study-teacher-controls">
       <div className="study-section-heading">
@@ -907,26 +917,13 @@ function TeacherControls({
         </span>
       </div>
       <div className="study-actions">
-        <button
-          className="button secondary"
-          disabled={demo}
-          title={
+        <CopyJoinLinkButton
+          href={studentJoinHref(view.code)}
+          className=""
+          disabledReason={
             demo ? "ひとりデモのため、他の人を招待できません。" : undefined
           }
-          onClick={async () => {
-            try {
-              await navigator.clipboard.writeText(
-                `${location.origin}/?code=${view.code}`,
-              );
-              setCopied(true);
-            } catch {
-              setCopied(false);
-            }
-          }}
-        >
-          <Copy size={15} />
-          {copied ? "コピーしました" : "参加リンクをコピー"}
-        </button>
+        />
         {!preparing && ["waiting", "review"].includes(view.phase) && (
           <button
             className="button success"
@@ -983,17 +980,16 @@ function TeacherControls({
         )}
         {children}
         {view.phase !== "finished" && (
-          <button
-            className="button danger study-teacher-finish"
+          <EndExperimentButton
+            className="study-teacher-finish"
             disabled={disabled}
             onClick={() => setConfirm("finish")}
-          >
-            実験を終了
-          </button>
+          />
         )}
       </div>
       {confirm && (
         <ConfirmDialog
+          danger={confirm === "finish"}
           title={
             confirm === "finish"
               ? "実験を終了しますか？"

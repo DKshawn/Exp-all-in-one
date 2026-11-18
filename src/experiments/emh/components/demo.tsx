@@ -185,7 +185,10 @@ function DemoRoom({
     setNow(at);
     setError("");
   }
+  const simulationRunning =
+    room.status !== "lobby" && room.status !== "completed";
   useEffect(() => {
+    if (!simulationRunning) return;
     const timer = setInterval(() => {
       const stored = current.current;
       if (stored.status === "lobby" || stored.status === "completed") return;
@@ -215,7 +218,7 @@ function DemoRoom({
       setNow(at);
     }, 500);
     return () => clearInterval(timer);
-  }, []);
+  }, [simulationRunning]);
   async function run(action: Action, as?: Actor) {
     const next = structuredClone(current.current);
     const at = Date.now() + offset.current;

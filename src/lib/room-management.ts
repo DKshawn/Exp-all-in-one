@@ -1,8 +1,15 @@
 import type { Phase } from "../experiments/double-auction/lib/types";
 import type { Institution } from "../experiments/double-auction/lib/study-types";
+import type { EMH_EXPERIMENT_LABELS } from "../experiments/emh/types";
+import type { Mode } from "../experiments/evolution/settings";
+import type { Experiment } from "./server/experiment-registry";
 
-export type RoomSummary = {
-  experiment?: "institutions" | "emh" | "judgment";
+type RoomExperiment =
+  | { experiment: "emh"; variant: keyof typeof EMH_EXPERIMENT_LABELS }
+  | { experiment: "evolution"; variant: Mode }
+  | { experiment: Exclude<Experiment, "emh" | "evolution">; variant?: never };
+
+export type RoomSummary = RoomExperiment & {
   code: string;
   title: string;
   createdAt: number;

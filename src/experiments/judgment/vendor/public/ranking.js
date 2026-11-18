@@ -106,7 +106,9 @@ export function mountRanking(board,trial,{language='ja',scroll={}}={}) {
     }else if(performance.now()-drag.scrollSince>=300){
       scroller.scrollTop+=speed;
     }
-    showTarget(targetAt(drag.x,drag.y));
+    const target=hit?.closest('[data-rank-target]');
+    showTarget(target&&board.contains(target)?target:null);
+    drag.ghost.style.transform='translate('+ (drag.x-drag.offsetX)+'px,'+(drag.y-drag.offsetY)+'px)';
     frame=requestAnimationFrame(scrollDuringDrag);
   }
   board.addEventListener('pointerdown',event=>{
@@ -122,15 +124,13 @@ export function mountRanking(board,trial,{language='ja',scroll={}}={}) {
     event.preventDefault();
     if(!drag.ghost){
       const rect=drag.token.getBoundingClientRect();
+      drag.offsetX=drag.startX-rect.left;drag.offsetY=drag.startY-rect.top;
       const ghost=document.createElement('div');ghost.className='ranking-token ranking-ghost';ghost.textContent=label(drag.id);
       ghost.setAttribute('aria-hidden','true');ghost.style.width=rect.width+'px';ghost.style.minHeight=rect.height+'px';
       (board.closest('.judgment-app')||document.body).append(ghost);drag.ghost=ghost;
       drag.token.classList.add('is-dragging');board.classList.add('is-dragging');
       frame=requestAnimationFrame(scrollDuringDrag);
     }
-    drag.ghost.style.left=(drag.x-drag.ghost.offsetWidth/2)+'px';
-    drag.ghost.style.top=(drag.y-28)+'px';
-    showTarget(targetAt(drag.x,drag.y));
   },options);
   board.addEventListener('pointerup',event=>{
     if(!drag||drag.pointerId!==event.pointerId)return;

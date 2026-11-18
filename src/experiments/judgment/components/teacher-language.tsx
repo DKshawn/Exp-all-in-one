@@ -50,7 +50,11 @@ const labels = {
   "回答完了 {count} 人": ["完成作答 {count} 人", "Completed: {count}"],
   学生の入室画面: ["学生入口", "Student entrance"],
   学生画面をプレビュー: ["预览学生画面", "Preview student view"],
-  今回の実施を終了: ["结束本次实验", "End this run"],
+  実験を終了: ["结束实验", "End experiment"],
+  "デモを終了して実験設定に戻ります。": [
+    "结束本次演示并返回实验设置。",
+    "End the demo and return to experiment settings.",
+  ],
   "開始中…": ["正在开始…", "Starting…"],
   次の実施を開始: ["开始下一次实验", "Start next run"],
   実施を開始: ["开始实验", "Start run"],
@@ -83,7 +87,6 @@ const labels = {
   ],
   前のページ: ["上一页", "Previous page"],
   スキップ: ["跳过", "Skip"],
-  実験設定に戻る: ["返回实验设置", "Back to experiment settings"],
 } satisfies Record<string, [string, string]>;
 export function teacherText(
   text: string,

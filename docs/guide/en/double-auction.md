@@ -2,7 +2,11 @@
 
 [日本語](../ja/double-auction.md) · [中文](../zh-CN/double-auction.md) · [English](../en/double-auction.md)
 
+At widths of 760 CSS pixels or less, the student trading screen uses a single column at native size. Personal conditions and ordering come first, followed by the market and records. Long histories scroll within their panels.
+
 Student waiting screens share a consistent card design while retaining experiment-specific information.
+
+In a formal room, **参加リンクをコピー** copies the student entry with the room code filled in. [Student entry instructions](classroom.md)
 
 [Demo Model](https://exp-all-in-one.vercel.app/demo) · [Demo controls](demo.md)
 
@@ -10,9 +14,11 @@ Open the screen-size demo at `/demo/preview`. On narrow screens, choose a size f
 
 Authenticate once with the key at the teacher entry, then set a teacher password of at least eight characters for each room. The creation form does not request the key again.
 
-The setup header contains **戻る** and, when opened from an existing room, **ルーム … に戻る**. Demo setup offers **戻る** to return to the demo list and **DEMOモードを終了** to return to teacher setup.
+On the creation page, **戻る** returns to the teacher home page. To find saved rooms, select **Double Auction** under **ルーム管理** on the teacher home page. When you open **ルーム管理** from a room, use **ルーム … に戻る** in the header to return to that room. Demo setup offers **戻る** to return to the demo list and **DEMOモードを終了** to return to teacher setup.
 
 CDA and EMH share an order book with list and bar-chart views. Both mark your active orders. CDA price/time priority, depth, quantities and cancellation rules are unchanged.
+
+Stochastic games use the same admission timer controls. See the [stochastic games guide](evolution.md) for their grouping and bye rules.
 
 ## Allocate using actual attendance
 
@@ -36,9 +42,9 @@ Teachers can confirm withdrawal with **参加終了** in the roster. Before star
 - Pre-creation attendance presets determine the condition template and requested markets, and the initial virtual attendance in demos. Production rooms do not require fixed attendance, allow market-count changes during admission, and do not fill shortages with virtual participants.
 - Across multiple markets, all permutations of selected institutions are assigned randomly with counts differing by at most one. A single market follows CDA, Call, then Posted Offer, omitting unselected institutions. Period counts accumulate in each market's assigned order.
 - New arrivals appear in entry order until admission closes, when the roster groups by market. Before starting, allocation can be randomized again, keeping buyer and seller counts within one per market. There is no need to wait for a fixed expected attendance.
-- **実験を開始** displays a common five-second countdown in all markets. Period 1 begins when it ends. Students cannot see provisional conditions while waiting or trade during the countdown. Markets then advance independently. Pause, resume, early period ending, and experiment ending apply across all markets. Saved legacy rooms keep their previous admission and start behavior.
+- **実験を開始** displays a common five-second countdown in all markets. Period 1 begins when it ends. Students cannot see provisional conditions while waiting or trade during the countdown. Markets then advance independently. Pause, resume and early period closure apply across markets. The red **実験を終了** button asks for confirmation before ending all markets. Saved legacy rooms keep their previous admission and start behavior.
 - Conditions JSON stores entry times, entry order, and final allocation. Fixed-attendance reshuffles use `participants-randomized`; open-admission closure and reallocation use `admission-closed`. Planned starts use `start-countdown`, and actual per-market starts use `period-started`.
-- The teacher's **全市場の結果** places each market's current period and green remaining-time label in one column. Statistics default to the current period. Selecting a past period changes quantities, prices, metrics, and the summarized institution, while progress, clocks, and status remain live.
+- The teacher's **全市場の結果** places each market's current period and green remaining-time label in one column. In the demo, teachers and students see the current period highlighted in gold. Statistics default to the current period. Selecting a past period changes quantities, prices, metrics, and the summarized institution, while progress, clocks, and status remain live.
 - The system manages matching, clocks, clearing, purchase order, and records. There are no student market moderators.
 - Students see their own conditions and their market's prices, orders, and personal trades for all configured periods of the current institution. Recent prices and trade details use the same range. Changing institution switches this history range; cumulative profit still covers all completed periods. Teachers retain all records and can compare price charts across the whole experiment or each institution. Theoretical equilibrium and everyone's conditions are teacher-only. This display policy is recorded in `rules.studentHistoryDisplay` and `rules.teacherHistoryDisplay`.
 - CDA books show active bids and asks plus the latest trade price, with eight rows per side in the standard 16-person market. **注文履歴・歩み値** occupies a separate center column; conditions and order entry sit below the book. History combines closed orders and trades from all periods of the current institution into one reverse-chronological table, ordered by time and event sequence. Bids, asks, and trades are distinguished; filled orders merge into their trade rows to avoid duplicates. Students see **あなた** on their own records and no participant numbers; teachers retain numbers. New rows and counts flash pale green twice over 2.4 seconds; initial and unchanged history does not flash. Reduced-motion settings use a temporary green background instead. History scrolls within the table, with **最新** returning to the top, without pagination or tabs. Historical entries cannot be traded and do not affect best prices, matching, or spreads. CDA input limit prices that trade immediately are not published in history. Call displays active orders during admission and keeps clearing results in history. Closed orders also appear as `order-closed` audit events and market-level `orderHistory` in `settings.json`; publication rules are recorded in `rules.cdaOrderHistory`. Legacy rooms record orders that close after the update.
@@ -135,4 +141,4 @@ Old three-good CDA rooms continue and support re-entry with their original rules
 
 ---
 
-[Home](../../../README.en.md) · [Classroom guide](classroom.md) · [Demo Model](demo.md) · [EMH asset market experiment](emh.md) · [Judgement under Uncertainty](judgment.md) · [Development, deployment and verification](development.md)
+[Home](../../../README.en.md) · [Classroom guide](classroom.md) · [Demo Model](demo.md) · [EMH asset market experiment](emh.md) · [Judgement under Uncertainty](judgment.md) · [Development, deployment and verification](development.md) · [Stochastic Evolutionary Games](evolution.md)

@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 import { teacherText } from "./teacher-language";
 import { Header } from "@/components/shell";
+import { EndExperimentButton } from "@/components/end-experiment-button";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { DEMO_TEACHER_HREFS } from "@/lib/demo-navigation";
 import type { Language, PreviewProtocol } from "../types";
 import {
@@ -21,6 +23,7 @@ export function JudgmentPreview({
   language?: Language;
 }) {
   const t = (text: string) => teacherText(text, language);
+  const [ending, setEnding] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null),
     handle = useRef<AppHandle | null>(null);
   const [progress, setProgress] = useState<PreviewProgress>({
@@ -70,9 +73,16 @@ export function JudgmentPreview({
           >
             {t("スキップ")}
           </button>
-          <button className="button primary" onClick={onClose}>
-            {t(demo ? "実験設定に戻る" : "閉じる")}
-          </button>
+          {demo ? (
+            <EndExperimentButton
+              label={t("実験を終了")}
+              onClick={() => setEnding(true)}
+            />
+          ) : (
+            <button className="button primary" onClick={onClose}>
+              {t("閉じる")}
+            </button>
+          )}
         </div>
       </div>
       <StudentApp
@@ -81,6 +91,18 @@ export function JudgmentPreview({
         handle={handle}
         onProgress={setProgress}
       />
+      {ending && (
+        <ConfirmDialog
+          danger
+          title={t("実験を終了")}
+          message={t("デモを終了して実験設定に戻ります。")}
+          confirmLabel={t("終了する")}
+          cancelLabel={t("戻る")}
+          pendingLabel={t("処理中…")}
+          onCancel={() => setEnding(false)}
+          onConfirm={async () => onClose()}
+        />
+      )}
     </dialog>
   );
 }

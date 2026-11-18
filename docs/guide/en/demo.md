@@ -1,8 +1,12 @@
 # Demo Model
 
-The demo list and screens use a yellow theme, with a demo-mode text label beside the site name. The blue-purple **DEMOモードを終了** button returns to the corresponding teacher setup, or to teacher experiment selection from the demo list.
+The demo list and screens use a yellow theme, with the demo-mode label in plain gold text beside the site name. The label and current round use the same gold (`#F4CB51`) as the Resume button. The blue-purple **DEMOモードを終了** button returns to the corresponding teacher setup, or to teacher experiment selection from the demo list.
 
 [日本語](../ja/demo.md) · [中文](../zh-CN/demo.md) · [English](../en/demo.md)
+
+The Double Auction student demo uses the same vertically scrolling trading screen as a formal room at widths of 760 CSS pixels or less.
+
+Select the **Stochastic Evolutionary Games** card on `/demo/select`. At `/evolution/demo`, configure the game and select **Create demo** to enter the teacher lobby. The toolbar now offers **View student screen**, even while admission is open. Switch back to the teacher view to close admission and confirm the start. By default you control one seat and five simulated participants choose independently at random. During decisions and feedback, the same toolbar offers **Pause**, **Resume** and **Advance 30 s** in either view. Pause freezes the clock and simulated participants so you can read both payoffs in the student view. Switching views keeps the demo paused. Only teachers can pause a formal session. The language selector in the header affects only your browser. Reloading clears practice; demo downloads contain practice data only. [Rules and data](evolution.md)
 
 Sign in at the teacher entry and open **Demo Model** to choose an experiment at `/demo/select`. Opening a demo or screen-size preview directly first takes you to teacher login, then returns you to that page. A student room session grants access only to the classroom experiment.
 
@@ -12,12 +16,12 @@ Select **市場実験室** or **戻る** in the demo header to return to the dem
 
 Open [`/demo`](https://exp-all-in-one.vercel.app/demo) directly or choose Double Auction from the demo list. It starts with the same settings form used for production experiments. The defaults are one market and 16 participants; institutions, periods per institution, markets, participants, and timing are configurable using the same validation rules as room creation.
 
-1. **ルーム作成** opens a teacher view containing you and virtual participants. Use **作成前に詳細を設定** for detailed configuration before creation. Before starting, use **実験の準備** to change institutions, periods, timing, values, and costs.
+1. **デモルームを作成** opens a teacher view containing you and virtual participants. Use **作成前に詳細を設定** for detailed configuration before creation. Before starting, **実験設定を変更** can change institutions, periods, timing, values, and costs.
 2. Close admission with **入室を締め切って割り当て** or the admission timer to allocate actual participants to markets and buyer/seller roles. **実験を開始** begins a five-second countdown before trading. **学生画面を見る** shows the transition from waiting to trading.
 3. Each selected institution runs for its configured number of periods. CDA trades through the order book; Call clears public orders together at the deadline; Posted lets all buyers purchase directly at sellers' published prices.
 4. **教員画面を見る** shows all-market results and both sides' orders, conditions, and profits for the selected market. The teacher view always displays both sides; roles cannot be switched there.
 5. **一時停止** stops every market clock and virtual participant. **30秒進める** advances time while processing clearings and purchases. The last period of each institution has an eight-second results view before advancing, and the demo ends after the configured total periods. Switching to the teacher view does not place orders or make purchases on your behalf.
-6. In the teacher view, **教員の管理・設定へ** returns to the settings form with the previous institutions, periods, participant count, and timing preserved, ready to adjust and create a new demo.
+6. **実験設定に戻る** returns to the settings form with the previous institutions, periods, participant count, and timing preserved, ready to adjust and create a new demo.
 
 The demo uses production matching, clearing, inventory, and profit calculations, but has demo-specific initial values and costs. Changing attendance samples or duplicates conditions using the production method. In CDA, the first three seconds of each period allow time to think; virtual buyers and sellers then submit orders every two seconds, initially leaving a larger profit margin and gradually reducing it. Call and Posted use fixed margins. These behaviors do not model human learning or price convergence.
 
@@ -37,7 +41,7 @@ The interface labels prices, dividends, trading balances and scores in yen.
 
 After starting, a five-second countdown appears directly above the personal conditions panel in its trading-screen position, highlighted with an arrow and border. The page scrolls to reveal it if needed. Pausing also freezes the countdown.
 
-[EMH Demo Model](https://exp-all-in-one.vercel.app/emh/demo) offers Experiment 1 and Experiment 2. Experiment 1 uses the same settings form, validation limits and defaults as the formal experiment. Set initial securities, target size, type ratios and A/B period duration, then choose **デモルームを作成**. It creates one market of 3–12 participants; everyone except you is virtual, with eight virtual participants by default.
+[EMH Demo Model](https://exp-all-in-one.vercel.app/emh/demo) offers **実験1（固定配当）** (fixed dividends) and **実験2（抽選配当）** (dividends determined by a draw). Experiment 1 uses the same settings form, validation limits and defaults as the formal experiment. Set initial securities, target size, type ratios and A/B period duration, then choose **デモルームを作成**. It creates one market of 3–12 participants; everyone except you is virtual, with eight virtual participants by default.
 
 Saving settings during admission, confirming and locking allocation, and explicitly releasing it before starting follow the formal workflow. Starting does not redraw confirmed types. Rounds, trade-attempt duration and break duration are configurable (defaults: 6 rounds, 30 seconds and 60 seconds). Securities, timing, payouts and efficiency use the shared engine. Practice A/B dividends in yen for types 1–3 are 120/40, 100/60 and 150/30; private classroom dividends are not used.
 
@@ -57,7 +61,7 @@ Task cards, selected count/list and randomization settings are shared with forma
 
 [Judgement Demo Model](https://exp-all-in-one.vercel.app/judgment/demo) previews the student screens after task selection. Circular **i** buttons open task details. The preview does not save answers and pauses time limits. Use the isolated local verification flow to check production timing and answer persistence.
 
-Everyone can quote in EMH. Accepting an opposing price or submitting a crossing quote immediately trades one unit. Students see anonymous trade records and their own resting orders highlighted in the book; Experiment 1 scores are marked provisional until period B ends.
+Everyone can quote in EMH. Accepting an opposing price or submitting a crossing quote immediately trades one unit. Students see anonymous trade records and their own resting orders highlighted in the book. In Experiment 1, the score becomes final at the end of B or when the teacher ends the experiment.
 
 ---
 

@@ -1,5 +1,10 @@
 import type { OrderBookLevel } from "@/lib/order-book";
 
+export const EMH_EXPERIMENT_LABELS = {
+  exp1: "実験1（固定配当）",
+  exp2: "実験2（抽選配当）",
+} as const;
+
 export type Period = "A" | "B";
 export type Side = "bid" | "ask";
 export type Status = "lobby" | "countdown" | "trading" | "break" | "completed";
@@ -88,7 +93,7 @@ export interface PeriodResult {
   year: number;
   period: Period;
   endedAt: number;
-  reason: "deadline" | "inactivity" | "teacher";
+  reason: "deadline" | "inactivity" | "teacher" | "teacher-finish";
   payouts: Payout[];
   volume: number;
   meanPrice: number | null;
@@ -144,7 +149,14 @@ export type StudentAction =
   | { kind: "accept"; side: Side; quoteId: string; unitKey: string }
   | { kind: "cancel"; side: Side; quoteId: string; unitKey: string };
 export type TeacherAction = {
-  kind: "start" | "pause" | "resume" | "end-period" | "next-year" | "reveal";
+  kind:
+    | "start"
+    | "pause"
+    | "resume"
+    | "end-period"
+    | "next-year"
+    | "reveal"
+    | "finish";
   expectedPhase: string;
 };
 export type Action = StudentAction | TeacherAction;

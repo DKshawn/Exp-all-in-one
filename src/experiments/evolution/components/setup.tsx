@@ -1,0 +1,238 @@
+"use client";
+import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { api, errorMessage } from "@/lib/client";
+import { teacherRoomHref } from "@/lib/room-navigation";
+import {
+  defaults,
+  settingsSchema,
+  type Settings,
+  type Mode,
+} from "../settings";
+import { label, displayChoices, type Key } from "../locale";
+import { PayoffMatrix } from "./rules";
+import { useLanguage } from "./language";
+
+export function useSetupDraft() {
+  const [s, set] = useState(() => defaults("coordination")),
+    [title, setTitle] = useState(""),
+    [text, setText] = useState("1/3, 1/2, 2/3"),
+    [n, setN] = useState(6);
+  const candidate =
+    s.mode === "demand"
+      ? { ...s, options: text.split(/[,，]/).map((x) => x.trim()) }
+      : s;
+  const parsed = settingsSchema.safeParse(candidate);
+  const validDemo = parsed.success && Number.isInteger(n) && n >= 2 && n <= 128;
+  return { s, set, title, setTitle, text, setText, n, setN, parsed, validDemo };
+}
+
+export function EvolutionSetup({ ready }: { ready: boolean }) {
+  const draft = useSetupDraft();
+  return <SetupForm draft={draft} ready={ready} />;
+}
+
+export function SetupForm({
+  draft,
+  ready = true,
+  onDemo,
+}: {
+  draft: ReturnType<typeof useSetupDraft>;
+  ready?: boolean;
+  onDemo?: (title: string, s: Settings, n: number) => void;
+}) {
+  const lang = useLanguage(),
+    t = (k: Key) => label(lang, k),
+    router = useRouter();
+  const { s, set, title, setTitle, text, setText, n, setN, parsed } = draft;
+  const [password, setPassword] = useState(""),
+    [busy, setBusy] = useState(false),
+    [error, setError] = useState("");
+  const names = displayChoices(lang, s);
+  const problem = parsed.success
+    ? ""
+    : t(
+        parsed.error.issues.some((i) =>
+          ["names", "matrix"].includes(String(i.path[0])),
+        )
+          ? "badMatrix"
+          : parsed.error.issues.some((i) =>
+                ["options", "total"].includes(String(i.path[0])),
+              )
+            ? "badDemand"
+            : "invalid",
+      );
+  async function create(e: FormEvent) {
+    e.preventDefault();
+    if (!parsed.success) return;
+    const roomTitle = title.trim() || t("title");
+    if (onDemo) {
+      if (draft.validDemo) onDemo(roomTitle, parsed.data, n);
+      return;
+    }
+    setBusy(true);
+    setError("");
+    try {
+      const { code } = await api<{ code: string }>("/api/evolution/rooms", {
+        title: roomTitle,
+        password,
+        settings: parsed.data,
+      });
+      router.push(teacherRoomHref(code));
+    } catch (e) {
+      setError(errorMessage(e));
+      setBusy(false);
+    }
+  }
+  return (
+    <form lang={lang} className="emh-create ev ev-setup" onSubmit={create}>
+      <div className="ev-heading">
+        <h1>{t("title")}</h1>
+      </div>
+      <label className="field">
+        {t("name")}
+        <input
+          value={title}
+          placeholder={t("title")}
+          maxLength={60}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+      </label>
+      <label className="field">
+        {t("mode")}
+        <select
+          value={s.mode}
+          onChange={(e) => {
+            const next = defaults(e.target.value as Mode);
+            set({
+              ...next,
+              groups: s.groups,
+              seconds: s.seconds,
+              rounds: s.rounds,
+              feedbackSeconds: s.feedbackSeconds,
+            });
+          }}
+        >
+          <option value="coordination">{t("coordination")}</option>
+          <option value="demand">{t("demand")}</option>
+        </select>
+      </label>
+      <div className="ev-fields">
+        {(["groups", "rounds", "seconds", "feedbackSeconds"] as const).map(
+          (key, i) => (
+            <label className="field" key={key}>
+              {t(key)}
+              <input
+                type="number"
+                required
+                min={[1, 1, 5, 3][i]}
+                max={[32, 100, 600, 120][i]}
+                value={s[key] || ""}
+                onChange={(e) => set({ ...s, [key]: Number(e.target.value) })}
+              />
+            </label>
+          ),
+        )}
+      </div>
+      {s.mode === "coordination" ? (
+        <>
+          <fieldset>
+            <legend>{t("names")}</legend>
+            <div className="ev-fields">
+              {names.map((x, i) => (
+                <label key={i} className="field">
+                  {t("choose")} {i + 1}
+                  <input
+                    value={x}
+                    maxLength={16}
+                    required
+                    onChange={(e) => {
+                      const updated = [...names] as typeof s.names;
+                      updated[i] = e.target.value;
+                      set({ ...s, names: updated });
+                    }}
+                  />
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <PayoffMatrix
+            s={s}
+            lang={lang}
+            onPayoffChange={(row, column, position, value) => {
+              const matrix = structuredClone(s.matrix);
+              matrix[row][column][position] = value;
+              set({ ...s, matrix });
+            }}
+          />
+        </>
+      ) : (
+        <>
+          <label className="field">
+            {t("total")}
+            <input
+              value={s.total}
+              required
+              maxLength={20}
+              onChange={(e) => set({ ...s, total: e.target.value })}
+            />
+          </label>
+          <label className="field">
+            {t("options")}
+            <input
+              value={text}
+              required
+              maxLength={264}
+              onChange={(e) => setText(e.target.value)}
+            />
+          </label>
+          <p>{t("demandRule")}</p>
+        </>
+      )}
+      {!parsed.success && (
+        <p className="error-message" role="alert">
+          {problem}
+        </p>
+      )}
+      {onDemo ? (
+        <label className="field">
+          {t("demoSize")}
+          <input
+            type="number"
+            min="2"
+            max="128"
+            required
+            value={n || ""}
+            onChange={(e) => setN(Number(e.target.value))}
+          />
+        </label>
+      ) : (
+        <label className="field">
+          {t("password")}
+          <input
+            type="password"
+            required
+            autoComplete="new-password"
+            minLength={8}
+            maxLength={128}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </label>
+      )}
+      {(!ready || error) && (
+        <p className="error-message" role="alert">
+          {error || t("unavailable")}
+        </p>
+      )}
+      <button
+        disabled={
+          busy || !ready || !parsed.success || (!!onDemo && !draft.validDemo)
+        }
+        className="button primary full"
+      >
+        {t(onDemo ? "demoCreate" : "create")}
+      </button>
+    </form>
+  );
+}

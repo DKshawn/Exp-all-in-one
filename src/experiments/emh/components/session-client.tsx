@@ -2,6 +2,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Header } from "@/components/shell";
+import { CopyJoinLinkButton } from "@/components/copy-join-link-button";
+import { studentJoinHref } from "@/lib/room-navigation";
 import { StudentWaitingCard } from "@/components/student-waiting-card";
 import type {
   SessionCommand,
@@ -10,6 +12,7 @@ import type {
 } from "../session-types";
 import type { Action } from "../types";
 import { RoomDashboard } from "./room-dashboard";
+import { EmhEndExperiment } from "./end-experiment";
 import { SettingsFields } from "./settings-fields";
 import { SettingsSummary } from "./settings-summary";
 import { settingsSchema, type EmhSettings } from "../settings";
@@ -339,6 +342,21 @@ export function SessionClient({
                               ? "解説を公開済み"
                               : "全市場に解説を公開"}
                           </button>
+                          {state.status === "running" && (
+                            <EmhEndExperiment
+                              disabled={disabled}
+                              onFinish={async () => {
+                                await send({
+                                  scope: "session",
+                                  requestId: crypto.randomUUID(),
+                                  command: {
+                                    kind: "finish-all",
+                                    expectedRevision: state.revision,
+                                  },
+                                });
+                              }}
+                            />
+                          )}
                         </div>
                       </div>
                       <div
@@ -438,25 +456,10 @@ export function SessionClient({
                             : "条件と割り当てを確定しました。全員同時に開始します。"}
                         </p>
                         <div className="emh-actions">
-                          <button
-                            className="button secondary"
-                            onClick={() =>
-                              navigator.clipboard
-                                .writeText(
-                                  `${window.location.origin}/?code=${code}`,
-                                )
-                                .then(() =>
-                                  setError("参加リンクをコピーしました。"),
-                                )
-                                .catch(() =>
-                                  setError(
-                                    `ルームコード ${code} を共有してください。`,
-                                  ),
-                                )
-                            }
-                          >
-                            参加リンクをコピー
-                          </button>
+                          <CopyJoinLinkButton
+                            href={studentJoinHref(code)}
+                            className=""
+                          />
                           {state.status === "open" ? (
                             <button
                               className="button primary"

@@ -395,20 +395,23 @@ test("demo carries saved dialog settings into the same compact room controls", a
   ).toContainText("入室締切");
 });
 
-test("teacher entry tabs keep the same navigation geometry", async ({
-  page,
-}) => {
+test("Double Auction setup only offers room creation", async ({ page }) => {
   await page.goto("/teacher?experiment=institutions");
   await enterTeacherPage(page);
-  const positions = [];
-  for (const name of ["教員として再入室", "新しい実験", "ルーム管理"]) {
-    await page.getByRole("button", { name, exact: true }).click();
-    const tabs = page.locator(".teacher-form-card.panel > .segmented");
-    await expect(tabs).toBeVisible();
-    positions.push(await tabs.boundingBox());
+  for (const path of [
+    "/teacher?experiment=institutions",
+    "/teacher?legacy=1",
+    "/demo",
+  ]) {
+    await page.goto(path);
+    await expect(
+      page.getByRole("button", { name: "ルーム作成" }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("教員として再入室", { exact: true }),
+    ).toHaveCount(0);
+    await expect(page.getByText("ルーム管理", { exact: true })).toHaveCount(0);
   }
-  expect(positions[1]).toEqual(positions[0]);
-  expect(positions[2]).toEqual(positions[0]);
 });
 
 test("shared preparation flow validates, advances, closes admission and preserves earlier settings", async ({

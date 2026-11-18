@@ -156,7 +156,7 @@ export function StudyPersonalHistory({
   trades: PersonalTrade[];
   firstPeriod?: number;
 }) {
-  const rows = trades.toReversed();
+  const rows = trades.slice().reverse();
   return (
     <section
       className="panel study-section study-personal-history"

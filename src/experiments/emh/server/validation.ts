@@ -61,6 +61,7 @@ export const commandSchema = z.discriminatedUnion("scope", [
               "start",
               "pause-all",
               "resume-all",
+              "finish-all",
               "reveal-all",
             ]),
             expectedRevision: z.number().int().min(0),

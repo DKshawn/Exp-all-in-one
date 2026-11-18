@@ -1,4 +1,5 @@
 import { experimentFor } from "@/lib/server/experiment-registry";
+import { evolutionService } from "@/experiments/evolution/server/service";
 import { emhService } from "@/experiments/emh/server/service";
 import { judgmentService } from "@/experiments/judgment/server/service";
 import type { NextRequest } from "next/server";
@@ -42,9 +43,12 @@ export async function DELETE(
     const code = codeFor((await ctx.params).code);
     const data = await body(request, deleteRoomSchema);
     const accessKey = teacherAccessKey(request, data.accessKey);
-    if ((await experimentFor(code)) === "judgment")
+    const experiment = await experimentFor(code);
+    if (experiment === "evolution")
+      await (await evolutionService()).deleteRoom(code, accessKey);
+    else if (experiment === "judgment")
       await (await judgmentService()).deleteRoom(code, accessKey);
-    else if ((await experimentFor(code)) === "emh")
+    else if (experiment === "emh")
       await (await emhService()).deleteRoom(code, accessKey);
     else await (await service()).deleteRoom(code, accessKey);
     return json({ deleted: code });

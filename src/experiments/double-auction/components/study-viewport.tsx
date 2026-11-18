@@ -6,7 +6,7 @@ import {
   STUDY_VIEWPORT_BASE,
 } from "@/experiments/double-auction/lib/study-viewport";
 
-/** Keep the complete trading workstation visible, using one uniform scale. */
+/** Fit the desktop workstation; let narrow student screens reflow at native size. */
 export function StudyViewport({ children }: { children: ReactNode }) {
   const viewport = useRef<HTMLDivElement>(null);
   const [available, setAvailable] = useState<{
@@ -30,22 +30,35 @@ export function StudyViewport({ children }: { children: ReactNode }) {
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
-  const fit = available
-    ? fitStudyViewport(available.width, available.height)
-    : { ...STUDY_VIEWPORT_BASE, scale: 1 };
+  const compact = available !== null && available.width <= 760;
+  const fit =
+    available && !compact
+      ? fitStudyViewport(available.width, available.height)
+      : { ...STUDY_VIEWPORT_BASE, scale: 1 };
   return (
-    <div className="study-fit-viewport" ref={viewport}>
+    <div
+      className={
+        compact
+          ? "study-fit-viewport study-compact-viewport"
+          : "study-fit-viewport"
+      }
+      ref={viewport}
+    >
       <div
         className="study-fit-canvas"
         data-study-scale={fit.scale}
         data-viewport-width={available && Math.round(available.width)}
         data-viewport-height={available && Math.round(available.height)}
-        style={{
-          width: fit.width,
-          height: fit.height,
-          transform: `translate(-50%, -50%) scale(${fit.scale})`,
-          visibility: available ? undefined : "hidden",
-        }}
+        style={
+          compact
+            ? undefined
+            : {
+                width: fit.width,
+                height: fit.height,
+                transform: `translate(-50%, -50%) scale(${fit.scale})`,
+                visibility: available ? undefined : "hidden",
+              }
+        }
       >
         {children}
       </div>

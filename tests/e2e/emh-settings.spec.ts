@@ -8,6 +8,8 @@ import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { verificationTarget } from "../../scripts/verification-target";
 import { enterTeacherPage } from "./helpers/teacher-login";
+import { expectEndButton } from "./helpers/end-experiment";
+import { expectCopiedJoinLink } from "./helpers/copy-join-link";
 import type {
   RequestCommand,
   SessionView,
@@ -53,6 +55,7 @@ test("EMH conditions persist, lock with allocation, and govern six rounds and ex
       .click();
     await expect(page).toHaveURL(/\/room\/[A-Z0-9]+\?entry=teacher/);
     code = new URL(page.url()).pathname.split("/")[2];
+    await expectCopiedJoinLink(page, `/?code=${code}`);
     const path = `/api/rooms/${code}`;
     const state = async (
       request = page.request,
@@ -274,6 +277,7 @@ test("EMH conditions persist, lock with allocation, and govern six rounds and ex
       confirmed.markets[0].conditions.assignment,
     );
     const active = await state();
+    await expectCopiedJoinLink(page, `/room/${code}`);
     expect(active.market!.periodSeconds).toBe(120);
     expect(
       active.market!.participants.reduce((total, p) => total + p.holdings, 0),
@@ -329,6 +333,19 @@ test("EMH conditions persist, lock with allocation, and govern six rounds and ex
     for (let i = 0; i < 18; i++) {
       const current = (await state()).market!;
       if (current.status === "completed") break;
+      if (
+        current.status === "trading" &&
+        current.year === 6 &&
+        current.period === "B"
+      ) {
+        await (await expectEndButton(page)).click();
+        await page
+          .getByRole("dialog")
+          .getByRole("button", { name: "終了する" })
+          .click();
+        await expect.poll(async () => (await state()).status).toBe("completed");
+        break;
+      }
       await command({
         scope: "market",
         marketId: 1,
@@ -342,6 +359,7 @@ test("EMH conditions persist, lock with allocation, and govern six rounds and ex
     const complete = await state();
     expect(complete.status).toBe("completed");
     expect(complete.market!.results).toHaveLength(12);
+    expect(complete.market!.results.at(-1)!.reason).toBe("teacher-finish");
     for (const result of complete.market!.results) {
       const dividends =
         result.period === "A" ? [216, 200, 257] : [105, 110, 83];

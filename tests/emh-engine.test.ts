@@ -73,6 +73,38 @@ function finish(r: Room, now: number) {
   );
 }
 
+test("ending a paused experiment settles only the open period and clears outstanding orders", () => {
+  const r = setup();
+  quote(r, 0, "ask", 10);
+  quote(r, 1, "bid", 10, 2);
+  quote(r, 2, "ask", 50, 3);
+  act(r, teacher, { kind: "pause", expectedPhase: phaseKey(r) }, 4);
+  act(r, teacher, { kind: "finish", expectedPhase: phaseKey(r) }, 1000);
+  assert.equal(r.status, "completed");
+  assert.equal(r.trades.length, 1);
+  assert.deepEqual(
+    r.results.map((p) => [p.period, p.reason]),
+    [["A", "teacher-finish"]],
+  );
+  for (const p of r.participants) {
+    const payout = r.results[0].payouts.find(
+      (row) => row.participantId === p.id,
+    )!;
+    assert.equal(
+      p.totalProfit,
+      p.cash + payout.holdings * r.config.dividends[p.type! - 1].a,
+    );
+  }
+  assert.deepEqual(
+    [r.ask, r.bid, r.unitEndsAt, r.periodEndsAt, r.pausedAt, r.breakEndsAt],
+    Array(6).fill(null),
+  );
+  assert.deepEqual(r.queuedQuotes, { ask: [], bid: [] });
+  const ended = structuredClone(r);
+  advanceClock(r, 1e10);
+  assert.deepEqual(r, ended);
+});
+
 test("PDF defaults, three private types, and theoretical prices", () => {
   assert.deepEqual(benchmarks(DEFAULT_CONFIG), {
     naiveA: 340,

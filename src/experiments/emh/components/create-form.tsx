@@ -13,6 +13,7 @@ import {
   type Exp2Options,
 } from "../settings";
 import { SettingsFields } from "./settings-fields";
+import { EMH_EXPERIMENT_LABELS } from "../types";
 
 export function EmhCreateForm({
   status,
@@ -103,8 +104,8 @@ export function EmhCreateForm({
             );
           }}
         >
-          <option value="exp1">実験1</option>
-          <option value="exp2">実験2</option>
+          <option value="exp1">{EMH_EXPERIMENT_LABELS.exp1}</option>
+          <option value="exp2">{EMH_EXPERIMENT_LABELS.exp2}</option>
         </select>
       </label>
       <SettingsFields

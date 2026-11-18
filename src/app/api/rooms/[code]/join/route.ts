@@ -1,4 +1,5 @@
 import { experimentFor } from "@/lib/server/experiment-registry";
+import { evolutionService } from "@/experiments/evolution/server/service";
 import { emhService } from "@/experiments/emh/server/service";
 import { judgmentService } from "@/experiments/judgment/server/service";
 import type { NextRequest } from "next/server";
@@ -20,7 +21,16 @@ export async function POST(
   try {
     const code = codeFor((await ctx.params).code);
     const { nickname, pin } = await body(request, joinSchema);
-    if ((await experimentFor(code)) === "judgment")
+    const experiment = await experimentFor(code);
+    if (experiment === "evolution")
+      return loginResponse(
+        request,
+        await (
+          await evolutionService()
+        ).login(code, { role: "student", nickname, pin }),
+        "student",
+      );
+    if (experiment === "judgment")
       return loginResponse(
         request,
         await (
@@ -28,7 +38,7 @@ export async function POST(
         ).login(code, { role: "student", studentId: nickname, pin }),
         "student",
       );
-    if ((await experimentFor(code)) === "emh")
+    if (experiment === "emh")
       return loginResponse(
         request,
         await (

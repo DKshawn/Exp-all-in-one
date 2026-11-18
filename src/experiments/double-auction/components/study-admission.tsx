@@ -3,13 +3,12 @@
 import {
   useEffect,
   useEffectEvent,
-  useId,
   useRef,
   useState,
   type Dispatch,
   type SetStateAction,
 } from "react";
-import { Pause, Play, RotateCcw } from "lucide-react";
+import { AdmissionTimer } from "@/components/admission-timer";
 import type { Command, RoomView } from "@/experiments/double-auction/lib/types";
 import { MAX_STUDY_MARKETS } from "@/experiments/double-auction/lib/study-config";
 import {
@@ -58,7 +57,6 @@ export function StudyAdmission({
   );
   const [secondsDraft, setSecondsDraft] = useState<string | null>(null);
   const seconds = secondsDraft ?? String(admission?.timerSeconds ?? 60);
-  const timerId = useId();
   const running = admission?.closesAt != null;
   const paused = admission?.pausedRemainingMs !== undefined;
   const remainingSeconds = Math.max(
@@ -184,82 +182,28 @@ export function StudyAdmission({
         {section !== "markets" &&
           (admission.status === "open" ? (
             <>
-              <div className="study-admission-timer-field">
-                <span id={timerId}>入室受付時間（秒）</span>
-                <div
-                  className="study-admission-timer"
-                  role="group"
-                  aria-labelledby={timerId}
-                >
-                  {running || paused ? (
-                    <output
-                      className="study-admission-countdown"
-                      role="timer"
-                      aria-label={
-                        paused ? "入室締切まで（一時停止中）" : "入室締切まで"
-                      }
-                    >
-                      {remainingSeconds}
-                    </output>
-                  ) : (
-                    <input
-                      aria-labelledby={timerId}
-                      type="number"
-                      min={5}
-                      max={3600}
-                      step={1}
-                      value={seconds}
-                      disabled={disabled}
-                      onChange={(e) => setSecondsDraft(e.target.value)}
-                    />
-                  )}
-                  <button
-                    type="button"
-                    className="study-admission-timer-action"
-                    aria-label={
-                      paused ? "締切タイマーを再開" : "締切タイマーを開始"
-                    }
-                    title={paused ? "再開" : "開始"}
-                    disabled={
-                      disabled ||
-                      running ||
-                      (!paused &&
-                        (!validMarkets ||
-                          !Number.isInteger(Number(seconds)) ||
-                          Number(seconds) < 5 ||
-                          Number(seconds) > 3600))
-                    }
-                    onClick={async () => {
-                      if (await send(paused ? "resume-timer" : "schedule"))
-                        setSecondsDraft(null);
-                    }}
-                  >
-                    <Play size={16} aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    className="study-admission-timer-action"
-                    aria-label="締切タイマーを一時停止"
-                    title="一時停止"
-                    disabled={disabled || !running}
-                    onClick={() => void send("pause-timer")}
-                  >
-                    <Pause size={16} aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    className="study-admission-timer-action"
-                    aria-label="締切タイマーをリセット"
-                    title="リセット"
-                    disabled={disabled || (!running && !paused)}
-                    onClick={async () => {
-                      if (await send("cancel-timer")) setSecondsDraft(null);
-                    }}
-                  >
-                    <RotateCcw size={16} aria-hidden="true" />
-                  </button>
-                </div>
-              </div>
+              <AdmissionTimer
+                seconds={seconds}
+                onSeconds={setSecondsDraft}
+                running={running}
+                paused={paused}
+                remaining={remainingSeconds}
+                disabled={disabled}
+                canStart={
+                  validMarkets &&
+                  Number.isInteger(Number(seconds)) &&
+                  Number(seconds) >= 5 &&
+                  Number(seconds) <= 3600
+                }
+                onStart={async () => {
+                  if (await send(paused ? "resume-timer" : "schedule"))
+                    setSecondsDraft(null);
+                }}
+                onPause={() => void send("pause-timer")}
+                onReset={async () => {
+                  if (await send("cancel-timer")) setSecondsDraft(null);
+                }}
+              />
               <button
                 className="button primary"
                 disabled={

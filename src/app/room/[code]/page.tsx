@@ -1,4 +1,5 @@
 import { experimentFor } from "@/lib/server/experiment-registry";
+import { EvolutionRoom } from "@/experiments/evolution/components/room";
 import { SessionClient } from "@/experiments/emh/components/session-client";
 import { JudgmentTeacherRoom } from "@/experiments/judgment/components/teacher-room";
 import { StudentApp } from "@/experiments/judgment/components/student-app";
@@ -21,13 +22,22 @@ export default async function RoomPage({
   const { entry } = await searchParams;
   if (entry === "teacher")
     await requireTeacherPage(`/room/${code.toUpperCase()}?entry=teacher`);
-  if ((await experimentFor(code.toUpperCase())) === "judgment")
+  const experiment = await experimentFor(code.toUpperCase());
+  if (experiment === "evolution")
+    return (
+      <EvolutionRoom
+        key={`${code}-${entry === "teacher" ? "teacher" : "student"}`}
+        code={code.toUpperCase()}
+        role={entry === "teacher" ? "teacher" : "student"}
+      />
+    );
+  if (experiment === "judgment")
     return entry === "teacher" ? (
       <JudgmentTeacherRoom code={code.toUpperCase()} studies={studies} />
     ) : (
       <StudentApp code={code.toUpperCase()} />
     );
-  if ((await experimentFor(code.toUpperCase())) === "emh")
+  if (experiment === "emh")
     return (
       <SessionClient
         code={code.toUpperCase()}

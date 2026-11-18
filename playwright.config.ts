@@ -26,6 +26,14 @@ export default defineConfig({
         channel: process.env.E2E_CHANNEL || undefined,
       },
     },
+    ...(["firefox", "webkit"] as const).map((browserName) => ({
+      name: browserName,
+      testMatch: [
+        "**/classroom-compat.spec.ts",
+        "**/shared-order-book.spec.ts",
+      ],
+      use: { browserName },
+    })),
   ],
   webServer: process.env.E2E_BASE_URL
     ? undefined

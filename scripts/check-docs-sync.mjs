@@ -5,7 +5,7 @@ import { pathToFileURL } from "node:url";
 
 const languages = ["ja", "zh-CN", "en"];
 const readmes = ["README.md", "README.zh-CN.md", "README.en.md"];
-const moduleNames = ["double-auction", "emh", "judgment"];
+const moduleNames = ["double-auction", "emh", "judgment", "evolution"];
 
 /** @param {string} path */
 function featureTopics(path) {

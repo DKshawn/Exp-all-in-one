@@ -117,6 +117,64 @@ async function classroom(
   return { teacher, students, get, command, act };
 }
 
+test("room finish is teacher-only, atomic across markets and idempotent across retries", async () => {
+  const c = await classroom(14, { ...DEFAULT_SETTINGS, rounds: 1 });
+  await c.command("assign");
+  await c.command("start");
+  for (const period of ["A", "B"]) {
+    const market = (await c.get(c.teacher.token, "teacher", 1)).state.market!;
+    assert.equal(market.period, period);
+    assert.equal(
+      (
+        await c.act(
+          c.teacher.token,
+          1,
+          { kind: "end-period", expectedPhase: market.phaseKey },
+          "teacher",
+        )
+      ).error,
+      undefined,
+    );
+  }
+  const earlier = (await c.get()).state.market!.results;
+  const paused = await c.command("pause-all");
+  const finish: RequestCommand = {
+    requestId: randomUUID(),
+    scope: "session",
+    command: { kind: "finish-all", expectedRevision: paused.state.revision },
+  };
+  assert.ok(commandSchema.safeParse(finish).success);
+  const denied = await emh.request(
+    c.teacher.code,
+    c.students[0].token,
+    "student",
+    undefined,
+    finish,
+  );
+  assert.equal(denied.error?.status, 403);
+  const send = () =>
+    emh.request(c.teacher.code, c.teacher.token, "teacher", 2, finish);
+  const ended = await send();
+  assert.equal(ended.error, undefined);
+  assert.equal(ended.state.status, "completed");
+  assert.deepEqual(
+    ended.state.markets.map((m) => [m.status, m.paused]),
+    [
+      ["completed", false],
+      ["completed", false],
+    ],
+  );
+  assert.deepEqual(
+    ended.state.market!.results.map((p) => [p.period, p.reason]),
+    [["A", "teacher-finish"]],
+  );
+  const retry = await send();
+  assert.equal(retry.error, undefined);
+  assert.equal(retry.state.revision, ended.state.revision);
+  assert.deepEqual(retry.state.market!.results, ended.state.market!.results);
+  assert.deepEqual((await c.get()).state.market!.results, earlier);
+});
+
 test("classroom starts all markets with one enforced countdown", async () => {
   const c = await classroom(14);
   await c.command("assign");
@@ -510,6 +568,7 @@ test("every attendance 3–999 includes everyone, balances groups and types loca
 
 test("shared registry preserves both experiments and safely backfills existing room codes", async () => {
   const first = await emh.create("EMH", password, "");
+  const draw = await emh.create("EMH 2", password, "", undefined, "exp2");
   const second = await da.create(
     { title: "DA", capacity: 12, rounds: 1, duration: 60 },
     password,
@@ -518,10 +577,15 @@ test("shared registry preserves both experiments and safely backfills existing r
   assert.equal(await experimentFor(first.code, db), "emh");
   assert.equal(await experimentFor(second.code, db), "institutions");
   assert.notEqual(first.code, second.code);
-  assert.equal(
-    (await emh.listRooms("")).find((r) => r.code === first.code)?.experiment,
-    "emh",
+  await db.query(
+    "UPDATE emh_sessions SET state=state-'experiment' WHERE code=$1",
+    [first.code],
   );
+  const emhRooms = await emh.listRooms("");
+  const legacy = emhRooms.find((r) => r.code === first.code);
+  assert.equal(legacy?.experiment, "emh");
+  assert.equal(legacy.variant, "exp1");
+  assert.equal(emhRooms.find((r) => r.code === draw.code)?.variant, "exp2");
   assert.ok((await da.listRooms("")).some((r) => r.code === second.code));
   await db.query("DELETE FROM lab_room_registry WHERE code=$1", [second.code]);
   await migrate(db);
@@ -529,6 +593,7 @@ test("shared registry preserves both experiments and safely backfills existing r
   await da.deleteRoom(second.code, "");
   assert.equal(await experimentFor(second.code, db), null);
   await emh.deleteRoom(first.code, "");
+  await emh.deleteRoom(draw.code, "");
   assert.equal(await experimentFor(first.code, db), null);
 });
 

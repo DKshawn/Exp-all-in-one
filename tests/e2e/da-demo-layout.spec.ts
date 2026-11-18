@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { enterTeacherPage } from "./helpers/teacher-login";
+import { expectEndButton } from "./helpers/end-experiment";
 
 async function expectToolbarBelowHeader(page: Page) {
   const header = page.locator(".study-shell > header");
@@ -8,11 +9,18 @@ async function expectToolbarBelowHeader(page: Page) {
     await page.setViewportSize({ width, height: 900 });
     await expect(header).toBeVisible();
     await expect(toolbar).toBeVisible();
-    const headerBox = await header.boundingBox();
-    const toolbarBox = await toolbar.boundingBox();
-    expect(toolbarBox!.y).toBeGreaterThanOrEqual(
-      headerBox!.y + headerBox!.height,
-    );
+    // Read both rectangles in the same frame after the viewport resize.
+    await expect
+      .poll(() =>
+        toolbar.evaluate((el) => {
+          const header = el.closest(".study-shell")!.querySelector("header")!;
+          return (
+            el.getBoundingClientRect().top -
+            header.getBoundingClientRect().bottom
+          );
+        }),
+      )
+      .toBeGreaterThanOrEqual(-1);
   }
   await page.setViewportSize({ width: 1366, height: 900 });
 }
@@ -63,8 +71,28 @@ test("DA demo settings use the demo palette and toolbar follows the header", asy
   await expect(roster.locator(".study-roster-content")).toBeVisible();
   await closeRoster.click();
   await expect(roster.locator(".study-roster-content")).toBeHidden();
+  await expectEndButton(page);
+  await expect(
+    page.locator('.study-market-progress [aria-current="step"]').first(),
+  ).toHaveCSS("background-color", "rgb(244, 203, 81)");
   await page.getByRole("button", { name: "学生画面を見る" }).click();
   await expectToolbarBelowHeader(page);
+  await expect(page.locator('.round-display [aria-current="step"]')).toHaveCSS(
+    "background-color",
+    "rgb(244, 203, 81)",
+  );
+  await expect(
+    page.getByRole("button", { name: "実験を終了", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "教員画面を見る" }).click();
+  await page.getByRole("button", { name: "実験を終了", exact: true }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "終了する" })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "実験を終了", exact: true }),
+  ).toHaveCount(0);
 });
 
 test("DA size preview keeps the demo toolbar outside the simulated screen", async ({

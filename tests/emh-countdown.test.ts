@@ -12,6 +12,23 @@ import { makeDemo } from "../src/experiments/emh/demo-model";
 import { DEFAULT_SETTINGS } from "../src/experiments/emh/settings";
 
 for (const experiment of ["exp1", "exp2"] as const) {
+  test(`${experiment}: ending the countdown records no unplayed period or dividend`, () => {
+    const room = makeDemo("Countdown", DEFAULT_SETTINGS, 10000, experiment);
+    assignParticipants(room);
+    const teacher = { role: "teacher" as const };
+    act(room, teacher, { kind: "start", expectedPhase: phaseKey(room) }, 10000);
+    act(
+      room,
+      teacher,
+      { kind: "finish", expectedPhase: phaseKey(room) },
+      11000,
+    );
+    advanceClock(room, 90000);
+    assert.equal(room.status, "completed");
+    assert.equal(room.countdownEndsAt, null);
+    assert.deepEqual(room.results, []);
+    assert.ok(room.participants.every((p) => p.totalProfit === 0));
+  });
   test(`${experiment}: countdown exposes own conditions, blocks trades and pauses without consuming trading time`, () => {
     const room = makeDemo("Countdown", DEFAULT_SETTINGS, 10000, experiment);
     assignParticipants(room, () => 0.99);

@@ -7,12 +7,18 @@ export function ConfirmDialog({
   onCancel,
   onConfirm,
   confirmLabel = "終了する",
+  cancelLabel = "戻る",
+  pendingLabel = "処理中…",
+  danger = false,
 }: {
   title: string;
   message: string;
   onCancel: () => void;
   onConfirm: () => Promise<void>;
   confirmLabel?: string;
+  cancelLabel?: string;
+  pendingLabel?: string;
+  danger?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const [pending, setPending] = useState(false);
@@ -27,6 +33,7 @@ export function ConfirmDialog({
       aria-describedby="confirm-description"
       onCancel={(e) => {
         e.preventDefault();
+        e.stopPropagation();
         if (!pending) onCancel();
       }}
     >
@@ -38,17 +45,21 @@ export function ConfirmDialog({
           disabled={pending}
           onClick={onCancel}
         >
-          戻る
+          {cancelLabel}
         </button>
         <button
-          className="button primary"
+          className={danger ? "button danger" : "button primary"}
           disabled={pending}
           onClick={async () => {
             setPending(true);
-            await onConfirm();
+            try {
+              await onConfirm();
+            } finally {
+              setPending(false);
+            }
           }}
         >
-          {pending ? "処理中…" : confirmLabel}
+          {pending ? pendingLabel : confirmLabel}
         </button>
       </div>
     </dialog>

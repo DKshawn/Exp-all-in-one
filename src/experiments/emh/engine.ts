@@ -245,6 +245,10 @@ export function endPeriod(
     "取引中の期だけ終了できます。",
   );
   const period = room.period;
+  const lastPeriodOfYear =
+    period === "B" ||
+    room.config.experiment === "exp2" ||
+    reason === "teacher-finish";
   const trades = room.trades.filter(
     (t) => t.year === room.year && t.period === period,
   );
@@ -260,8 +264,7 @@ export function endPeriod(
           : d!.b;
     const dividend = p.holdings * perUnit;
     p.dividend += dividend;
-    if (period === "B" || room.config.experiment === "exp2")
-      p.totalProfit += p.cash + p.dividend;
+    if (lastPeriodOfYear) p.totalProfit += p.cash + p.dividend;
     return {
       participantId: p.id,
       seat: p.seat!,
@@ -336,12 +339,12 @@ export function endPeriod(
     reason,
     actualDividend,
   });
-  if (period === "A" && room.config.experiment !== "exp2") {
+  if (!lastPeriodOfYear) {
     room.period = "B";
     beginPeriod(room, now, random);
   } else {
     for (const p of room.participants) p.holdings = 0;
-    if (room.year === room.config.rounds) {
+    if (room.year === room.config.rounds || reason === "teacher-finish") {
       room.status = "completed";
       room.breakEndsAt = null;
     } else {
@@ -718,6 +721,23 @@ export function act(
     }
     case "end-period":
       endPeriod(room, now, "teacher", random);
+      break;
+    case "finish":
+      requireRule(
+        room.status === "countdown" ||
+          room.status === "trading" ||
+          room.status === "break",
+        "実施中の実験だけ終了できます。",
+      );
+      room.pausedAt = null;
+      if (room.status === "trading") {
+        endPeriod(room, now, "teacher-finish", random);
+      } else {
+        room.countdownEndsAt = null;
+        room.breakEndsAt = null;
+        room.status = "completed";
+        for (const p of room.participants) p.holdings = 0;
+      }
       break;
     case "next-year":
       requireRule(

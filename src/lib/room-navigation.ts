@@ -11,6 +11,9 @@ export const teacherReentryHref = (code: string) =>
 // `entry` selects a session and its recovery route; it is never a credential.
 export const teacherRoomHref = (code: string) => `/room/${code}?entry=teacher`;
 
+export const studentJoinHref = (code: string) =>
+  `/?code=${encodeURIComponent(code)}`;
+
 export function roomNavigation(
   code: string,
   role?: RoomView["me"]["role"],

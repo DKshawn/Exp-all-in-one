@@ -2,6 +2,7 @@ import { DOUBLE_AUCTION_SCHEMA } from "@/experiments/double-auction/server/schem
 import { EMH_SCHEMA } from "@/experiments/emh/server/schema";
 import { JUDGMENT_SCHEMA } from "@/experiments/judgment/server/schema";
 import { REGISTRY_SCHEMA } from "./experiment-schema";
+import { EVOLUTION_SCHEMA } from "@/experiments/evolution/server/schema";
 import { timed } from "./performance";
 import { neon, neonConfig, Pool } from "@neondatabase/serverless";
 import ws from "ws";
@@ -30,6 +31,7 @@ export const SCHEMA = [
   ...DOUBLE_AUCTION_SCHEMA,
   ...EMH_SCHEMA,
   ...JUDGMENT_SCHEMA,
+  ...EVOLUTION_SCHEMA,
   ...REGISTRY_SCHEMA,
 ];
 
