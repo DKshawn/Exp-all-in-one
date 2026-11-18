@@ -71,6 +71,8 @@ npm run build
 
 正式な実験は同じ `main` に保ち、短期の機能ブランチで開発し、検証後にマージしてブランチを削除します。共通の入口・ルーム・セッション・DB接続はプラットフォーム、実験のルールとデータは各モジュールが担当します。[構成と開発方針（English）](../../architecture.md)を参照してください。
 
+AI 学生の開発は `Agent-Based-Behavioral-Experiments` にプッシュします。このブランチでは AI テストが実行され、Vercel の自動デプロイは無効です。`main` へのマージには対象変更の承認が必要です。
+
 主要な実装は `src/experiments/double-auction/lib/study-core.ts`（ルール）、`study-view.ts`（表示・統計）、`study-export.ts`（出力）、`src/experiments/double-auction/components/study-room.tsx`（画面）、`study-settings.tsx`（設定）です。写真の出典は [public/fruits/CREDITS.md](../../../public/fruits/CREDITS.md) に記載しています。
 
 ## 三語ドキュメントの同期チェック

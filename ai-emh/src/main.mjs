@@ -10,25 +10,27 @@ import {
   requestModel,
 } from "./client.mjs";
 import { createPrompts } from "./prompts.mjs";
-import {
-  classifyAction,
-  DECISION_SCHEMA,
-  isActive,
-  marketObservationKey,
-  observation,
-  SYSTEM_PROMPT,
-} from "./decision.mjs";
+import { emhAdapter } from "./decision.mjs";
+import { auctionAdapter } from "./auction.mjs";
+import { evolutionAdapter } from "./evolution.mjs";
+import { isWait } from "./selection.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const HELP = `独立 EMH 实验 2 AI 学生客户端（Node.js 22+）
+const EXPERIMENTS = {
+  emh: { name: "EMH", adapter: emhAdapter },
+  institutions: { name: "Double Auction", adapter: auctionAdapter },
+  evolution: { name: "SEG", adapter: evolutionAdapter },
+};
+const HELP = `Agent-Based Behavioral Experiments（Node.js 22+）
 
-  node run.mjs [--url http://localhost:3000] [--room ABCD23] [--count 90]
+  node ai-emh/run.mjs [--url http://localhost:3000] [--room ABCD23] [--count 90]
                [--provider local|openai] [--model MODEL]
                [--local-url http://127.0.0.1:11434/v1]
                [--interval 10] [--timeout 20] [--parallel 8] [--max-output-tokens ${DEFAULT_MAX_OUTPUT_TOKENS}]
                [--resume PATH] [--lmstudio-fast]
 
 平台地址也可以填写包含房间代码的学生参加链接或教师房间链接。
+程序按房间代码识别 Double Auction、EMH 实验 1/2 或 SEG。
 未提供的连接信息会交互式询问，Token 输入不会显示。也可以分别通过
 OPENAI_API_KEY 或 LOCAL_MODEL_API_KEY 环境变量提供 OpenAI 或本地模型的密钥。
 本地模式使用 OpenAI 兼容的 /v1/chat/completions 接口。
@@ -177,6 +179,7 @@ async function wait(seconds, signal) {
 }
 
 export async function runStudent(client, config, slots, signal, report) {
+  const { adapter } = EXPERIMENTS[client.experiment ?? "emh"];
   let nextDecisionAt = 0;
   let nextCapacityLogAt = 0;
   let waitingOn = null;
@@ -185,8 +188,7 @@ export async function runStudent(client, config, slots, signal, report) {
     report({
       student: client.identity.nickname,
       type: "waiting_ended",
-      round: waitingOn.round,
-      market: waitingOn.market,
+      ...waitingOn.position,
       waitDurationMs: Math.max(0, Date.now() - waitingOn.startedAt),
       reason,
     });
@@ -199,27 +201,23 @@ export async function runStudent(client, config, slots, signal, report) {
     let modelDurationMs;
     try {
       const state = await client.state();
-      if (state.experiment !== "exp2") throw new Error("此房间不是 EMH 实验 2");
-      if (
-        state.status === "completed" ||
-        state.market?.status === "completed"
-      ) {
+      if (adapter.isComplete(state)) {
         endWaiting("experiment_completed");
         report({ student: client.identity.nickname, type: "completed" });
         return;
       }
-      const active = isActive(state);
+      const active = adapter.isActive(state);
       if (waitingOn && !active) endWaiting("market_inactive");
-      if (waitingOn && active && marketObservationKey(state) !== waitingOn.key)
+      if (waitingOn && active && adapter.key(state) !== waitingOn.key)
         endWaiting("market_changed");
       const shouldDecide = active && !waitingOn && Date.now() >= nextDecisionAt;
+      const position = adapter.position(state);
       if (shouldDecide && !slots.acquire()) {
         if (Date.now() >= nextCapacityLogAt) {
           report({
             student: client.identity.nickname,
             type: "deferred",
-            round: state.market.year,
-            market: state.marketId,
+            ...position,
             skipReason: "model_capacity",
           });
           nextCapacityLogAt = Date.now() + config.interval * 1000;
@@ -236,8 +234,7 @@ export async function runStudent(client, config, slots, signal, report) {
             model: config.model,
             timeoutMs: config.timeout * 1000,
             maxOutputTokens: config.maxOutputTokens,
-            prompt: { system: SYSTEM_PROMPT, observation: observation(state) },
-            schema: DECISION_SCHEMA,
+            ...adapter.request(state),
             provider: config.provider,
             lmstudioFast: config.lmstudioFast,
           });
@@ -246,12 +243,13 @@ export async function runStudent(client, config, slots, signal, report) {
             modelDurationMs = Math.round(performance.now() - modelStartedAt);
           slots.release();
         }
+        stage = "refresh";
+        const latest = signal.aborted ? null : await client.state();
         if (signal.aborted) {
           report({
             student: client.identity.nickname,
             type: "skipped",
-            round: state.market.year,
-            market: state.marketId,
+            ...position,
             decision: result.decision,
             usage: result.usage,
             modelDurationMs,
@@ -259,52 +257,46 @@ export async function runStudent(client, config, slots, signal, report) {
           });
           break;
         }
-        stage = "refresh";
-        const latest = await client.state();
         if (
-          result.decision?.action === "wait" &&
-          typeof result.decision.reason === "string" &&
-          isActive(latest) &&
-          latest.marketId === state.marketId &&
-          latest.market.year === state.market.year
+          isWait(result.decision) &&
+          adapter.isActive(latest) &&
+          JSON.stringify(adapter.position(latest)) === JSON.stringify(position)
         ) {
           waitingOn = {
-            key: marketObservationKey(state),
+            key: adapter.key(state),
             startedAt: Date.now(),
-            round: state.market.year,
-            market: state.marketId,
+            position,
           };
           report({
             student: client.identity.nickname,
             type: "waiting_started",
-            round: state.market.year,
-            market: state.marketId,
+            ...position,
             decision: result.decision,
             usage: result.usage,
             modelDurationMs,
           });
-          if (marketObservationKey(latest) !== waitingOn.key)
+          if (adapter.key(latest) !== waitingOn.key)
             endWaiting("market_changed");
           await wait(config.pollSeconds, signal);
           continue;
         }
-        const { action, skipReason } = classifyAction(
+        const { action, skipReason } = adapter.classify(
           result.decision,
           state,
           latest,
         );
         if (action) {
           stage = "submit";
-          await client.act(latest.marketId, action);
+          await client.act(adapter.target(latest), action);
         }
         report({
           student: client.identity.nickname,
           type: action ? "submitted" : "skipped",
-          round: state.market.year,
-          market: state.marketId,
+          ...position,
           decision: result.decision,
           usage: result.usage,
           modelDurationMs,
+          ...(action ? { command: action } : {}),
           ...(skipReason ? { skipReason } : {}),
         });
       }
@@ -317,7 +309,7 @@ export async function runStudent(client, config, slots, signal, report) {
         ...(modelDurationMs !== undefined ? { modelDurationMs } : {}),
         error:
           error.name === "TimeoutError" || error.name === "AbortError"
-            ? "请求超时，本次不交易"
+            ? "请求超时，本次不提交操作"
             : error.message,
       });
       nextDecisionAt = Date.now() + config.interval * 1000;
@@ -344,6 +336,8 @@ async function makeManifest(code, count, baseUrl) {
 function validateManifest(manifest) {
   if (
     manifest?.version !== 1 ||
+    (manifest.experiment !== undefined &&
+      !Object.hasOwn(EXPERIMENTS, manifest.experiment)) ||
     !/^[A-Z2-9]{6}$/.test(manifest.code) ||
     !Array.isArray(manifest.students) ||
     manifest.students.length < 1 ||
@@ -386,7 +380,7 @@ export async function main(args = process.argv.slice(2)) {
           (await ask("实验平台地址或参加链接", "http://localhost:3000")),
       );
       const code = resolveRoomCode(
-        options.room || roomCode || (await ask("EMH 实验 2 房间代码")),
+        options.room || roomCode || (await ask("房间代码")),
         roomCode,
       );
       if (roomCode) console.log(`已从链接识别房间代码：${code}`);
@@ -453,7 +447,10 @@ export async function main(args = process.argv.slice(2)) {
     prompts.close();
   }
 
-  await checkRoom(manifest.baseUrl, manifest.code);
+  const experiment = await checkRoom(manifest.baseUrl, manifest.code);
+  if (options.resume && (manifest.experiment ?? "emh") !== experiment)
+    throw new Error("房间所属实验与恢复文件不一致");
+  manifest.experiment = experiment;
   await mkdir(path.join(root, ".local", "runs"), { recursive: true });
   const manifestPath = options.resume
     ? path.resolve(options.resume)
@@ -471,7 +468,7 @@ export async function main(args = process.argv.slice(2)) {
     });
   const logPath = `${manifestPath}.jsonl`;
   console.log(
-    `模型：${config.provider} / ${config.model}；房间：${manifest.code}；AI 学生：${manifest.students.length} 人`,
+    `实验：${EXPERIMENTS[experiment].name}；模型：${config.provider} / ${config.model}；房间：${manifest.code}；AI 学生：${manifest.students.length} 人`,
   );
   console.log(`模型接口：${config.modelUrl}`);
   if (config.lmstudioFast)
@@ -479,29 +476,20 @@ export async function main(args = process.argv.slice(2)) {
   console.log(`身份恢复文件：${manifestPath}\n记录文件：${logPath}`);
   console.log("恢复文件包含学生 PIN，请妥善保存。正在入室……");
 
-  // Join the first identity before the rest to verify the room's experiment.
+  // Verify the first student session before registering the remaining identities.
   const clients = manifest.students.map(
-    (student) => new StudentClient(manifest.baseUrl, manifest.code, student),
+    (student) =>
+      new StudentClient(manifest.baseUrl, manifest.code, student, experiment),
   );
   await clients[0].join();
-  const first = await clients[0].state();
-  if (first.experiment !== "exp2")
-    throw new Error(
-      `房间不是 EMH 实验 2；已入室的 ${clients[0].identity.nickname} 不会交易`,
-    );
+  await clients[0].state();
   for (let index = 1; index < clients.length; index++) {
     await clients[index].join();
     if ((index + 1) % 10 === 0 || index + 1 === clients.length)
       console.log(`已入室 ${index + 1}/${clients.length}`);
   }
-  const roomMessage =
-    first.status === "open"
-      ? "请在实验平台教师页面分配市场并开始实验。"
-      : first.status === "assigned"
-        ? "市场已分配，请在教师页面开始实验。"
-        : "已连接已有实验；如果实验已暂停，请在教师页面恢复。";
   console.log(
-    `全部 ${clients.length} 人已入室。${roomMessage}按 Ctrl+C 停止。`,
+    `全部 ${clients.length} 人已入室。请在教师页面开始或恢复实验，按 Ctrl+C 停止 AI。`,
   );
   const controller = new AbortController();
   const stop = () => {
@@ -516,25 +504,32 @@ export async function main(args = process.argv.slice(2)) {
     logging = logging
       .then(() => appendFile(logPath, `${JSON.stringify(record)}\n`))
       .catch((error) => console.error(`记录写入失败：${error.message}`));
+    const location =
+      entry.group != null
+        ? `小组 ${entry.group} `
+        : entry.market != null
+          ? `市场 ${entry.market} `
+          : "";
     if (entry.type === "error")
       console.error(`${entry.student}：${entry.error}`);
     else if (entry.type === "submitted")
       console.log(
-        `${entry.student} 市場 ${entry.market} 第 ${entry.round} 轮：${entry.decision.action}${entry.decision.price == null ? "" : ` ${entry.decision.price}円`}`,
+        `${entry.student} ${location}第 ${entry.round} 轮：${entry.decision.action}${entry.decision.choice == null ? "" : ` ${entry.decision.choice}`}${entry.decision.price == null ? "" : ` ${entry.decision.price}円`}`,
       );
     else if (entry.type === "waiting_started")
       console.log(
-        `${entry.student} 市場 ${entry.market} 第 ${entry.round} 轮：AI 进入等待状态`,
+        `${entry.student} ${location}第 ${entry.round} 轮：AI 进入等待状态`,
       );
     else if (entry.type === "skipped")
       console.log(
-        `${entry.student} 市場 ${entry.market} 第 ${entry.round} 轮：${entry.decision.action === "wait" ? "AI 决定等待" : "决定已过期或不符合交易条件，本次未执行"}`,
+        `${entry.student} ${location}第 ${entry.round} 轮：${entry.decision?.action === "wait" ? "AI 决定等待" : "决定已过期或不符合条件，本次未执行"}`,
       );
     else if (entry.type === "completed")
       console.log(`${entry.student}：实验结束`);
   };
   report({
     type: "run_started",
+    experiment,
     provider: config.provider,
     model: config.model,
     count: clients.length,

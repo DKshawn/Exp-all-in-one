@@ -39,10 +39,11 @@ async function request(
 }
 
 export class StudentClient {
-  constructor(baseUrl, code, identity) {
+  constructor(baseUrl, code, identity, experiment = "emh") {
     this.baseUrl = baseUrl.replace(/\/$/, "");
     this.code = code;
     this.identity = identity;
+    this.experiment = experiment;
     this.cookie = null;
     this.path = `${this.baseUrl}/api/rooms/${code}`;
   }
@@ -59,16 +60,37 @@ export class StudentClient {
   }
 
   async state() {
-    const { data } = await request(`${this.path}/emh?session=student`, {
+    const endpoint =
+      this.experiment === "institutions" ? "" : `/${this.experiment}`;
+    const { data } = await request(`${this.path}${endpoint}?session=student`, {
       cookie: this.cookie,
     });
-    return data.state;
+    return this.experiment === "emh" ? data.state : data;
   }
 
-  async act(marketId, action) {
+  async act(target, action) {
+    if (this.experiment === "institutions") {
+      const { data } = await request(`${this.path}/commands?session=student`, {
+        cookie: this.cookie,
+        body: { requestId: randomUUID(), ...target, command: action },
+      });
+      return data;
+    }
+    if (this.experiment === "evolution") {
+      const { data } = await request(`${this.path}/evolution?session=student`, {
+        cookie: this.cookie,
+        body: action,
+      });
+      return data;
+    }
     const { data } = await request(`${this.path}/emh?session=student`, {
       cookie: this.cookie,
-      body: { requestId: randomUUID(), scope: "market", marketId, action },
+      body: {
+        requestId: randomUUID(),
+        scope: "market",
+        marketId: target,
+        action,
+      },
     });
     return data.state;
   }
@@ -78,8 +100,9 @@ export async function checkRoom(baseUrl, code) {
   const { data } = await request(
     `${baseUrl.replace(/\/$/, "")}/api/rooms/${code}/entry`,
   );
-  if (data.experiment !== "emh")
-    throw new Error("这个房间不是 EMH 实验，请检查房间代码");
+  if (!["emh", "institutions", "evolution"].includes(data.experiment))
+    throw new Error("AI 学生支持 Double Auction、EMH 和 SEG 房间");
+  return data.experiment;
 }
 
 export function parseModelDecision(content) {

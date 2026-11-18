@@ -2,6 +2,8 @@
 
 [日本語](../ja/double-auction.md) · [中文](../zh-CN/double-auction.md) · [English](../en/double-auction.md)
 
+The [standalone AI student program](../../../ai-emh/README.en.md) joins formal CDA, Call Market, Posted Offer and legacy three-good CDA rooms. Each AI order or purchase is for one unit.
+
 At widths of 760 CSS pixels or less, the student trading screen uses a single column at native size. Personal conditions and ordering come first, followed by the market and records. Long histories scroll within their panels.
 
 Student waiting screens share a consistent card design while retaining experiment-specific information.

@@ -69,6 +69,8 @@ Automated tests cover the three institutions, marginal values and per-unit order
 
 Keep all released experiments together on `main`. Use short-lived feature branches, validate, merge, and delete the branch. The platform owns entry points, rooms, sessions, and database connections; modules own experiment rules and data. See the [architecture and development policy](../../architecture.md).
 
+Push AI participant development to `Agent-Based-Behavioral-Experiments` first. Pushes to that branch run the AI tests, and automatic Vercel deployments are disabled. Merging into `main` requires acceptance of the specific change.
+
 Key Double Auction files are `src/experiments/double-auction/lib/study-core.ts` for rules, `study-view.ts` and `study-export.ts` in the same directory for views/statistics and exports, and `src/experiments/double-auction/components/study-room.tsx` and `study-settings.tsx` for the interface and settings. Photo credits are in [public/fruits/CREDITS.md](../../../public/fruits/CREDITS.md).
 
 ## Documentation synchronization

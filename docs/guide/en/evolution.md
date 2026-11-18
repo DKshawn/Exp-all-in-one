@@ -2,6 +2,8 @@
 
 [日本語](../ja/evolution.md) · [中文](../zh-CN/evolution.md) · [English](../en/evolution.md)
 
+The [standalone AI student program](../../../ai-emh/README.en.md) joins formal coordination and Nash demand rooms. Each AI uses its own conditions and history to make one choice in each eligible round.
+
 If the browser blocks preference storage, language changes apply to the open page. On narrow screens, edit each payoff directly and scroll inside the input to inspect long values.
 
 ## Run a classroom session

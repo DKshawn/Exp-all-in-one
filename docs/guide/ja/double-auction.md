@@ -2,6 +2,8 @@
 
 [日本語](../ja/double-auction.md) · [中文](../zh-CN/double-auction.md) · [English](../en/double-auction.md)
 
+正式ルームには[独立した AI 学生プログラム](../../../ai-emh/README.md)で入室できます。CDA、Call Market、Posted Offer と旧3商品CDAに対応し、AI は一操作あたり1単位を注文・購入します。
+
 学生の取引画面は幅760 CSSピクセル以下で原寸の1列表示になります。自分の条件と注文の下に市場と履歴が並び、履歴はパネル内でスクロールできます。
 
 学生の待機画面は共通のカードデザインを使い、実験ごとの情報を表示します。

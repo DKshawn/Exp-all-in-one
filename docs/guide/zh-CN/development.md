@@ -69,6 +69,8 @@ npm run build
 
 所有正式实验共同维护在 `main`，开发使用短期功能分支，验证后合并并删除分支。平台负责入口、房间、会话与数据库连接，各实验模块负责自己的规则和数据。详见[架构与开发约定（英文）](../../architecture.md)。
 
+AI 学生相关开发先推送到 `Agent-Based-Behavioral-Experiments`。该分支会运行 AI 测试，并关闭 Vercel 自动部署。合入 `main` 前须验收当次修改。
+
 Double Auction 的主要实现包括 `src/experiments/double-auction/lib/study-core.ts`（规则）、同目录的 `study-view.ts`（视图与统计）、`study-export.ts`（导出），以及 `src/experiments/double-auction/components/study-room.tsx`（页面）和同目录的 `study-settings.tsx`（设置）。照片来源见 [public/fruits/CREDITS.md](../../../public/fruits/CREDITS.md)。
 
 ## 三语文档同步检查

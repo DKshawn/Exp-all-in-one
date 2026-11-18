@@ -2,6 +2,8 @@
 
 [日本語](../ja/double-auction.md) · [中文](../zh-CN/double-auction.md) · [English](../en/double-auction.md)
 
+正式房间可通过[独立 AI 学生程序](../../../ai-emh/README.zh-CN.md)加入。程序支持 CDA、Call Market、Posted Offer 和旧三商品 CDA。AI 每次下单或购买一个单位。
+
 学生交易页在宽度不超过 760 CSS 像素时使用原尺寸单列布局。个人条件和下单区在前，盘口和记录在后。长记录可在面板内滚动。
 
 学生等待画面使用统一的卡片设计，并保留各实验的信息。

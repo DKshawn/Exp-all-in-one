@@ -1,4 +1,7 @@
-export const SYSTEM_PROMPT = `You are one student in an experimental asset market. Your goal is to make trading decisions for your own score. All monetary values are yen. Each trade is for one unit. You may buy, sell, place a bid or ask, cancel your own standing bid or ask, or wait. A bid is a price you offer to pay; an ask is a price you offer to accept. You can sell only if you own units. Your tradeCash is net trading income, not a cash budget: it can be negative, and buying does not require a positive balance. Market orders buy the best ask or sell to the best bid. A bid at or above the best ask, or an ask at or below the best bid, may execute immediately. Your dividend per held unit depends on the state at the end of the round. The dividends and probabilities arrays correspond to states 1, 2 and 3 in that order. A non-null clue identifies the state that will occur in this round; it is private information. Your historical trades and outcomes are supplied if available. Think independently using only the information supplied. No other participant's private information is available. Return a JSON object with action, price and reason. action is one of wait, bid, ask, buy, sell, cancel_bid, cancel_ask. For bid or ask set price to an integer between 1 and 100000; otherwise set price to null. reason is a short explanation.`;
+const TRADING_RULES = `You are one student in an experimental asset market. Your goal is to make trading decisions for your own score. All monetary values are yen. Each trade is for one unit. You may buy, sell, place a bid or ask, cancel your own standing bid or ask, or wait. A bid is a price you offer to pay; an ask is a price you offer to accept. You can sell only if you own units. Your tradeCash is net trading income, not a cash budget: it can be negative, and buying does not require a positive balance. Market orders buy the best ask or sell to the best bid. A bid at or above the best ask, or an ask at or below the best bid, may execute immediately.`;
+const OUTPUT_RULES = `Your historical trades and outcomes are supplied if available. Think independently using only the information supplied. No other participant's private information is available. Return a JSON object with action, price and reason. action is one of wait, bid, ask, buy, sell, cancel_bid, cancel_ask. For bid or ask set price to an integer between 1 and 100000; otherwise set price to null. reason is a short explanation.`;
+export const SYSTEM_PROMPT = `${TRADING_RULES} Your dividend per held unit depends on the state at the end of the round. The dividends and probabilities arrays correspond to states 1, 2 and 3 in that order. A non-null clue identifies the state that will occur in this round; it is private information. ${OUTPUT_RULES}`;
+const FIXED_DIVIDEND_PROMPT = `${TRADING_RULES} You receive your fixed dividend per held unit at the end of period A and keep those units into period B. You receive your period B dividend on the units still held at the end of B, and the units expire. The dividends object contains your own amounts for A and B as a and b. ${OUTPUT_RULES}`;
 
 export const DECISION_SCHEMA = {
   type: "json_schema",
@@ -34,6 +37,7 @@ export const DECISION_SCHEMA = {
 export function observation(state) {
   const market = state.market;
   const me = market.me;
+  const draw = state.experiment === "exp2";
   const levels = (side) =>
     (market.orderBook?.[side] ?? [])
       .slice(0, 10)
@@ -52,9 +56,17 @@ export function observation(state) {
     holdings: me.holdings,
     tradeCash: me.cash,
     totalProfit: me.totalProfit,
-    dividends: market.exp2.dividends,
-    probabilities: market.exp2.prior,
-    clue: market.exp2.clue,
+    ...(draw
+      ? {
+          dividends: market.exp2.dividends,
+          probabilities: market.exp2.prior,
+          clue: market.exp2.clue,
+        }
+      : {
+          period: market.period,
+          dividends: { a: me.dividends.a, b: me.dividends.b },
+          receivedDividends: me.dividend,
+        }),
     bestBid: market.bid
       ? { price: market.bid.price, isOwn: market.bid.participantId === me.id }
       : null,
@@ -74,6 +86,7 @@ export function observation(state) {
     },
     recentTrades: market.trades.slice(-20).map((trade) => ({
       round: trade.year,
+      ...(draw ? {} : { period: trade.period }),
       price: trade.price,
       ownSide:
         trade.buyerId === me.id
@@ -83,14 +96,34 @@ export function observation(state) {
             : null,
     })),
     pastResults: market.results
-      .filter((result) => result.year < market.year)
-      .map((result) => ({
-        round: result.year,
-        state: result.state ?? null,
-        own:
-          result.payouts?.find((payout) => payout.participantId === me.id) ??
-          null,
-      })),
+      .filter(
+        (result) =>
+          result.year < market.year ||
+          (!draw &&
+            result.year === market.year &&
+            market.period === "B" &&
+            result.period === "A"),
+      )
+      .map((result) => {
+        const own = result.payouts?.find(
+          (payout) => payout.participantId === me.id,
+        );
+        return {
+          round: result.year,
+          ...(draw
+            ? { state: result.state ?? null }
+            : { period: result.period }),
+          own: own
+            ? {
+                holdings: own.holdings,
+                perUnit: own.perUnit,
+                dividend: own.dividend,
+                cash: own.cash,
+                yearProfit: own.yearProfit,
+              }
+            : null,
+        };
+      }),
   };
 }
 
@@ -114,14 +147,16 @@ export function marketObservationKey(state) {
 export function isActive(state) {
   const market = state?.market;
   return (
-    state?.experiment === "exp2" &&
     state?.role === "student" &&
     Number.isInteger(state?.marketId) &&
-    market?.experiment === "exp2" &&
-    market.status === "trading" &&
+    market?.status === "trading" &&
     market.pausedAt == null &&
     market.me &&
-    market.exp2?.dividends &&
+    (state.experiment === "exp2"
+      ? market.experiment === "exp2" && market.exp2?.dividends
+      : (state.experiment ?? "exp1") === "exp1" &&
+        (market.experiment ?? "exp1") === "exp1" &&
+        market.me.dividends) &&
     market.unitKey &&
     market.unitEndsAt > state.serverNow &&
     market.periodEndsAt > state.serverNow
@@ -199,3 +234,21 @@ export function classifyAction(decision, original, current) {
   }
   return skip("invalid_decision");
 }
+
+export const emhAdapter = {
+  isActive,
+  isComplete: (state) =>
+    state.status === "completed" || state.market?.status === "completed",
+  position: (state) => ({ round: state.market?.year, market: state.marketId }),
+  target: (state) => state.marketId,
+  key: marketObservationKey,
+  classify: classifyAction,
+  request: (state) => ({
+    schema: DECISION_SCHEMA,
+    prompt: {
+      system:
+        state.experiment === "exp2" ? SYSTEM_PROMPT : FIXED_DIVIDEND_PROMPT,
+      observation: observation(state),
+    },
+  }),
+};
