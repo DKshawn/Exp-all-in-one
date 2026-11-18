@@ -416,7 +416,7 @@ export function StudyRoom({
                   : undefined
               }
             >
-              教員の管理・設定へ
+              {demo ? "教員の管理・設定へ" : "ルーム管理"}
             </Link>
           )}
           {roomStatus}

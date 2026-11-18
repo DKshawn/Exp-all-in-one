@@ -26,7 +26,7 @@ export function TeacherReentry({ initialCode }: { initialCode: string }) {
     }
   }
   return (
-    <form className="emh-create" onSubmit={submit}>
+    <form className="emh-create" method="post" onSubmit={submit}>
       <h1>教員として再入室</h1>
       <label className="field">
         ルームコード

@@ -68,7 +68,7 @@ test("demo starts at the shared teacher settings form and restores the last expe
     }),
   );
   assert.match(formal, /name="password"/);
-  assert.match(formal, /ルーム管理/);
+  assert.doesNotMatch(formal, /ルーム管理|教員として再入室/);
   assert.match(formal, /ルーム作成/);
 });
 

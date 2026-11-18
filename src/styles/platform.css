@@ -75,6 +75,11 @@
 .teacher-hub-main > .teacher-rooms-heading h1 {
   margin-bottom: 0;
 }
+@media (max-width: 380px) {
+  main.teacher-hub-main {
+    padding-inline: 16px;
+  }
+}
 .emh-app .emh-session {
   padding-block: 28px 50px;
 }

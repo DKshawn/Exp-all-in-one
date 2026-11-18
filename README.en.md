@@ -63,6 +63,8 @@ Experiment 2 configures initial securities, the unsuccessful-attempt limit, insi
 
 The EMH demo control panel switches between teacher and student views, pauses, advances 30 seconds or to the next period, restarts, and returns to settings. Fast-forward processes virtual trades and deadlines in order; it is disabled during the countdown and while paused. **やり直す** keeps the settings and resets allocation and progress. The screen-size preview places the control panel outside the frame.
 
+Use **ルーム管理** on the teacher home page to find and re-enter rooms across all experiments. Each room has an experiment label. Filter by experiment, creation month (Japan time), and status.
+
 [Illustrated instructions, re-entry, and room management](docs/guide/en/classroom.md) · [Using Demo Model](docs/guide/en/demo.md)
 
 Teachers sign in once to open **Demo Model**, including direct links to a demo or its screen-size preview. The demo list and screens use a yellow theme, with the demo-mode label in plain gold text beside the site name. Select **市場実験室** or **戻る** to return to the demo experiment list. The blue-purple **DEMOモードを終了** button returns to the corresponding teacher setup, or to teacher experiment selection from the demo list.

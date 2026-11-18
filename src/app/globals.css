@@ -575,23 +575,9 @@ summary.disclosure-button {
 .teacher-rooms-heading {
   margin-bottom: 8px;
 }
-.teacher-rooms-unlock {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 8px 12px;
-  margin: 18px 0;
-}
-.teacher-rooms-unlock .field {
-  min-width: 0;
-  margin: 0;
-}
-.teacher-rooms-unlock > .field-help {
-  grid-column: 1 / -1;
-}
 .teacher-room-filters {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 110px 130px;
+  grid-template-columns: minmax(0, 1fr) minmax(17.5rem, 1.1fr) 8.5rem 9.5rem;
   gap: 12px;
   margin: 20px 0 12px;
 }
@@ -601,7 +587,8 @@ summary.disclosure-button {
 }
 .teacher-room-filters input,
 .teacher-room-filters select {
-  font-size: 12px;
+  font-size: max(1rem, 1em);
+  min-height: 48px;
 }
 .teacher-room-search > span {
   position: relative;
@@ -641,10 +628,24 @@ summary.disclosure-button {
   padding: 16px;
   min-width: 0;
 }
+.teacher-room-card-heading {
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-bottom: 8px;
+}
 .teacher-room-card h3 {
   font-size: 14px;
-  min-width: 0;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow-x: auto;
+}
+.teacher-room-experiment {
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--lavender);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 .teacher-room-status {
   flex-shrink: 0;
@@ -653,6 +654,7 @@ summary.disclosure-button {
   color: var(--muted);
   background: var(--bg);
   border-radius: 6px;
+  white-space: nowrap;
 }
 .teacher-room-status.is-running,
 .teacher-room-status.is-paused {
@@ -685,8 +687,12 @@ summary.disclosure-button {
 }
 .teacher-room-actions {
   justify-content: flex-end;
+  flex-wrap: wrap;
   margin-top: 12px;
   gap: 8px;
+}
+.teacher-room-actions > .button {
+  white-space: nowrap;
 }
 .teacher-rooms-message {
   margin-top: 14px;
@@ -708,46 +714,25 @@ summary.disclosure-button {
 .teacher-room-delete-button:not(:disabled):hover {
   background: #a53346;
 }
-@media (max-width: 620px) {
+@media (max-width: 860px) {
   .teacher-room-filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .teacher-room-search {
+}
+@media (max-width: 640px) {
+  .teacher-room-search,
+  .teacher-room-experiment-filter {
     grid-column: 1 / -1;
   }
-  .teacher-rooms-unlock {
+}
+@media (max-width: 380px) {
+  .teacher-room-filters {
     grid-template-columns: minmax(0, 1fr);
   }
-  .teacher-rooms-unlock > .field-help {
-    grid-row: 2;
+  .teacher-room-filters select {
+    font-weight: 500;
+    padding-inline-start: 10px;
   }
-  .teacher-rooms-unlock > button {
-    grid-row: 3;
-    justify-self: start;
-  }
-}
-.segmented {
-  display: flex;
-  border-radius: 9px;
-  padding: 4px;
-  background: var(--bg);
-  border: 1px solid var(--line);
-  gap: 4px;
-}
-.segmented button {
-  flex: 1;
-  background: transparent;
-  border: 0;
-  border-radius: 6px;
-  font-size: 12px;
-  padding: 9px;
-  color: var(--muted);
-}
-.segmented button[aria-pressed="true"] {
-  color: var(--accent);
-  background: #fff;
-  box-shadow: 0 1px 5px #2425500a;
-  font-weight: 600;
 }
 .form-grid {
   display: grid;

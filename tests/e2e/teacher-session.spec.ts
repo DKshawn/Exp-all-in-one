@@ -1,5 +1,142 @@
 import { expect, test } from "@playwright/test";
 import { verificationTarget } from "../../scripts/verification-target";
+import type { RoomSummary } from "../../src/lib/room-management";
+import { enterTeacherPage } from "./helpers/teacher-login";
+
+test("room management labels all experiments and combines its filters in Japan time", async ({
+  page,
+}) => {
+  const samples = [
+    [
+      "evolution",
+      "EVOL23",
+      "2026-12-01T00:00:00+09:00",
+      "waiting",
+      "Stochastic Evolutionary Games",
+    ],
+    [
+      "judgment",
+      "JUDG23",
+      "2026-11-30T23:59:59+09:00",
+      "waiting",
+      "Judgement under Uncertainty",
+    ],
+    [
+      "emh",
+      "EMHS23",
+      "2026-11-15T00:00:00+09:00",
+      "waiting",
+      "Efficient Market Hypothesis",
+    ],
+    [
+      "institutions",
+      "AUCD23",
+      "2026-11-01T00:00:00+09:00",
+      "finished",
+      "Double Auction",
+    ],
+    [
+      "institutions",
+      "AUCO23",
+      "2026-10-31T23:59:59+09:00",
+      "waiting",
+      "Double Auction",
+    ],
+  ] as const;
+  const rooms: RoomSummary[] = samples.map(
+    ([experiment, code, createdAt, phase]) => ({
+      experiment,
+      code,
+      createdAt: Date.parse(createdAt),
+      phase,
+      title: `授業用ルーム ${code}`,
+      round: 1,
+      totalRounds: 5,
+      participantCount: 0,
+      capacity: 16,
+      marketCount: 1,
+      institutions: [],
+    }),
+  );
+  await page.route("**/api/rooms/manage", (route) =>
+    route.fulfill({ json: { rooms } }),
+  );
+  await page.goto("/teacher");
+  await enterTeacherPage(page);
+  const management = page.getByRole("region", { name: "ルーム管理" });
+  const cards = management.getByRole("listitem");
+  const experiment = management.getByRole("combobox", {
+    name: "実験",
+    exact: true,
+  });
+  const month = management.getByRole("combobox", { name: "作成月" });
+  const phase = management.getByRole("combobox", { name: "状態" });
+  const query = management.getByRole("searchbox");
+  for (const [, code, , , label] of samples) {
+    const room = cards.filter({
+      has: page.getByRole("heading", { name: `授業用ルーム ${code}` }),
+    });
+    await expect(room.getByText(label, { exact: true })).toBeVisible();
+  }
+  await expect(month.getByRole("option")).toHaveText([
+    "すべての月",
+    "2026年12月",
+    "2026年11月",
+    "2026年10月",
+  ]);
+  for (const width of [320, 390, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await experiment.selectOption("evolution");
+    await expect(cards).toHaveCount(1);
+    expect(
+      await experiment.evaluate((select: HTMLSelectElement) => {
+        const style = getComputedStyle(select);
+        const context = document.createElement("canvas").getContext("2d")!;
+        context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+        const label = select.selectedOptions[0].text;
+        const inset = parseFloat(style.paddingInlineStart);
+        const dropdownArrowSpace = 24;
+        return (
+          context.measureText(label).width + inset + dropdownArrowSpace <=
+          select.clientWidth
+        );
+      }),
+      `Experiment option fits at ${width}px`,
+    ).toBe(true);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    expect(
+      await management
+        .locator(
+          ".teacher-room-card h3, .teacher-room-experiment, .teacher-room-actions > *",
+        )
+        .evaluateAll((elements) =>
+          elements.every((el) => el.scrollWidth <= el.clientWidth + 1),
+        ),
+    ).toBe(true);
+  }
+  await experiment.selectOption("institutions");
+  await expect(cards).toHaveCount(2);
+  await month.selectOption("2026年11月");
+  await expect(cards).toHaveCount(1);
+  await expect(cards.first()).toContainText("AUCD23");
+  await phase.selectOption("waiting");
+  await expect(cards).toHaveCount(0);
+  await expect(
+    management.getByText("条件に一致するルームはありません。"),
+  ).toBeVisible();
+  await phase.selectOption("finished");
+  await query.fill("auco23");
+  await expect(cards).toHaveCount(0);
+  await query.fill("double auction");
+  await expect(cards).toHaveCount(1);
+  await expect(
+    cards.getByRole("link", { name: /結果・ダウンロード/ }),
+  ).toHaveAttribute("href", "/teacher?code=AUCD23");
+});
 
 test("one teacher login protects entry and authorizes all experiments and management without another key", async ({
   page,

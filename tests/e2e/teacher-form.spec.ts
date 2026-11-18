@@ -59,9 +59,6 @@ test("teacher can create and reenter a room with an eight-digit password without
   await page.route("**/api/status", (route) => route.abort("failed"));
   await page.goto("/teacher?experiment=institutions");
   await enterTeacherPage(page);
-  await page.getByRole("button", { name: "教員として再入室" }).click();
-  await expect(page.getByLabel("ルームコード", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "新しい実験" }).click();
   await page
     .getByLabel("実験名", { exact: true })
     .fill("教員フォームの動作確認");
@@ -80,13 +77,25 @@ test("teacher can create and reenter a room with an eight-digit password without
   expect(snapshot.me.role).toBe("teacher");
   expect(snapshot.config.capacity).toBe(16);
   expect(snapshot.study.protocol).toBe("institutions-v1");
+  await page.getByRole("link", { name: "ルーム管理", exact: true }).click();
+  await expect(page).toHaveURL(`/teacher?room=${code}`);
+  await expect(page.getByRole("heading", { name: "実験を選ぶ" })).toBeVisible();
+  await page.getByRole("link", { name: `ルーム ${code} に戻る` }).click();
+  await expect(page).toHaveURL(`/room/${code}?entry=teacher`);
 
   const returningTeacher = await browser.newContext({ baseURL });
   try {
     const reentry = await returningTeacher.newPage();
-    await reentry.goto(`/teacher?code=${code}`);
+    await reentry.goto("/teacher");
     await enterTeacherPage(reentry);
-    await reentry.waitForLoadState("networkidle");
+    const management = reentry.getByRole("region", { name: "ルーム管理" });
+    await management.getByRole("searchbox").fill(code);
+    const card = management.getByRole("listitem");
+    await expect(
+      card.getByText("Double Auction", { exact: true }),
+    ).toBeVisible();
+    await card.getByRole("link", { name: /結果・ダウンロード/ }).click();
+    await expect(reentry.getByLabel("ルームコード")).toHaveValue(code);
     await reentry
       .getByLabel("教員パスワード", { exact: false })
       .fill("12345678");

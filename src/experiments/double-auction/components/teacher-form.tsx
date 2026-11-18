@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { ArrowRight, FlaskConical, Info } from "lucide-react";
+import { FlaskConical, Info } from "lucide-react";
 import { api, errorMessage } from "@/lib/client";
 import { TeacherPasswordHelp } from "@/components/teacher-password-help";
 import {
@@ -43,7 +43,6 @@ import type {
   StudyUnitCounts,
   StudySchedules,
 } from "@/experiments/double-auction/lib/study-types";
-import { TeacherRooms } from "../../../components/teacher-rooms";
 import type { RoomConfig } from "@/experiments/double-auction/lib/types";
 import { studyRoomConfigSchema } from "@/experiments/double-auction/lib/study-room-config";
 import {
@@ -60,8 +59,6 @@ import { StudyAllocationPreview } from "./study-allocation-preview";
 import { teacherRoomHref } from "@/lib/room-navigation";
 
 export function TeacherForm({
-  initialCode = "",
-  initialTab,
   status,
   legacy = false,
   initialConfig,
@@ -69,8 +66,6 @@ export function TeacherForm({
   conditionPreset,
   onCreateDemo,
 }: {
-  initialCode?: string;
-  initialTab?: "manage" | "create" | "reenter";
   status: ServerStatus;
   legacy?: boolean;
   initialConfig?: RoomConfig;
@@ -78,10 +73,6 @@ export function TeacherForm({
   conditionPreset?: { label: string; settings: StudySettings };
   onCreateDemo?: (config: RoomConfig, generator?: StudyGeneratorConfig) => void;
 }) {
-  const [tab, setTab] = useState(
-    initialTab ?? (!onCreateDemo && initialCode ? "reenter" : "create"),
-  );
-  const [reenterCode, setReenterCode] = useState(initialCode);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [title, setTitle] = useState(
@@ -336,7 +327,6 @@ export function TeacherForm({
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (
-      tab === "create" &&
       !legacy &&
       (layoutError ||
         unitsError ||
@@ -397,19 +387,13 @@ export function TeacherForm({
         onCreateDemo(parsed.data, adoptedConditions?.generator);
         return;
       }
-      const result =
-        tab === "create"
-          ? await api<{ code: string }>("/api/rooms", {
-              config,
-              password: form.get("password"),
-              ...(!legacy && adoptedConditions?.generator
-                ? { generator: adoptedConditions.generator }
-                : {}),
-            })
-          : await api<{ code: string }>(
-              `/api/rooms/${String(form.get("code")).toUpperCase()}/teacher`,
-              { password: form.get("password") },
-            );
+      const result = await api<{ code: string }>("/api/rooms", {
+        config,
+        password: form.get("password"),
+        ...(!legacy && adoptedConditions?.generator
+          ? { generator: adoptedConditions.generator }
+          : {}),
+      });
       // Open the teacher credential slot without changing the student session.
       window.location.assign(teacherRoomHref(result.code));
     } catch (e) {
@@ -418,7 +402,7 @@ export function TeacherForm({
       setPending(false);
     }
   }
-  const studyCreation = tab === "create" && !legacy;
+  const studyCreation = !legacy;
   const conditionHeading = (
     <h2 id="teacher-condition-heading">供需プリセット</h2>
   );
@@ -516,223 +500,149 @@ export function TeacherForm({
   );
   return (
     <div className="panel teacher-form-card">
-      {!onCreateDemo && (
-        <div className="segmented">
-          <button
-            aria-pressed={tab === "create"}
-            onClick={() => {
-              setTab("create");
-              setError("");
-            }}
+      <form
+        method="post"
+        onSubmit={submit}
+        className={
+          studyCreation
+            ? "teacher-create-layout teacher-create-quick"
+            : undefined
+        }
+      >
+        <div className="teacher-primary-settings">
+          <section
+            className={
+              studyCreation ? "teacher-settings-section panel" : undefined
+            }
           >
-            新しい実験
-          </button>
-          <button
-            aria-pressed={tab === "reenter"}
-            onClick={() => {
-              setTab("reenter");
-              setError("");
-            }}
-          >
-            教員として再入室
-          </button>
-          <button
-            aria-pressed={tab === "manage"}
-            onClick={() => {
-              setTab("manage");
-              setError("");
-            }}
-          >
-            ルーム管理
-          </button>
-        </div>
-      )}
-      {tab === "manage" ? (
-        <TeacherRooms
-          status={status}
-          onEnter={(code) => {
-            setReenterCode(code);
-            setError("");
-            setTab("reenter");
-          }}
-        />
-      ) : (
-        <form
-          onSubmit={submit}
-          key={tab}
-          className={
-            studyCreation
-              ? "teacher-create-layout teacher-create-quick"
-              : undefined
-          }
-        >
-          <div className="teacher-primary-settings">
-            {tab === "create" ? (
-              <>
-                <section
-                  className={
-                    studyCreation ? "teacher-settings-section panel" : undefined
-                  }
-                >
-                  {studyCreation && <h2>ルームの設定</h2>}
-                  <label className="field">
-                    実験名
-                    <input
-                      name="title"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      disabled={pending}
-                      maxLength={60}
-                      required
-                    />
-                  </label>
-                  {studyCreation && (
-                    <button
-                      type="button"
-                      className="button secondary"
-                      aria-haspopup="dialog"
-                      onClick={openConfiguration}
-                    >
-                      作成前に詳細を設定
-                    </button>
-                  )}
-                </section>
-                {legacy ? (
-                  <>
-                    <div className="form-grid">
-                      <label className="field">
-                        参加人数
-                        <select name="capacity" defaultValue="12">
-                          <option value="12">12人（買6・売6）</option>
-                          <option value="24">24人（買12・売12）</option>
-                          <option value="36">36人（買18・売18）</option>
-                        </select>
-                      </label>
-                      <label className="field">
-                        ラウンド数
-                        <input
-                          type="number"
-                          name="rounds"
-                          defaultValue={6}
-                          min={1}
-                          max={12}
-                          required
-                        />
-                      </label>
-                    </div>
-                    <label className="field">
-                      1ラウンドの取引時間
-                      <select name="duration" defaultValue="180">
-                        <option value="60">1分</option>
-                        <option value="120">2分</option>
-                        <option value="180">3分</option>
-                        <option value="300">5分</option>
-                        <option value="600">10分</option>
-                      </select>
-                    </label>
-                  </>
-                ) : null}
-              </>
-            ) : (
-              <label className="field">
-                ルームコード
-                <input
-                  className="code-input"
-                  name="code"
-                  defaultValue={reenterCode}
-                  placeholder="例：K7M4PX"
-                  required
-                  pattern="[A-Za-z2-9]{6}"
-                  maxLength={6}
-                  autoComplete="off"
-                />
-              </label>
-            )}
-            {!onCreateDemo && (
-              <section
-                className={
-                  studyCreation ? "teacher-settings-section panel" : undefined
-                }
+            {studyCreation && <h2>ルームの設定</h2>}
+            <label className="field">
+              実験名
+              <input
+                name="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                disabled={pending}
+                maxLength={60}
+                required
+              />
+            </label>
+            {studyCreation && (
+              <button
+                type="button"
+                className="button secondary"
+                aria-haspopup="dialog"
+                onClick={openConfiguration}
               >
+                作成前に詳細を設定
+              </button>
+            )}
+          </section>
+          {legacy ? (
+            <>
+              <div className="form-grid">
                 <label className="field">
-                  教員パスワード
-                  <input
-                    type="password"
-                    name="password"
-                    placeholder={
-                      tab === "create"
-                        ? "8文字以上で設定"
-                        : "作成時に設定したパスワード"
-                    }
-                    minLength={8}
-                    maxLength={128}
-                    required
-                    autoComplete={
-                      tab === "create" ? "new-password" : "current-password"
-                    }
-                  />
-                  <TeacherPasswordHelp />
+                  参加人数
+                  <select name="capacity" defaultValue="12">
+                    <option value="12">12人（買6・売6）</option>
+                    <option value="24">24人（買12・売12）</option>
+                    <option value="36">36人（買18・売18）</option>
+                  </select>
                 </label>
-              </section>
-            )}
-          </div>
-          <div className="teacher-form-actions">
-            {!onCreateDemo && tab === "create" && !status.ready && (
-              <p className="error-message" role="alert">
-                アプリの接続設定が完了していません。管理者がデータベースと教員用キーを設定してください。
-              </p>
-            )}
-            {error && (
-              <p className="error-message" role="alert">
-                {error}
-              </p>
-            )}
-            <button
-              className="button primary full"
-              disabled={
-                pending ||
-                (tab === "create" &&
-                  ((!onCreateDemo && !status.ready) ||
-                    (!legacy &&
-                      Boolean(
-                        layoutError ||
-                        unitsError ||
-                        institutionError ||
-                        periodsError ||
-                        timingError ||
-                        commissionError ||
-                        conditionsPending,
-                      ))))
+                <label className="field">
+                  ラウンド数
+                  <input
+                    type="number"
+                    name="rounds"
+                    defaultValue={6}
+                    min={1}
+                    max={12}
+                    required
+                  />
+                </label>
+              </div>
+              <label className="field">
+                1ラウンドの取引時間
+                <select name="duration" defaultValue="180">
+                  <option value="60">1分</option>
+                  <option value="120">2分</option>
+                  <option value="180">3分</option>
+                  <option value="300">5分</option>
+                  <option value="600">10分</option>
+                </select>
+              </label>
+            </>
+          ) : null}
+          {!onCreateDemo && (
+            <section
+              className={
+                studyCreation ? "teacher-settings-section panel" : undefined
               }
             >
-              {pending ? (
-                <Spinner />
-              ) : (
-                <>
-                  {tab === "create" ? "ルーム作成" : "管理画面に入る"}
-                  {tab !== "create" && <ArrowRight size={17} />}
-                </>
-              )}
-            </button>
-            {tab === "create" && legacy && !onCreateDemo && (
-              <div className="callout">
-                <Info size={17} />
-                <p>
-                  ルーム作成後、教員用画面で各商品の価値と費用を変更できます。参加人数がそろうと開始でき、実験開始後は条件が固定されます。
-                </p>
-              </div>
-            )}
-            {(onCreateDemo || status.mode === "local") && (
-              <p className="local-note">
-                <FlaskConical size={14} />
-                {onCreateDemo
-                  ? "デモの進行はこの画面内で保持されます。再読み込みすると実験設定からやり直せます。"
-                  : "ローカル環境で実行中。データはこのコンピューターに保存されます。"}
+              <label className="field">
+                教員パスワード
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="8文字以上で設定"
+                  minLength={8}
+                  maxLength={128}
+                  required
+                  autoComplete="new-password"
+                />
+                <TeacherPasswordHelp />
+              </label>
+            </section>
+          )}
+        </div>
+        <div className="teacher-form-actions">
+          {!onCreateDemo && !status.ready && (
+            <p className="error-message" role="alert">
+              アプリの接続設定が完了していません。管理者がデータベースと教員用キーを設定してください。
+            </p>
+          )}
+          {error && (
+            <p className="error-message" role="alert">
+              {error}
+            </p>
+          )}
+          <button
+            className="button primary full"
+            disabled={
+              pending ||
+              (!onCreateDemo && !status.ready) ||
+              (studyCreation &&
+                Boolean(
+                  layoutError ||
+                  unitsError ||
+                  institutionError ||
+                  periodsError ||
+                  timingError ||
+                  commissionError ||
+                  conditionsPending,
+                ))
+            }
+          >
+            {pending ? <Spinner /> : "ルーム作成"}
+          </button>
+          {legacy && !onCreateDemo && (
+            <div className="callout">
+              <Info size={17} />
+              <p>
+                ルーム作成後、教員用画面で各商品の価値と費用を変更できます。参加人数がそろうと開始でき、実験開始後は条件が固定されます。
               </p>
-            )}
-          </div>
-        </form>
-      )}
+            </div>
+          )}
+          {(onCreateDemo || status.mode === "local") && (
+            <p className="local-note">
+              <FlaskConical size={14} />
+              {onCreateDemo
+                ? "デモの進行はこの画面内で保持されます。再読み込みすると実験設定からやり直せます。"
+                : "ローカル環境で実行中。データはこのコンピューターに保存されます。"}
+            </p>
+          )}
+        </div>
+      </form>
       {studyCreation && configureFirst && (
         <StudyDetailDialog
           label="実験の詳細設定"

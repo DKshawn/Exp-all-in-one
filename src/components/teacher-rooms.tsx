@@ -1,10 +1,12 @@
 "use client";
-import { JUDGMENT_NAME } from "@/experiments/judgment/constants";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { FlaskConical, RefreshCw, Search, Trash2 } from "lucide-react";
 import { api, ApiError, errorMessage } from "@/lib/client";
 import type { RoomSummary } from "@/lib/room-management";
+import { EXPERIMENT_CATALOG } from "@/lib/experiment-catalog";
+import { teacherReentryHref } from "@/lib/room-navigation";
 import type { ServerStatus } from "@/lib/server/config";
 import type { Phase } from "@/experiments/double-auction/lib/types";
 import { INSTITUTIONS } from "@/experiments/double-auction/lib/study-rules";
@@ -22,24 +24,20 @@ const dateFormat = new Intl.DateTimeFormat("ja-JP", {
   timeStyle: "short",
   timeZone: "Asia/Tokyo",
 });
-const yearFormat = new Intl.DateTimeFormat("ja-JP", {
+const monthFormat = new Intl.DateTimeFormat("ja-JP", {
   year: "numeric",
+  month: "long",
   timeZone: "Asia/Tokyo",
 });
 
-export function TeacherRooms({
-  status,
-  onEnter,
-}: {
-  status: ServerStatus;
-  onEnter: (code: string) => void;
-}) {
+export function TeacherRooms({ status }: { status: ServerStatus }) {
   const [rooms, setRooms] = useState<RoomSummary[] | null>(null);
   const [pending, setPending] = useState(status.ready);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [query, setQuery] = useState("");
-  const [year, setYear] = useState("");
+  const [experiment, setExperiment] = useState("");
+  const [month, setMonth] = useState("");
   const [phase, setPhase] = useState("");
   const [limit, setLimit] = useState(20);
   const [deleting, setDeleting] = useState<RoomSummary | null>(null);
@@ -94,17 +92,25 @@ export function TeacherRooms({
     setDeleting(null);
   }
 
-  const years = [
-    ...new Set((rooms ?? []).map((r) => yearFormat.format(r.createdAt))),
-  ].sort((a, b) => b.localeCompare(a));
+  const entries = (rooms ?? []).map((room) => ({
+    room,
+    createdMonth: monthFormat.format(room.createdAt),
+    experimentName: EXPERIMENT_CATALOG[room.experiment].title,
+  }));
+  const months = [
+    ...new Set([month, ...entries.map((entry) => entry.createdMonth)]),
+  ]
+    .filter(Boolean)
+    .sort((a, b) => b.localeCompare(a, "ja-JP", { numeric: true }));
   const normalizedQuery = query.trim().toLocaleLowerCase("ja-JP");
-  const filtered = (rooms ?? []).filter(
-    (room) =>
+  const filtered = entries.filter(
+    ({ room, createdMonth, experimentName }) =>
       (!normalizedQuery ||
-        `${room.title} ${room.code}`
+        `${room.title} ${room.code} ${experimentName}`
           .toLocaleLowerCase("ja-JP")
           .includes(normalizedQuery)) &&
-      (!year || yearFormat.format(room.createdAt) === year) &&
+      (!experiment || room.experiment === experiment) &&
+      (!month || createdMonth === month) &&
       (!phase || room.phase === phase),
   );
 
@@ -139,7 +145,10 @@ export function TeacherRooms({
       )}
       {rooms !== null && (
         <>
-          <div className="teacher-room-filters">
+          <search
+            className="teacher-room-filters"
+            aria-label="ルームの絞り込み"
+          >
             <label className="field teacher-room-search">
               実験名・ルームコード
               <span>
@@ -155,17 +164,36 @@ export function TeacherRooms({
                 />
               </span>
             </label>
-            <label className="field">
-              作成年
+            <label className="field teacher-room-experiment-filter">
+              実験
               <select
-                value={year}
+                value={experiment}
                 onChange={(event) => {
-                  setYear(event.target.value);
+                  setExperiment(event.target.value);
                   setLimit(20);
                 }}
               >
-                <option value="">すべての年</option>
-                {years.map((value) => (
+                <option value="">すべての実験</option>
+                {Object.entries(EXPERIMENT_CATALOG).map(
+                  ([value, { title }]) => (
+                    <option key={value} value={value}>
+                      {title}
+                    </option>
+                  ),
+                )}
+              </select>
+            </label>
+            <label className="field">
+              作成月
+              <select
+                value={month}
+                onChange={(event) => {
+                  setMonth(event.target.value);
+                  setLimit(20);
+                }}
+              >
+                <option value="">すべての月</option>
+                {months.map((value) => (
                   <option key={value} value={value}>
                     {value}
                   </option>
@@ -189,7 +217,7 @@ export function TeacherRooms({
                 ))}
               </select>
             </label>
-          </div>
+          </search>
           <p className="teacher-room-count" role="status">
             {filtered.length}件 / 全{rooms.length}件 · 新しい順
           </p>
@@ -201,14 +229,17 @@ export function TeacherRooms({
             </p>
           ) : (
             <ul className="teacher-room-list">
-              {filtered.slice(0, limit).map((room) => (
+              {filtered.slice(0, limit).map(({ room, experimentName }) => (
                 <li className="teacher-room-card" key={room.code}>
                   <div className="teacher-room-card-heading">
-                    <h3>{room.title}</h3>
+                    <span className="teacher-room-experiment">
+                      {experimentName}
+                    </span>
                     <span className={`teacher-room-status is-${room.phase}`}>
                       {PHASE_LABELS[room.phase]}
                     </span>
                   </div>
+                  <h3>{room.title}</h3>
                   <div className="teacher-room-meta">
                     <span className="teacher-room-code">{room.code}</span>
                     <span>作成 {dateFormat.format(room.createdAt)}</span>
@@ -232,31 +263,27 @@ export function TeacherRooms({
                       )}
                     </span>
                   </div>
-                  <div className="teacher-room-institutions">
-                    {room.experiment === "evolution" ? (
-                      <span>確率的進化ゲーム</span>
-                    ) : room.experiment === "judgment" ? (
-                      <span>{JUDGMENT_NAME}</span>
-                    ) : room.experiment === "emh" ? (
-                      <span>EMH · 資産市場実験</span>
-                    ) : room.institutions.length ? (
-                      room.institutions.map(({ institution, periods }) => (
-                        <span key={institution}>
-                          {INSTITUTIONS[institution].short} {periods}期
-                        </span>
-                      ))
-                    ) : (
-                      <span>旧版ダブルオークション {room.totalRounds}期</span>
-                    )}
-                  </div>
+                  {room.experiment === "institutions" && (
+                    <div className="teacher-room-institutions">
+                      {room.institutions.length ? (
+                        room.institutions.map(({ institution, periods }) => (
+                          <span key={institution}>
+                            {INSTITUTIONS[institution].short} {periods}期
+                          </span>
+                        ))
+                      ) : (
+                        <span>旧版 CDA {room.totalRounds}期</span>
+                      )}
+                    </div>
+                  )}
                   <div className="teacher-room-actions">
-                    <button
+                    <Link
                       className="button secondary small-button"
-                      onClick={() => onEnter(room.code)}
-                      aria-label={`${room.code} に教員として再入室`}
+                      href={teacherReentryHref(room.code)}
+                      aria-label={`結果・ダウンロード / 再入室 (${room.code})`}
                     >
                       結果・ダウンロード / 再入室
-                    </button>
+                    </Link>
                     <button
                       className="button secondary small-button danger-text"
                       onClick={() => {

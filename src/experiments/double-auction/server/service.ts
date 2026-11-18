@@ -608,6 +608,7 @@ export class AuctionService {
       ) m ON true
       ORDER BY (r.state->>'createdAt')::bigint DESC, r.code`);
     return result.rows.map((row) => ({
+      experiment: "institutions",
       code: row.code,
       title: row.config.title,
       createdAt: Number(row.created_at),

@@ -140,6 +140,7 @@ test("room listing is newest first, reports selected periods and counts, and exc
   await service.join(teacher.code, "1234567", "1234");
   const listed = await service.listRooms("");
   assert.equal(listed[0].code, teacher.code);
+  assert.equal(listed[0].experiment, "institutions");
   assert.equal(listed.at(-1)!.code, old.code);
   assert.deepEqual(listed[0].institutions, [
     { institution: "call", periods: 3 },

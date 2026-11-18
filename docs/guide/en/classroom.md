@@ -16,7 +16,7 @@ Student waiting screens use a consistent design. In EMH, a five-second preparati
 
 Create a room, bring students in, run the experiment, and download the results. Screenshots show a local sample classroom in the default Japanese interface; use the online entry links above for class. The creation and download panels use Double Auction as the example.
 
-On experiment setup and re-entry pages, use **戻る** in the header to return to experiment selection. When opening settings from a Double Auction room, **ルーム … に戻る** in the same header returns to that room.
+On experiment setup and re-entry pages, use **戻る** in the header to return to experiment selection. After opening **ルーム管理** from a Double Auction room, use **ルーム … に戻る** in the teacher home page header to return to that room.
 
 Judgement room creation places task cards beside the selection and create controls; on narrow screens controls appear above the cards. See the [Judgement guide](judgment.md) for language switching and controls during a run.
 
@@ -73,16 +73,16 @@ In Double Auction, attempting to download records that do not exist yet shows a 
 
 ## Re-entry and room management
 
-| Task                                                       | Action                                                                                                     |
-| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Teacher returns to a room                                  | Click **教員として再入室** and enter the room code and the teacher password set at creation                |
-| Student returns after closing the page or changing devices | Open the student entry with the same code, nickname or student ID, and original PIN                        |
-| Find an earlier room                                       | After login, search by experiment name or code under **ルーム管理**, or filter by creation year and status |
-| View saved results                                         | In the list, click **結果・ダウンロード / 再入室** or **再入室**, then enter that room's teacher password  |
+| Task                                                       | Action                                                                                                                                             |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Re-enter using a room code                                 | On the teacher home page, click **教員として再入室** and enter the code and the teacher password set at creation                                   |
+| Student returns after closing the page or changing devices | Open the student entry with the same code, nickname or student ID, and original PIN                                                                |
+| Find an earlier room                                       | Under **ルーム管理** on the teacher home page, search by experiment name or code, or filter by experiment, creation month (Japan time), and status |
+| Re-enter or view results from the list                     | Click the room's **結果・ダウンロード / 再入室**, then enter its teacher password                                                                  |
 
 Login state is scoped by room and role. Ordinary tabs in one browser can show the teacher and student views together. To simulate multiple students, use a separate device or browser profile for each.
 
-Rooms appear newest first, with experiment name, code, creation time, status, market count, attendance, progress, and periods per institution. Load another 20 entries at a time. There are no personal teacher accounts: online creation and management use a shared teacher key. Locally, the list shows rooms in the database selected on that computer.
+Rooms appear newest first, each with an experiment label. The list includes the experiment name, code, creation time, status, market count, attendance, progress, and periods per institution. Load another 20 entries at a time. The platform uses a shared teacher key for online creation and management. Locally, the list shows rooms in the database selected on that computer.
 
 Enter the teacher key once at the teacher entry. The same browser stays signed in for eight hours across reloads, experiment changes, room creation and management. Sign in again after logout, expiry or a key change; each room keeps its separate teacher password.
 
