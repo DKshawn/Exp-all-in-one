@@ -28,6 +28,8 @@ The conditions panel groups each student’s private dividends with their tradin
 
 Completed rounds and periods are bright green. The current round and period are gold in demos and purple in formal rooms. For long schedules, the round strip scrolls the active round into view on a round change.
 
+On the teacher home page, **ルーム管理** labels EMH rooms as **実験1（固定配当）** or **実験2（抽選配当）**. Select either variant under **実験** to filter the list.
+
 ## Experiment 1 (Fixed dividends)
 
 1. After authenticating at the teacher entry, alongside the title and room teacher password, set initial securities per participant per round (1–20, default 2), target market size (3–12, default 9), three type weights (integers 1–100 each, default 1:1:1), and the shared A/B period duration (1–30 minutes, default 4, rounded to whole seconds). While admission is open, these settings can still be edited and applied with **設定を保存**.

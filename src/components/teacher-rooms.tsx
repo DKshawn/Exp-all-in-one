@@ -10,6 +10,8 @@ import { teacherReentryHref } from "@/lib/room-navigation";
 import type { ServerStatus } from "@/lib/server/config";
 import type { Phase } from "@/experiments/double-auction/lib/types";
 import { INSTITUTIONS } from "@/experiments/double-auction/lib/study-rules";
+import { EMH_EXPERIMENT_LABELS } from "@/experiments/emh/types";
+import { label } from "@/experiments/evolution/locale";
 import { Spinner } from "./shell";
 
 const PHASE_LABELS: Record<Phase, string> = {
@@ -18,6 +20,18 @@ const PHASE_LABELS: Record<Phase, string> = {
   paused: "一時停止",
   review: "今期終了",
   finished: "実験終了",
+};
+const EXPERIMENT_GROUPS: Partial<
+  Record<string, { name: string; variants: Readonly<Record<string, string>> }>
+> = {
+  emh: { name: "EMH", variants: EMH_EXPERIMENT_LABELS },
+  evolution: {
+    name: "SEG",
+    variants: {
+      coordination: label("ja", "coordination"),
+      demand: label("ja", "demand"),
+    },
+  },
 };
 const dateFormat = new Intl.DateTimeFormat("ja-JP", {
   dateStyle: "medium",
@@ -92,11 +106,20 @@ export function TeacherRooms({ status }: { status: ServerStatus }) {
     setDeleting(null);
   }
 
-  const entries = (rooms ?? []).map((room) => ({
-    room,
-    createdMonth: monthFormat.format(room.createdAt),
-    experimentName: EXPERIMENT_CATALOG[room.experiment].title,
-  }));
+  const entries = (rooms ?? []).map((room) => {
+    const experimentName = EXPERIMENT_CATALOG[room.experiment].title;
+    const group = EXPERIMENT_GROUPS[room.experiment];
+    const variantName = room.variant && group?.variants[room.variant];
+    return {
+      room,
+      createdMonth: monthFormat.format(room.createdAt),
+      experimentName,
+      experimentLabel:
+        group && variantName
+          ? `${group.name} · ${variantName}`
+          : experimentName,
+    };
+  });
   const months = [
     ...new Set([month, ...entries.map((entry) => entry.createdMonth)]),
   ]
@@ -104,12 +127,14 @@ export function TeacherRooms({ status }: { status: ServerStatus }) {
     .sort((a, b) => b.localeCompare(a, "ja-JP", { numeric: true }));
   const normalizedQuery = query.trim().toLocaleLowerCase("ja-JP");
   const filtered = entries.filter(
-    ({ room, createdMonth, experimentName }) =>
+    ({ room, createdMonth, experimentName, experimentLabel }) =>
       (!normalizedQuery ||
-        `${room.title} ${room.code} ${experimentName}`
+        `${room.title} ${room.code} ${experimentName} ${experimentLabel}`
           .toLocaleLowerCase("ja-JP")
           .includes(normalizedQuery)) &&
-      (!experiment || room.experiment === experiment) &&
+      (!experiment ||
+        room.experiment === experiment ||
+        `${room.experiment}:${room.variant}` === experiment) &&
       (!month || createdMonth === month) &&
       (!phase || room.phase === phase),
   );
@@ -175,11 +200,25 @@ export function TeacherRooms({ status }: { status: ServerStatus }) {
               >
                 <option value="">すべての実験</option>
                 {Object.entries(EXPERIMENT_CATALOG).map(
-                  ([value, { title }]) => (
-                    <option key={value} value={value}>
-                      {title}
-                    </option>
-                  ),
+                  ([value, { title }]) => {
+                    const group = EXPERIMENT_GROUPS[value];
+                    return group ? (
+                      <optgroup key={value} label={group.name}>
+                        <option value={value}>{group.name}（すべて）</option>
+                        {Object.entries(group.variants).map(
+                          ([variant, name]) => (
+                            <option key={variant} value={`${value}:${variant}`}>
+                              {name}
+                            </option>
+                          ),
+                        )}
+                      </optgroup>
+                    ) : (
+                      <option key={value} value={value}>
+                        {title}
+                      </option>
+                    );
+                  },
                 )}
               </select>
             </label>
@@ -229,11 +268,11 @@ export function TeacherRooms({ status }: { status: ServerStatus }) {
             </p>
           ) : (
             <ul className="teacher-room-list">
-              {filtered.slice(0, limit).map(({ room, experimentName }) => (
+              {filtered.slice(0, limit).map(({ room, experimentLabel }) => (
                 <li className="teacher-room-card" key={room.code}>
                   <div className="teacher-room-card-heading">
                     <span className="teacher-room-experiment">
-                      {experimentName}
+                      {experimentLabel}
                     </span>
                     <span className={`teacher-room-status is-${room.phase}`}>
                       {PHASE_LABELS[room.phase]}

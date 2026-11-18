@@ -15,6 +15,8 @@ Group count remains editable during admission. Close manually or start the 5–3
 
 Completed rounds are bright green. The current round has a double ring and is gold in demos or purple in formal rooms. Upcoming rounds have a dashed gray outline. Both views also show the countdown and its progress bar. Teachers can pause/resume decisions or feedback, shorten the current phase by 30 seconds (up to its boundary), close decisions early for feedback (or finish on the final round), advance from feedback to the next round, or confirm early termination. Settled payoffs stand. Incomplete pairs are marked `interrupted`, retaining submitted choices with null payoff. Research JSON records teacher interventions with time and round in `controls`. Personal history scrolls inside its own table, newest first.
 
+On the teacher home page, **ルーム管理** labels SEG rooms as **協調ゲーム** (Coordination game) or **ナッシュ要求ゲーム** (Nash demand game). Select either game under **実験** to filter the list.
+
 ## Parameters and payoff rules
 
 | Setting                | Default    | Range |

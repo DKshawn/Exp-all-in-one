@@ -568,6 +568,7 @@ test("every attendance 3–999 includes everyone, balances groups and types loca
 
 test("shared registry preserves both experiments and safely backfills existing room codes", async () => {
   const first = await emh.create("EMH", password, "");
+  const draw = await emh.create("EMH 2", password, "", undefined, "exp2");
   const second = await da.create(
     { title: "DA", capacity: 12, rounds: 1, duration: 60 },
     password,
@@ -576,10 +577,15 @@ test("shared registry preserves both experiments and safely backfills existing r
   assert.equal(await experimentFor(first.code, db), "emh");
   assert.equal(await experimentFor(second.code, db), "institutions");
   assert.notEqual(first.code, second.code);
-  assert.equal(
-    (await emh.listRooms("")).find((r) => r.code === first.code)?.experiment,
-    "emh",
+  await db.query(
+    "UPDATE emh_sessions SET state=state-'experiment' WHERE code=$1",
+    [first.code],
   );
+  const emhRooms = await emh.listRooms("");
+  const legacy = emhRooms.find((r) => r.code === first.code);
+  assert.equal(legacy?.experiment, "emh");
+  assert.equal(legacy.variant, "exp1");
+  assert.equal(emhRooms.find((r) => r.code === draw.code)?.variant, "exp2");
   assert.ok((await da.listRooms("")).some((r) => r.code === second.code));
   await db.query("DELETE FROM lab_room_registry WHERE code=$1", [second.code]);
   await migrate(db);
@@ -587,6 +593,7 @@ test("shared registry preserves both experiments and safely backfills existing r
   await da.deleteRoom(second.code, "");
   assert.equal(await experimentFor(second.code, db), null);
   await emh.deleteRoom(first.code, "");
+  await emh.deleteRoom(draw.code, "");
   assert.equal(await experimentFor(first.code, db), null);
 });
 

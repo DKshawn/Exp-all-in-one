@@ -239,9 +239,20 @@ test("row locks, reconnects, scoped views, timed advancement and research export
     assert.equal(again.role, "student");
     assert.equal(again.history.length, 2);
     assert.ok(!JSON.stringify(again).includes(raw.rows[0].id));
+    const key = process.env.TEACHER_ACCESS_KEY ?? "";
+    const coordination = await svc.create(
+      "Coordination",
+      "room-password",
+      key,
+      defaults("coordination"),
+    );
+    const rooms = await svc.listRooms(key);
+    const demand = rooms.find((room) => room.code === code);
+    assert.equal(demand?.phase, "finished");
+    assert.equal(demand.variant, "demand");
     assert.equal(
-      (await svc.listRooms(process.env.TEACHER_ACCESS_KEY ?? ""))[0].phase,
-      "finished",
+      rooms.find((room) => room.code === coordination.code)?.variant,
+      "coordination",
     );
     await svc.deleteRoom(code, process.env.TEACHER_ACCESS_KEY ?? "");
     await assert.rejects(view(token, "teacher"));

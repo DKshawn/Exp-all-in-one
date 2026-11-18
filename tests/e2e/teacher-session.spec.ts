@@ -8,35 +8,49 @@ test("room management labels all experiments and combines its filters in Japan t
 }) => {
   const samples = [
     [
-      "evolution",
+      { experiment: "evolution", variant: "coordination" },
       "EVOL23",
       "2026-12-01T00:00:00+09:00",
       "waiting",
-      "Stochastic Evolutionary Games",
+      "SEG · 協調ゲーム",
     ],
     [
-      "judgment",
+      { experiment: "evolution", variant: "demand" },
+      "NASH23",
+      "2026-12-01T00:00:00+09:00",
+      "waiting",
+      "SEG · ナッシュ要求ゲーム",
+    ],
+    [
+      { experiment: "judgment" },
       "JUDG23",
       "2026-11-30T23:59:59+09:00",
       "waiting",
       "Judgement under Uncertainty",
     ],
     [
-      "emh",
+      { experiment: "emh", variant: "exp2" },
       "EMHS23",
       "2026-11-15T00:00:00+09:00",
       "waiting",
-      "Efficient Market Hypothesis",
+      "EMH · 実験2（抽選配当）",
     ],
     [
-      "institutions",
+      { experiment: "emh", variant: "exp1" },
+      "FIXD23",
+      "2026-11-14T00:00:00+09:00",
+      "waiting",
+      "EMH · 実験1（固定配当）",
+    ],
+    [
+      { experiment: "institutions" },
       "AUCD23",
       "2026-11-01T00:00:00+09:00",
       "finished",
       "Double Auction",
     ],
     [
-      "institutions",
+      { experiment: "institutions" },
       "AUCO23",
       "2026-10-31T23:59:59+09:00",
       "waiting",
@@ -44,8 +58,8 @@ test("room management labels all experiments and combines its filters in Japan t
     ],
   ] as const;
   const rooms: RoomSummary[] = samples.map(
-    ([experiment, code, createdAt, phase]) => ({
-      experiment,
+    ([type, code, createdAt, phase]) => ({
+      ...type,
       code,
       createdAt: Date.parse(createdAt),
       phase,
@@ -78,6 +92,23 @@ test("room management labels all experiments and combines its filters in Japan t
     });
     await expect(room.getByText(label, { exact: true })).toBeVisible();
   }
+  for (const [option, codes] of [
+    ["EMH（すべて）", ["EMHS23", "FIXD23"]],
+    ["実験1（固定配当）", ["FIXD23"]],
+    ["実験2（抽選配当）", ["EMHS23"]],
+    ["SEG（すべて）", ["EVOL23", "NASH23"]],
+    ["協調ゲーム", ["EVOL23"]],
+    ["ナッシュ要求ゲーム", ["NASH23"]],
+  ] as const) {
+    await experiment.selectOption({ label: option });
+    await expect(cards.getByRole("heading")).toHaveText(
+      codes.map((code) => `授業用ルーム ${code}`),
+    );
+  }
+  await experiment.selectOption("");
+  await query.fill("抽選配当");
+  await expect(cards.getByRole("heading")).toHaveText(["授業用ルーム EMHS23"]);
+  await query.clear();
   await expect(month.getByRole("option")).toHaveText([
     "すべての月",
     "2026年12月",
@@ -86,7 +117,7 @@ test("room management labels all experiments and combines its filters in Japan t
   ]);
   for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
-    await experiment.selectOption("evolution");
+    await experiment.selectOption("judgment");
     await expect(cards).toHaveCount(1);
     expect(
       await experiment.evaluate((select: HTMLSelectElement) => {
@@ -103,6 +134,8 @@ test("room management labels all experiments and combines its filters in Japan t
       }),
       `Experiment option fits at ${width}px`,
     ).toBe(true);
+    await experiment.selectOption("");
+    await expect(cards).toHaveCount(samples.length);
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,

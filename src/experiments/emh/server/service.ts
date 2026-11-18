@@ -635,6 +635,7 @@ export class EmhService {
       code: string;
       title: string;
       created_at: string;
+      experiment: Session["experiment"] | null;
       status: string;
       count: number;
       markets: number;
@@ -642,6 +643,7 @@ export class EmhService {
       finished: boolean;
       paused: boolean;
     }>(`SELECT s.code,s.state->>'title' title,s.state->>'createdAt' created_at,s.state->>'status' status,
+      s.state->>'experiment' AS experiment,
       jsonb_array_length(s.state->'members') count, jsonb_array_length(s.state->'allocation') markets,
       COALESCE(m.round,0) round,COALESCE(m.finished,false) finished,COALESCE(m.paused,false) paused
       FROM emh_sessions s LEFT JOIN LATERAL (SELECT max((state->>'year')::int) round,bool_and(state->>'status'='completed') finished,bool_or(state->>'pausedAt' IS NOT NULL) paused FROM emh_markets WHERE room_code=s.code) m ON true`);
@@ -650,6 +652,7 @@ export class EmhService {
       title: r.title,
       createdAt: Number(r.created_at),
       experiment: "emh",
+      variant: r.experiment === "exp2" ? "exp2" : "exp1",
       phase: r.finished
         ? "finished"
         : r.paused

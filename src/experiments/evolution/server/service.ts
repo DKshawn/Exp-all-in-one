@@ -389,6 +389,7 @@ export class EvolutionService {
       code: string;
       title: string;
       created_at: string;
+      mode: Settings["mode"];
       phase: Game["phase"];
       round: number;
       rounds: number;
@@ -396,13 +397,19 @@ export class EvolutionService {
       paused: boolean;
       count: number;
     }>(
-      `SELECT code,title,created_at,game->>'phase' AS phase,(game->>'pausedAt' IS NOT NULL) AS paused,COALESCE((game->'round'->>'number')::int,0) AS round,(game->'settings'->>'rounds')::int AS rounds,(game->'settings'->>'groups')::int AS groups,jsonb_array_length(game->'seats') AS count FROM evolution_rooms`,
+      `SELECT code,title,created_at,game->'settings'->>'mode' AS mode,
+        game->>'phase' AS phase,(game->>'pausedAt' IS NOT NULL) AS paused,
+        COALESCE((game->'round'->>'number')::int,0) AS round,
+        (game->'settings'->>'rounds')::int AS rounds,
+        (game->'settings'->>'groups')::int AS groups,
+        jsonb_array_length(game->'seats') AS count FROM evolution_rooms`,
     );
     return rows.map((r) => ({
       code: r.code,
       title: r.title,
       createdAt: Number(r.created_at),
       experiment: "evolution",
+      variant: r.mode,
       phase: r.paused
         ? "paused"
         : r.phase === "playing"

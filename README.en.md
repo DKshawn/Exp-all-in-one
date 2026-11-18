@@ -63,7 +63,7 @@ Experiment 2 configures initial securities, the unsuccessful-attempt limit, insi
 
 The EMH demo control panel switches between teacher and student views, pauses, advances 30 seconds or to the next period, restarts, and returns to settings. Fast-forward processes virtual trades and deadlines in order; it is disabled during the countdown and while paused. **やり直す** keeps the settings and resets allocation and progress. The screen-size preview places the control panel outside the frame.
 
-Use **ルーム管理** on the teacher home page to find and re-enter rooms across all experiments. Each room has an experiment label. Filter by experiment, creation month (Japan time), and status.
+Use **ルーム管理** on the teacher home page to find and re-enter rooms across all experiments. Each room has an experiment label. Filter by experiment, creation month (Japan time), and status. EMH and Stochastic Evolutionary Games (SEG) also show and filter by the specific experiment or game.
 
 [Illustrated instructions, re-entry, and room management](docs/guide/en/classroom.md) · [Using Demo Model](docs/guide/en/demo.md)
 
