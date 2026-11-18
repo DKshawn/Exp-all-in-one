@@ -816,6 +816,16 @@ test("empty or truncated model responses explain the failure without submitting 
     { choices: [{ finish_reason: "length", message: { content: null } }] },
     {
       choices: [
+        { finish_reason: "length", message: { content: '{"action":"bi' } },
+      ],
+    },
+    {
+      choices: [
+        { finish_reason: "length", message: { content: '{"action":"bid"}' } },
+      ],
+    },
+    {
+      choices: [
         {
           finish_reason: "stop",
           message: { content: null, reasoning: "private" },
@@ -838,6 +848,8 @@ test("empty or truncated model responses explain the failure without submitting 
       schema: { type: "json_object" },
     });
   await assert.rejects(call(), /1024 tokens/);
+  await assert.rejects(call(), /1024 tokens/);
+  assert.deepEqual((await call()).decision, { action: "bid" });
   await assert.rejects(call(), /推理内容/);
   await assert.rejects(call(), /Chat Completions/);
 });

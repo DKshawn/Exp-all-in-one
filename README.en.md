@@ -53,7 +53,7 @@ After the teacher starts EMH, a five-second countdown appears directly above the
 
 EMH room creation and Demo Model offer **実験1（固定配当）** (fixed dividends) and **実験2（抽選配当）** (dividends determined by a draw). Experiment 2 defaults to a 12-person market and uses separate practice dividends and states. Students see their state-contingent dividends and probabilities. In both experiments, students see buy and sell controls in separate columns, market prices, and personal records together; teachers can expand or collapse conditions during play. Open `/emh/demo/preview` to view the demo at different screen sizes.
 
-[Agent-Based Behavioral Experiments](ai-emh/README.en.md) adds AI students to formal rooms for Double Auction, EMH Experiments 1 and 2, and Stochastic Evolutionary Games (SEG). It detects the experiment from the room code and uses a local model or OpenAI for decisions. AI participant development goes to the `Agent-Based-Behavioral-Experiments` branch.
+[Agent-Based Behavioral Experiments](ai-emh/README.en.md) adds AI students to formal rooms for Double Auction, EMH Experiments 1 and 2, and Stochastic Evolutionary Games (SEG). It detects the experiment from the room code and submits complete decisions from a local model or OpenAI when they meet the experiment rules. AI participant development goes to the `Agent-Based-Behavioral-Experiments` branch.
 
 An optional LM Studio fast mode disables extended reasoning; complete fenced JSON blocks are also supported.
 

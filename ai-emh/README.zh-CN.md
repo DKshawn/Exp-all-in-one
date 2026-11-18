@@ -30,6 +30,8 @@ node ai-emh/run.mjs --help
 
 如果 LM Studio 的模型在长时间思考后仍无法给出决定，可在启动时增加 `--lmstudio-fast`。此模式使用 LM Studio 的 Responses 接口并关闭模型的长思考，仍由模型自主决定；模型和服务必须支持此设置，决策行为也可能与思考模式不同。可以同时调整 `--parallel` 和 `--max-output-tokens`，例如 `--lmstudio-fast --parallel 4 --max-output-tokens 1024`。没有这个参数时保持模型服务默认的思考设置。
 
+如果 Chat Completions 在返回完整决定前达到输出上限，程序会跳过这次操作，并在日志中显示当前上限和可调整的 `--max-output-tokens` 参数。
+
 ## 恢复与记录
 
 每次新运行会在 `ai-emh/.local/runs/` 创建包含房间地址、学生昵称和 PIN 的恢复文件，以及不含 API 密钥的 `.jsonl` 操作记录。记录包含模型决定及模型返回的 token 使用量，可能包含 AI 的私有条件；请妥善保存。文件不会提交到 Git。日志中的 `modelDurationMs` 是每次模型请求从发起到解析响应所用的毫秒数。`skipReason` 区分 `unit_changed`（交易单位已切换）、`quote_changed`（对手报价变化）、`model_capacity`（并发已满，暂缓请求）等原因；错误还会记录 `errorStage`。暂缓不代表已经发出模型请求。恢复文件可用于程序中断后重新登录同一批学生：

@@ -30,6 +30,8 @@ Replace the model name with an installed or available model. When a local servic
 
 If an LM Studio model spends too long reasoning without producing a decision, add `--lmstudio-fast`. This uses LM Studio's Responses interface with extended reasoning disabled; the model still makes the decision. The service and model must support this setting, and its decisions may differ from reasoning mode. You can also adjust concurrency and output limits, for example `--lmstudio-fast --parallel 4 --max-output-tokens 1024`. Without the flag the model service's default reasoning settings apply.
 
+If Chat Completions reaches the output limit before returning a complete decision, the program skips the action and reports the limit and the `--max-output-tokens` option in the log.
+
 ## Recovery and logs
 
 Each new run saves a recovery file containing the platform address, student names and PINs, plus a `.jsonl` action log without the API key, under `ai-emh/.local/runs/`. The log records AI decisions and reported token usage and may contain the AI's private conditions; store it carefully. These files are excluded from Git. In the log, `modelDurationMs` measures each model request through response parsing in milliseconds. `skipReason` identifies causes such as `unit_changed`, `quote_changed`, or `model_capacity` (deferred until a concurrency slot is free); errors also include `errorStage`. A deferral is not a model request. Resume the same students after interruption with:

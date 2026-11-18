@@ -53,7 +53,7 @@ EMHは開始操作後、取引画面の「あなたの条件」の真上に5秒�
 
 EMH の正式ルーム作成と Demo Model では「実験1（固定配当）」と「実験2（抽選配当）」を選べます。実験2は既定12人の市場と練習用の配当・状態を使い、学生は状態別条件を確認できます。どちらの実験でも、学生画面に左右に分けた買売操作・市場価格・自分の記録を同時に表示します。進行中の教員画面では条件を開閉できます。 画面サイズ別のプレビューは `/emh/demo/preview` で開けます。
 
-[Agent-Based Behavioral Experiments](ai-emh/README.md) は、Double Auction、EMH 実験1・2、確率的進化ゲーム（SEG）の正式ルームに AI 学生を参加させます。ルームコードから実験を識別し、ローカルモデルまたは OpenAI で判断します。AI 学生の開発は `Agent-Based-Behavioral-Experiments` ブランチで行います。
+[Agent-Based Behavioral Experiments](ai-emh/README.md) は、Double Auction、EMH 実験1・2、確率的進化ゲーム（SEG）の正式ルームに AI 学生を参加させます。ルームコードから実験を識別し、ローカルモデルまたは OpenAI から得た完全な判断のうち、実験ルールを満たす操作を送信します。AI 学生の開発は `Agent-Based-Behavioral-Experiments` ブランチで行います。
 
 LM Studio には長い思考を無効にする任意の高速モードがあり、完全な JSON コードブロックも読み取れます。
 

@@ -177,26 +177,28 @@ export async function requestModel({
   );
   const choice = data.choices?.[0];
   const content = choice?.message?.content;
-  if (typeof content !== "string" || !content.trim()) {
-    if (choice?.finish_reason === "length")
-      throw new Error(
-        `模型达到 ${maxOutputTokens} tokens 的输出上限，未返回交易决定；可增大 --max-output-tokens`,
-      );
-    if (choice?.message?.reasoning || choice?.message?.reasoning_content)
-      throw new Error(
-        "模型返回了推理内容，但没有返回最终交易决定；可检查思考模式与输出上限",
-      );
-    if (!choice)
-      throw new Error(
-        "模型接口未返回 Chat Completions 格式；请检查本地模型地址和模型服务",
-      );
-    throw new Error("模型返回空内容，没有交易决定；请检查模型服务日志");
+  const reachedOutputLimit = choice?.finish_reason === "length";
+  if (typeof content === "string" && content.trim()) {
+    try {
+      return {
+        decision: parseModelDecision(content),
+        usage: data.usage ?? null,
+      };
+    } catch {
+      if (!reachedOutputLimit) throw new Error("模型返回的决定不是有效 JSON");
+    }
   }
-  let decision;
-  try {
-    decision = parseModelDecision(content);
-  } catch {
-    throw new Error("模型返回的决定不是有效 JSON");
-  }
-  return { decision, usage: data.usage ?? null };
+  if (reachedOutputLimit)
+    throw new Error(
+      `模型达到 ${maxOutputTokens} tokens 的输出上限，未返回完整决定；可增大 --max-output-tokens`,
+    );
+  if (choice?.message?.reasoning || choice?.message?.reasoning_content)
+    throw new Error(
+      "模型返回了推理内容，但没有返回最终交易决定；可检查思考模式与输出上限",
+    );
+  if (!choice)
+    throw new Error(
+      "模型接口未返回 Chat Completions 格式；请检查本地模型地址和模型服务",
+    );
+  throw new Error("模型返回空内容，没有交易决定；请检查模型服务日志");
 }

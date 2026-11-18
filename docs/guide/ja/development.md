@@ -73,6 +73,8 @@ npm run build
 
 AI 学生の開発は `Agent-Based-Behavioral-Experiments` にプッシュします。このブランチでは AI テストが実行され、Vercel の自動デプロイは無効です。`main` へのマージには対象変更の承認が必要です。
 
+ローカルモデルで多数の AI 学生を検証するときは、独立したローカルデータベースを使います。推論の順番待ちを含め、取引単位や回答の制限時間に余裕を持たせてください。出力上限で判断が途中になった場合は、[AI 学生の設定](../../../ai-emh/README.md)にある `--max-output-tokens` を調整します。
+
 主要な実装は `src/experiments/double-auction/lib/study-core.ts`（ルール）、`study-view.ts`（表示・統計）、`study-export.ts`（出力）、`src/experiments/double-auction/components/study-room.tsx`（画面）、`study-settings.tsx`（設定）です。写真の出典は [public/fruits/CREDITS.md](../../../public/fruits/CREDITS.md) に記載しています。
 
 ## 三語ドキュメントの同期チェック

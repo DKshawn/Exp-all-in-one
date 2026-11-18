@@ -30,6 +30,8 @@ node ai-emh/run.mjs --help
 
 LM Studio のモデルが長時間考えても判断を返せない場合は、起動時に `--lmstudio-fast` を指定できます。このモードは LM Studio の Responses 接続で長い思考を無効にし、判断自体はモデルが行います。対応するモデルとサービスが必要で、思考モードとは判断行動が異なる可能性があります。例えば `--lmstudio-fast --parallel 4 --max-output-tokens 1024` と指定できます。この引数を使わなければモデルサービスの既定の思考設定を維持します。
 
+Chat Completions で出力上限に達して判断が途中になったときは、該当の操作を送信せず、ログに使用した上限と `--max-output-tokens` の調整方法を表示します。
+
 ## 再入室と記録
 
 新しい実行では `ai-emh/.local/runs/` に、ルームのアドレス、学生名、PIN を含む復旧ファイルと、API キーを含まない `.jsonl` 操作記録を作成します。記録には AI の判断とモデルが返す token 使用量が含まれ、AI の非公開条件が含まれる可能性があります。大切に保管してください。ファイルは Git に含まれません。中断後は同じ学生として再入室できます。 ログの `modelDurationMs` は各モデル要求の開始から応答解析までのミリ秒です。`skipReason` は `unit_changed`（取引単位の変更）、`quote_changed`（相手の注文変更）、`model_capacity`（並列枠が空くまで保留）などを示し、エラー時は `errorStage` も記録します。保留はモデルへの要求ではありません。

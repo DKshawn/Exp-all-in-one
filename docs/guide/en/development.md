@@ -71,6 +71,8 @@ Keep all released experiments together on `main`. Use short-lived feature branch
 
 Push AI participant development to `Agent-Based-Behavioral-Experiments` first. Pushes to that branch run the AI tests, and automatic Vercel deployments are disabled. Merging into `main` requires acceptance of the specific change.
 
+When testing many AI students with a local model, use an isolated local database and allow time for queued inference within each trading unit or answer window. If the output limit cuts off a decision, adjust `--max-output-tokens` as described in the [AI student setup guide](../../../ai-emh/README.en.md).
+
 Key Double Auction files are `src/experiments/double-auction/lib/study-core.ts` for rules, `study-view.ts` and `study-export.ts` in the same directory for views/statistics and exports, and `src/experiments/double-auction/components/study-room.tsx` and `study-settings.tsx` for the interface and settings. Photo credits are in [public/fruits/CREDITS.md](../../../public/fruits/CREDITS.md).
 
 ## Documentation synchronization

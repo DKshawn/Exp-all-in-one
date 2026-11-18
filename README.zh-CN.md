@@ -53,7 +53,7 @@ EMH 在教师开始后在交易画面原位置的个人条件正上方显示5秒
 
 创建 EMH 正式房间或试用 Demo Model 时，可选择「実験1（固定配当）」和「実験2（抽選配当）」。实验2默认使用12人市场及单独的练习分红与状态，学生可查看各状态条件；两个实验的学生均可同时查看左右分开的买卖操作、市场价格和个人记录。教师可展开或收起条件。 可在 `/emh/demo/preview` 切换屏幕尺寸查看演示。
 
-[Agent-Based Behavioral Experiments](ai-emh/README.zh-CN.md) 让 AI 学生参加 Double Auction、EMH 实验 1 和 2、随机演化博弈（SEG）的正式房间。程序按房间代码识别实验，由本地模型或 OpenAI 决策。AI 学生的开发在 `Agent-Based-Behavioral-Experiments` 分支进行。
+[Agent-Based Behavioral Experiments](ai-emh/README.zh-CN.md) 让 AI 学生参加 Double Auction、EMH 实验 1 和 2、随机演化博弈（SEG）的正式房间。程序按房间代码识别实验，只提交本地模型或 OpenAI 给出的完整且符合实验规则的决定。AI 学生的开发在 `Agent-Based-Behavioral-Experiments` 分支进行。
 
 LM Studio 可选择关闭长思考的快速模式；程序也能识别完整的 JSON 代码框。
 
