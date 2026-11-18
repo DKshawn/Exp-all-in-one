@@ -571,6 +571,7 @@ test("compatible local model response makes one real student request", async (t)
         },
       ],
       usage: { prompt_tokens: 100 },
+      model: "test-build-2026",
     });
   });
   t.after(() => {
@@ -615,15 +616,67 @@ test("compatible local model response makes one real student request", async (t)
     unitKey: "1:A:1",
   });
   assert.equal(reports[0].type, "submitted");
+  assert.equal(reports[0].responseModel, "test-build-2026");
+  assert.equal(reports[0].variant, "exp2");
+  assert.equal(reports[0].usage.prompt_tokens, 100);
+  assert.ok(Number.isFinite(Date.parse(reports[0].modelRequestedAt)));
   assert.ok(
     Number.isInteger(reports[0].modelDurationMs) &&
       reports[0].modelDurationMs >= 0,
   );
 });
 
+test("a failed submission retains the model decision and attempted command", async (t) => {
+  const model = await server((_request, response) =>
+    reply(response, {
+      model: "actual-model",
+      usage: { prompt_tokens: 30, completion_tokens: 8 },
+      choices: [
+        { message: { content: '{"action":"bid","price":105,"reason":"bid"}' } },
+      ],
+    }),
+  );
+  t.after(() => model.instance.close());
+  const controller = new AbortController();
+  const events = [];
+  await runStudent(
+    {
+      identity: { nickname: "AABC001" },
+      state: async () => snapshot(),
+      act: async () => {
+        throw new Error("submission unavailable");
+      },
+    },
+    {
+      modelUrl: model.url,
+      model: "alias",
+      interval: 1,
+      timeout: 1,
+      pollSeconds: 0.01,
+    },
+    { acquire: () => true, release() {} },
+    controller.signal,
+    (event) => {
+      events.push(event);
+      controller.abort();
+    },
+  );
+  const [event] = events;
+  assert.equal(event.type, "error");
+  assert.equal(event.errorStage, "submit");
+  assert.equal(event.responseModel, "actual-model");
+  assert.equal(event.usage.completion_tokens, 8);
+  assert.equal(event.decision.action, "bid");
+  assert.equal(event.command.price, 105);
+});
+
 test("model timeout or malformed response causes no fallback transaction", async (t) => {
   const invalid = await server((request, response) =>
-    reply(response, { choices: [{ message: { content: "not json" } }] }),
+    reply(response, {
+      model: "model-build",
+      usage: { completion_tokens: 2 },
+      choices: [{ message: { content: "not json" } }],
+    }),
   );
   t.after(() => invalid.instance.close());
   let transactions = 0;
@@ -656,6 +709,8 @@ test("model timeout or malformed response causes no fallback transaction", async
   assert.equal(events[0].type, "error");
   assert.equal(events[0].errorStage, "model");
   assert.equal(events[0].skipReason, "model_error");
+  assert.equal(events[0].responseModel, "model-build");
+  assert.equal(events[0].usage.completion_tokens, 2);
   assert.ok(
     Number.isInteger(events[0].modelDurationMs) &&
       events[0].modelDurationMs >= 0,

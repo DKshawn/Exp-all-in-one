@@ -1,4 +1,4 @@
-import { randomBytes, randomInt } from "node:crypto";
+import { randomBytes, randomInt, randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile, appendFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -197,8 +197,7 @@ export async function runStudent(client, config, slots, signal, report) {
   await wait(Math.random() * config.pollSeconds, signal);
   while (!signal.aborted) {
     let stage = "state";
-    let modelStartedAt;
-    let modelDurationMs;
+    let attempt;
     try {
       const state = await client.state();
       if (adapter.isComplete(state)) {
@@ -224,23 +223,45 @@ export async function runStudent(client, config, slots, signal, report) {
         }
       } else if (shouldDecide) {
         nextDecisionAt = Date.now() + config.interval * 1000;
-        let result;
+        let modelStartedAt;
         try {
           stage = "model";
+          const request = adapter.request(state);
+          const observation = request.prompt.observation;
+          attempt = {
+            ...position,
+            variant:
+              observation.mode ??
+              observation.institution ??
+              state.experiment ??
+              "exp1",
+            period: state.market?.period,
+            unit: state.market?.unit,
+            role: observation.role ?? observation.position,
+            modelRequestedAt: new Date().toISOString(),
+          };
           modelStartedAt = performance.now();
-          result = await requestModel({
+          const result = await requestModel({
             baseUrl: config.modelUrl,
             apiKey: config.apiKey,
             model: config.model,
             timeoutMs: config.timeout * 1000,
             maxOutputTokens: config.maxOutputTokens,
-            ...adapter.request(state),
+            ...request,
             provider: config.provider,
             lmstudioFast: config.lmstudioFast,
           });
+          Object.assign(attempt, result);
+          if (Number.isInteger(result.decision?.choice)) {
+            const choice = result.decision.choice;
+            attempt.selectedOption =
+              observation.options?.[choice] ?? observation.choices?.[choice];
+          }
         } finally {
           if (modelStartedAt !== undefined)
-            modelDurationMs = Math.round(performance.now() - modelStartedAt);
+            attempt.modelDurationMs = Math.round(
+              performance.now() - modelStartedAt,
+            );
           slots.release();
         }
         stage = "refresh";
@@ -249,16 +270,13 @@ export async function runStudent(client, config, slots, signal, report) {
           report({
             student: client.identity.nickname,
             type: "skipped",
-            ...position,
-            decision: result.decision,
-            usage: result.usage,
-            modelDurationMs,
+            ...attempt,
             skipReason: "run_stopped",
           });
           break;
         }
         if (
-          isWait(result.decision) &&
+          isWait(attempt.decision) &&
           adapter.isActive(latest) &&
           JSON.stringify(adapter.position(latest)) === JSON.stringify(position)
         ) {
@@ -270,10 +288,7 @@ export async function runStudent(client, config, slots, signal, report) {
           report({
             student: client.identity.nickname,
             type: "waiting_started",
-            ...position,
-            decision: result.decision,
-            usage: result.usage,
-            modelDurationMs,
+            ...attempt,
           });
           if (adapter.key(latest) !== waitingOn.key)
             endWaiting("market_changed");
@@ -281,22 +296,19 @@ export async function runStudent(client, config, slots, signal, report) {
           continue;
         }
         const { action, skipReason } = adapter.classify(
-          result.decision,
+          attempt.decision,
           state,
           latest,
         );
         if (action) {
           stage = "submit";
+          attempt.command = action;
           await client.act(adapter.target(latest), action);
         }
         report({
           student: client.identity.nickname,
           type: action ? "submitted" : "skipped",
-          ...position,
-          decision: result.decision,
-          usage: result.usage,
-          modelDurationMs,
-          ...(action ? { command: action } : {}),
+          ...attempt,
           ...(skipReason ? { skipReason } : {}),
         });
       }
@@ -304,9 +316,13 @@ export async function runStudent(client, config, slots, signal, report) {
       report({
         student: client.identity.nickname,
         type: "error",
+        ...attempt,
         errorStage: stage,
         skipReason: `${stage}_${error.name === "TimeoutError" || error.name === "AbortError" ? "timeout" : "error"}`,
-        ...(modelDurationMs !== undefined ? { modelDurationMs } : {}),
+        ...(error.usage !== undefined ? { usage: error.usage } : {}),
+        ...(error.responseModel !== undefined
+          ? { responseModel: error.responseModel }
+          : {}),
         error:
           error.name === "TimeoutError" || error.name === "AbortError"
             ? "请求超时，本次不提交操作"
@@ -476,34 +492,38 @@ export async function main(args = process.argv.slice(2)) {
   console.log(`身份恢复文件：${manifestPath}\n记录文件：${logPath}`);
   console.log("恢复文件包含学生 PIN，请妥善保存。正在入室……");
 
-  // Verify the first student session before registering the remaining identities.
-  const clients = manifest.students.map(
-    (student) =>
-      new StudentClient(manifest.baseUrl, manifest.code, student, experiment),
-  );
-  await clients[0].join();
-  await clients[0].state();
-  for (let index = 1; index < clients.length; index++) {
-    await clients[index].join();
-    if ((index + 1) % 10 === 0 || index + 1 === clients.length)
-      console.log(`已入室 ${index + 1}/${clients.length}`);
-  }
-  console.log(
-    `全部 ${clients.length} 人已入室。请在教师页面开始或恢复实验，按 Ctrl+C 停止 AI。`,
-  );
   const controller = new AbortController();
   const stop = () => {
     console.log("\n正在停止；未完成的 AI 决策不会提交。 ");
     controller.abort();
   };
-  process.once("SIGINT", stop);
-  const slots = new ModelSlots(config.parallel);
+  const run = {
+    schemaVersion: 2,
+    runId: randomUUID(),
+    roomCode: manifest.code,
+    experiment,
+    provider: config.provider,
+    model: config.model,
+    lmstudioFast: config.lmstudioFast,
+  };
   let logging = Promise.resolve();
+  let logFailure;
   const report = (entry) => {
-    const record = { at: new Date().toISOString(), ...entry };
+    const record = { ...run, at: new Date().toISOString(), ...entry };
     logging = logging
-      .then(() => appendFile(logPath, `${JSON.stringify(record)}\n`))
-      .catch((error) => console.error(`记录写入失败：${error.message}`));
+      .then(async () => {
+        if (!logFailure)
+          await appendFile(logPath, `${JSON.stringify(record)}\n`, {
+            mode: 0o600,
+          });
+      })
+      .catch((error) => {
+        logFailure = new Error(`记录写入失败：${error.message}`, {
+          cause: error,
+        });
+        console.error(logFailure.message);
+        controller.abort();
+      });
     const location =
       entry.group != null
         ? `小组 ${entry.group} `
@@ -529,16 +549,32 @@ export async function main(args = process.argv.slice(2)) {
   };
   report({
     type: "run_started",
-    experiment,
-    provider: config.provider,
-    model: config.model,
-    count: clients.length,
+    count: manifest.students.length,
     intervalSeconds: config.interval,
     timeoutSeconds: config.timeout,
     maxConcurrency: config.parallel,
     maxOutputTokens: config.maxOutputTokens,
-    lmstudioFast: config.lmstudioFast,
   });
+  await logging;
+  if (logFailure) throw logFailure;
+
+  // Verify the first student session before registering the remaining identities.
+  const clients = manifest.students.map(
+    (student) =>
+      new StudentClient(manifest.baseUrl, manifest.code, student, experiment),
+  );
+  await clients[0].join();
+  await clients[0].state();
+  for (let index = 1; index < clients.length; index++) {
+    await clients[index].join();
+    if ((index + 1) % 10 === 0 || index + 1 === clients.length)
+      console.log(`已入室 ${index + 1}/${clients.length}`);
+  }
+  console.log(
+    `全部 ${clients.length} 人已入室。请在教师页面开始或恢复实验，按 Ctrl+C 停止 AI。`,
+  );
+  process.once("SIGINT", stop);
+  const slots = new ModelSlots(config.parallel);
   try {
     await Promise.all(
       clients.map((client) =>
@@ -549,5 +585,6 @@ export async function main(args = process.argv.slice(2)) {
     process.removeListener("SIGINT", stop);
     await logging;
   }
+  if (logFailure) throw logFailure;
   console.log("AI 学生已停止。");
 }

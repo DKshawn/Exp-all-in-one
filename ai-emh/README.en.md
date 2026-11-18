@@ -42,6 +42,16 @@ node ai-emh/run.mjs --resume ai-emh/.local/runs/room-time-id.json --provider loc
 
 Recovery files identify the platform, room, experiment, and AI roster. Existing EMH recovery files still work. New students must join before admission closes. Registered students can reconnect after the experiment starts.
 
+### Decision results
+
+The `.jsonl` log automatically appends the result of each model request. It records the room, student, round, run ID, requested and reported model names, request and record times, latency, token usage, choice or trade action, and status. Latency is measured in milliseconds from the request through response parsing. `submitted` means the platform accepted the action. The teacher's results export records fills, pairings, and payoffs.
+
+The CSV contains one row per model request. You can specify a new output file, or omit it to save a `.results.csv` next to the log. Exports of older logs use the model recorded at each run's start and leave fields absent from the original log blank.
+
+```powershell
+node ai-emh/export-results.mjs ai-emh/.local/runs/room-code-time-id.json.jsonl
+```
+
 ## Decisions
 
 After a model chooses to wait, the program checks the student view about every two seconds. A market change such as a new quote, trade, or change in holdings triggers another decision. In SEG, the next eligible round triggers a decision. Clock ticks alone do not trigger a request. The minimum decision interval and concurrency limit still apply.

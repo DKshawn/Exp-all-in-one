@@ -73,6 +73,8 @@ AI 学生相关开发先推送到 `Agent-Based-Behavioral-Experiments`。该分�
 
 用本地模型验证大量 AI 学生时，使用隔离的本地数据库，并为交易单元或作答窗口预留等待推理的时间。若决定因输出上限被截断，可参照 [AI 学生设置](../../../ai-emh/README.zh-CN.md)调整 `--max-output-tokens`。
 
+比较模型的作答和耗时时，按 [AI 学生作答结果](../../../ai-emh/README.zh-CN.md)的步骤将 `.jsonl` 导出为 CSV。恢复运行的记录可按运行 ID 和模型区分。
+
 Double Auction 的主要实现包括 `src/experiments/double-auction/lib/study-core.ts`（规则）、同目录的 `study-view.ts`（视图与统计）、`study-export.ts`（导出），以及 `src/experiments/double-auction/components/study-room.tsx`（页面）和同目录的 `study-settings.tsx`（设置）。照片来源见 [public/fruits/CREDITS.md](../../../public/fruits/CREDITS.md)。
 
 ## 三语文档同步检查

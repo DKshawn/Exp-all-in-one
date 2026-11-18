@@ -113,6 +113,20 @@ export function parseModelDecision(content) {
 
 export const DEFAULT_MAX_OUTPUT_TOKENS = 2048;
 
+function responseDetails(data) {
+  return {
+    usage: data.usage ?? null,
+    responseModel: typeof data.model === "string" ? data.model : null,
+  };
+}
+
+class ModelResponseError extends Error {
+  constructor(message, details) {
+    super(message);
+    Object.assign(this, details);
+  }
+}
+
 export async function requestModel({
   baseUrl,
   apiKey,
@@ -140,21 +154,26 @@ export async function requestModel({
         store: false,
       },
     });
+    const details = responseDetails(data);
     const content = data.output
       ?.filter((item) => item.type === "message")
       .flatMap((item) => item.content ?? [])
       .find((item) => item.type === "output_text")?.text;
     if (!content)
-      throw new Error(
+      throw new ModelResponseError(
         "LM Studio 没有返回最终交易决定；请检查模型服务和输出上限",
+        details,
       );
     try {
       return {
         decision: parseModelDecision(content),
-        usage: data.usage ?? null,
+        ...details,
       };
     } catch {
-      throw new Error("LM Studio 返回的决定不是有效 JSON");
+      throw new ModelResponseError(
+        "LM Studio 返回的决定不是有效 JSON",
+        details,
+      );
     }
   }
   const { data } = await request(
@@ -175,6 +194,7 @@ export async function requestModel({
       },
     },
   );
+  const details = responseDetails(data);
   const choice = data.choices?.[0];
   const content = choice?.message?.content;
   const reachedOutputLimit = choice?.finish_reason === "length";
@@ -182,23 +202,30 @@ export async function requestModel({
     try {
       return {
         decision: parseModelDecision(content),
-        usage: data.usage ?? null,
+        ...details,
       };
     } catch {
-      if (!reachedOutputLimit) throw new Error("模型返回的决定不是有效 JSON");
+      if (!reachedOutputLimit)
+        throw new ModelResponseError("模型返回的决定不是有效 JSON", details);
     }
   }
   if (reachedOutputLimit)
-    throw new Error(
+    throw new ModelResponseError(
       `模型达到 ${maxOutputTokens} tokens 的输出上限，未返回完整决定；可增大 --max-output-tokens`,
+      details,
     );
   if (choice?.message?.reasoning || choice?.message?.reasoning_content)
-    throw new Error(
+    throw new ModelResponseError(
       "模型返回了推理内容，但没有返回最终交易决定；可检查思考模式与输出上限",
+      details,
     );
   if (!choice)
-    throw new Error(
+    throw new ModelResponseError(
       "模型接口未返回 Chat Completions 格式；请检查本地模型地址和模型服务",
+      details,
     );
-  throw new Error("模型返回空内容，没有交易决定；请检查模型服务日志");
+  throw new ModelResponseError(
+    "模型返回空内容，没有交易决定；请检查模型服务日志",
+    details,
+  );
 }
