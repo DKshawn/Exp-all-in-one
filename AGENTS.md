@@ -20,6 +20,8 @@ For this Windows checkout, the canonical source folder and command working direc
 
 Keep released experiments together on `main`, in `src/experiments/double-auction`, `src/experiments/emh`, and `src/experiments/judgment`. Shared entry, room management, sessions, UI tokens, and database connections belong to the platform layer. Develop on short-lived feature branches and merge after validation; do not maintain a permanent branch per experiment. Preserve migration provenance and existing experiment data.
 
+Push AI participant development to `Agent-Based-Behavioral-Experiments` first. This cross-experiment branch has automatic Vercel deployments disabled. A specific user-approved release is required to merge AI participant changes into `main`.
+
 Whenever functionality is added, changed, or removed, update the Japanese `README.md`, Chinese `README.zh-CN.md`, English `README.en.md`, and the corresponding guides in `docs/guide/ja`, `docs/guide/zh-CN`, and `docs/guide/en` together in the same pull request. Keep feature descriptions, defaults, rules, examples, commands, and navigation links consistent across all three languages. Before merging, verify that the affected language versions describe the same behavior and that relative links and language-switch links resolve. Preserve archived source documents under `docs/upstream`; maintain current instructions in the guides instead.
 
 <!-- BEGIN:nextjs-agent-rules -->

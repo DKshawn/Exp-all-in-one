@@ -1,5 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": {
+      "Agent-Based-Behavioral-Experiments": false
+    }
+  },
   "regions": ["sin1"],
   "functions": {
     "src/app/api/rooms/*/events/route.ts": {

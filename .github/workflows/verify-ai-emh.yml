@@ -1,4 +1,4 @@
-name: Verify independent EMH AI
+name: Verify AI experiment participants
 
 on:
   pull_request:
@@ -6,7 +6,7 @@ on:
       - "ai-emh/**"
       - ".github/workflows/verify-ai-emh.yml"
   push:
-    branches: [main]
+    branches: [main, Agent-Based-Behavioral-Experiments]
     paths:
       - "ai-emh/**"
       - ".github/workflows/verify-ai-emh.yml"
