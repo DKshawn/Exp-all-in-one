@@ -1,7 +1,12 @@
 "use client";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ArrowBigLeft, Download, LockKeyhole } from "lucide-react";
-import type { Action, RoomView, Side } from "@/experiments/emh/types";
+import {
+  EMH_EXPERIMENT_LABELS,
+  type Action,
+  type RoomView,
+  type Side,
+} from "@/experiments/emh/types";
 import { OrderBookPanel } from "@/components/order-book-panel";
 import type { OrderBookSide } from "@/lib/order-book";
 import { canSellAtMarket } from "@/experiments/emh/order-book";
@@ -741,7 +746,7 @@ export function ResultsPanel({ room }: { room: RoomView }) {
       ) : null}
       {room.exp2 && (teacher || room.reveal) && (
         <div className="debrief">
-          <h3>実験2の条件と均衡</h3>
+          <h3>{EMH_EXPERIMENT_LABELS.exp2}の条件と均衡</h3>
           <p>事前確率：{room.exp2.prior.join(" / ")}</p>
           <table>
             <thead>

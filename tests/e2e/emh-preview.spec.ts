@@ -50,7 +50,12 @@ test("EMH screen-size preview keeps the same interactive Exp2 session", async ({
       )
       .toBe(true);
   };
-  await demo.getByRole("combobox", { name: "実験" }).selectOption("exp2");
+  const experiment = demo.getByRole("combobox", { name: "実験", exact: true });
+  await expect(experiment.getByRole("option")).toHaveText([
+    "実験1（固定配当）",
+    "実験2（抽選配当）",
+  ]);
+  await experiment.selectOption({ label: "実験2（抽選配当）" });
   await demo.getByRole("button", { name: "デモルームを作成" }).click();
   await demo.getByRole("button", { name: "分け方を確定して受付終了" }).click();
   await demo.getByRole("button", { name: "全市場で実験を開始" }).click();

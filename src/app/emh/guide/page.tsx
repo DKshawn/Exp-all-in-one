@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Shell } from "@/experiments/emh/components/shell";
+import { EMH_EXPERIMENT_LABELS } from "@/experiments/emh/types";
 
 export default function Guide() {
   return (
@@ -14,7 +15,7 @@ export default function Guide() {
           <br />
           価格・配当・売買収支・損益は円で表示します。
         </p>
-        <h2>実験1</h2>
+        <h2>{EMH_EXPERIMENT_LABELS.exp1}</h2>
         <section>
           <span className="step-number">01</span>
           <div>
@@ -63,7 +64,7 @@ export default function Guide() {
             </p>
           </div>
         </section>
-        <h2>実験2</h2>
+        <h2>{EMH_EXPERIMENT_LABELS.exp2}</h2>
         <p>
           実験1・2は開始後に5秒間の準備カウントダウンがあり、学生は自分の条件を確認できます。終了後に取引と時間の計測が始まります。一時停止中はカウントダウンも止まります。
         </p>

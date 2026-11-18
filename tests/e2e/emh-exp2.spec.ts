@@ -13,7 +13,15 @@ test("Exp2 creation and participant view use the default two securities and a si
   try {
     await page.goto("/teacher?experiment=emh");
     await enterTeacherPage(page);
-    await page.getByRole("combobox", { name: "実験" }).selectOption("exp2");
+    const experiment = page.getByRole("combobox", {
+      name: "実験",
+      exact: true,
+    });
+    await expect(experiment.getByRole("option")).toHaveText([
+      "実験1（固定配当）",
+      "実験2（抽選配当）",
+    ]);
+    await experiment.selectOption({ label: "実験2（抽選配当）" });
     await expect(page.locator('[name="initialUnits"]')).toHaveValue("2");
     await page
       .getByLabel("教員パスワード", { exact: false })
@@ -112,6 +120,20 @@ test("Exp2 creation and participant view use the default two securities and a si
       .first()
       .textContent();
     await expect(realized).toContainText(`状態 ${resultState}`);
+    await page.setViewportSize({ width: 320, height: 900 });
+    await page.getByRole("tab", { name: "結果", exact: true }).click();
+    const resultHeading = page.getByRole("heading", {
+      name: "実験2（抽選配当）の条件と均衡",
+    });
+    await expect(resultHeading).toBeVisible();
+    expect(
+      await resultHeading.evaluate((heading) => {
+        const range = document.createRange();
+        range.selectNodeContents(heading);
+        return new Set(Array.from(range.getClientRects(), (rect) => rect.top))
+          .size;
+      }),
+    ).toBe(1);
     expect(errors).toEqual([]);
   } finally {
     await Promise.all(contexts.map((context) => context.close()));

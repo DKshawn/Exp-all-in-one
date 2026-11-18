@@ -41,7 +41,7 @@ The interface labels prices, dividends, trading balances and scores in yen.
 
 After starting, a five-second countdown appears directly above the personal conditions panel in its trading-screen position, highlighted with an arrow and border. The page scrolls to reveal it if needed. Pausing also freezes the countdown.
 
-[EMH Demo Model](https://exp-all-in-one.vercel.app/emh/demo) offers Experiment 1 and Experiment 2. Experiment 1 uses the same settings form, validation limits and defaults as the formal experiment. Set initial securities, target size, type ratios and A/B period duration, then choose **デモルームを作成**. It creates one market of 3–12 participants; everyone except you is virtual, with eight virtual participants by default.
+[EMH Demo Model](https://exp-all-in-one.vercel.app/emh/demo) offers **実験1（固定配当）** (fixed dividends) and **実験2（抽選配当）** (dividends determined by a draw). Experiment 1 uses the same settings form, validation limits and defaults as the formal experiment. Set initial securities, target size, type ratios and A/B period duration, then choose **デモルームを作成**. It creates one market of 3–12 participants; everyone except you is virtual, with eight virtual participants by default.
 
 Saving settings during admission, confirming and locking allocation, and explicitly releasing it before starting follow the formal workflow. Starting does not redraw confirmed types. Rounds, trade-attempt duration and break duration are configurable (defaults: 6 rounds, 30 seconds and 60 seconds). Securities, timing, payouts and efficiency use the shared engine. Practice A/B dividends in yen for types 1–3 are 120/40, 100/60 and 150/30; private classroom dividends are not used.
 
