@@ -1,7 +1,9 @@
 import { test, expect, type Page } from "@playwright/test";
-import { enterTeacherPage } from "./helpers/teacher-login";
+import { enterTeacherPage, signInTeacher } from "./helpers/teacher-login";
 import { expectEndButton } from "./helpers/end-experiment";
 import { expectCopiedJoinLink } from "./helpers/copy-join-link";
+import { defaults } from "../../src/experiments/evolution/settings";
+import type { View } from "../../src/experiments/evolution/views";
 
 async function setDemand(page: Page, value: number) {
   const slider = page.getByRole("slider");
@@ -31,6 +33,134 @@ async function fit(page: Page) {
     expect(overflow, "Control overflow at " + width).toEqual([]);
   }
 }
+
+test("a settled SEG pair waits for room-wide feedback and the next round", async ({
+  page,
+  browser,
+  baseURL,
+}) => {
+  await signInTeacher(page.request);
+  const created = await page.request.post("/api/evolution/rooms", {
+    data: {
+      title: "Shared round clock",
+      password: "review-password",
+      settings: {
+        ...defaults("coordination"),
+        groups: 2,
+        rounds: 2,
+        seconds: 10,
+        feedbackSeconds: 6,
+      },
+    },
+  });
+  await expect(created).toBeOK();
+  const { code } = await created.json();
+  const control = `/api/rooms/${code}/evolution?session=teacher`;
+  const participant = `/api/rooms/${code}/evolution?session=student`;
+  const contexts = await Promise.all(
+    Array.from({ length: 4 }, () =>
+      browser.newContext({ baseURL, viewport: { width: 320, height: 844 } }),
+    ),
+  );
+  try {
+    for (const [i, context] of contexts.entries()) {
+      await expect(
+        await context.request.post(`/api/rooms/${code}/join`, {
+          data: { nickname: `Seat ${i + 1}`, pin: "1234" },
+        }),
+      ).toBeOK();
+    }
+    await expect(
+      await page.request.post(control, { data: { kind: "close" } }),
+    ).toBeOK();
+    async function view(context: (typeof contexts)[number]) {
+      const response = await context.request.get(participant);
+      await expect(response).toBeOK();
+      return (await response.json()) as Extract<View, { role: "student" }>;
+    }
+    const groups = await Promise.all(
+      contexts.map(async (context) => (await view(context)).group),
+    );
+    const early = contexts.filter((_, i) => groups[i] === groups[0]);
+    const late = contexts.filter((_, i) => groups[i] !== groups[0]);
+    expect([early.length, late.length]).toEqual([2, 2]);
+    const screens = await Promise.all(
+      early.map(async (context) => {
+        await context.addInitScript(() =>
+          localStorage.setItem("evolution-language", "zh-CN"),
+        );
+        const screen = await context.newPage();
+        await screen.goto(`/room/${code}`);
+        return screen;
+      }),
+    );
+    await expect(
+      await page.request.post(control, { data: { kind: "start" } }),
+    ).toBeOK();
+    async function submit(context: (typeof contexts)[number], choice: number) {
+      await expect(
+        await context.request.post(participant, {
+          data: { kind: "choose", round: 1, choice },
+        }),
+      ).toBeOK();
+    }
+    await Promise.all([
+      ...early.map((context) => submit(context, 0)),
+      submit(late[0], 1),
+    ]);
+    for (const screen of screens) {
+      await expect(
+        screen.getByRole("heading", { name: "等待其他配对完成" }),
+      ).toBeVisible();
+      await expect(
+        screen.getByRole("timer", { name: "距作答截止" }),
+      ).toBeVisible();
+      await expect(screen.getByRole("timer", { name: "距下一轮" })).toHaveCount(
+        0,
+      );
+      await expect(screen.locator(".ev-matrix-result")).toBeVisible();
+      await expect(screen.locator(".session-phase strong")).toHaveText(
+        "轮次 1/2",
+      );
+      expect(
+        await screen.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
+    }
+    await Promise.all(
+      screens.map(async (screen) => {
+        await expect(
+          screen.getByRole("timer", { name: "距下一轮" }),
+        ).toBeVisible();
+        await expect(
+          screen.getByRole("heading", { name: "等待其他配对完成" }),
+        ).toHaveCount(0);
+        await expect(screen.locator(".session-phase strong")).toHaveText(
+          "轮次 1/2",
+        );
+      }),
+    );
+    const [answered, timedOut] = await Promise.all(late.map(view));
+    expect(answered.current).toMatchObject({
+      choice: 1,
+      status: "unmatched",
+      pay: null,
+    });
+    expect(timedOut.current).toMatchObject({
+      choice: null,
+      status: "timeout",
+      pay: null,
+    });
+    await Promise.all(
+      screens.map((screen) =>
+        expect(screen.locator(".session-phase strong")).toHaveText("轮次 2/2"),
+      ),
+    );
+  } finally {
+    await Promise.all(contexts.map((context) => context.close()));
+  }
+});
 
 test("1000-round Nash demo submits a demand on phone tap", async ({
   browser,

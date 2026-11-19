@@ -75,6 +75,12 @@ const messages = {
   open: ["入室受付中", "正在入室", "Admission open"],
   ready: ["開始待ち", "等待开始", "Ready to start"],
   playing: ["回答受付中", "正在作答", "Decisions open"],
+  waitingForPairs: [
+    "他の組の回答待ち",
+    "等待其他配对完成",
+    "Waiting for other pairs",
+  ],
+  decisionCutoff: ["回答締切まで", "距作答截止", "Decision cutoff"],
   feedback: ["結果確認", "轮间反馈", "Round feedback"],
   finished: ["実験終了", "实验结束", "Finished"],
   close: ["入室を締め切る", "截止入室", "Close admission"],
