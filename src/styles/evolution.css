@@ -271,6 +271,32 @@
   font-size: 13px;
   color: var(--muted);
 }
+.ev-matrix-cell {
+  display: grid;
+}
+.ev-matrix-cell > span {
+  grid-area: 1 / 1;
+}
+.ev-matrix-breakdown {
+  visibility: hidden;
+  font-weight: 700;
+}
+.ev .ev-matrix-result {
+  background: var(--lavender);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.ev .ev-matrix-axis {
+  box-shadow: inset 0 -2px var(--accent);
+}
+.ev-matrix-result .ev-matrix-breakdown {
+  visibility: visible;
+}
+.ev-matrix-result .ev-matrix-values {
+  visibility: hidden;
+}
+.ev .ev-decision .button[aria-pressed="true"]:disabled {
+  opacity: 1;
+}
 .ev-payoff-pair {
   display: inline-flex;
   align-items: center;
@@ -400,6 +426,16 @@
   align-items: start;
   gap: 10px;
 }
+.ev-play-column {
+  display: contents;
+}
+.ev-workbench-coordination .ev-play-column {
+  grid-column: 1;
+  grid-row: 1;
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
 .ev-workbench .ev-history-scroll {
   max-height: clamp(160px, 43vh, 420px);
   overflow: auto;
@@ -429,6 +465,11 @@
 }
 .ev-decision fieldset {
   padding: 6px 9px;
+}
+.ev-workbench-coordination .ev-decision fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
 }
 .ev-room .ev-rules {
   gap: 5px;
@@ -509,15 +550,29 @@
   grid-column: 2;
   grid-row: 1 / span 2;
 }
+.ev-workbench-coordination .ev-history {
+  grid-row: 1;
+}
 .ev-workbench .ev-reference {
   grid-column: 1;
 }
 @media (max-width: 760px) {
   .ev-workbench .ev-task,
   .ev-workbench .ev-history,
-  .ev-workbench .ev-reference {
+  .ev-workbench .ev-reference,
+  .ev-workbench-coordination .ev-play-column {
     grid-column: 1;
     grid-row: auto;
+  }
+  .ev-workbench:not(.ev-workbench-coordination) .ev-reference {
+    order: 1;
+  }
+  .ev-workbench-coordination.has-history .ev-history {
+    order: -1;
+  }
+  .ev-workbench-coordination.has-history .ev-history-scroll {
+    height: 118px;
+    max-height: 118px;
   }
   .ev-room,
   .ev-demo-bar.demo-panel {
@@ -557,5 +612,10 @@
   }
   .ev-workbench.has-history .ev-history-scroll {
     max-height: 118px;
+  }
+}
+@media (max-width: 480px) {
+  .ev-reference :is(th, td) {
+    padding-inline: 4px;
   }
 }

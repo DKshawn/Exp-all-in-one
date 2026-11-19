@@ -5,6 +5,7 @@ import { localDatabase, migrate } from "../src/lib/server/database";
 import { EvolutionService } from "../src/experiments/evolution/server/service";
 import {
   defaults,
+  demandStep,
   outcome,
   settingsSchema,
 } from "../src/experiments/evolution/settings";
@@ -67,14 +68,22 @@ test("both payoff models, orientation and exact input boundaries", () => {
   assert.ok(!settingsSchema.safeParse({ ...c, names: ["a", "a"] }).success);
   const slider = defaults("demand");
   assert.equal(slider.mode, "demand");
-  assert.deepEqual(outcome(slider, 333, 667).pay, ["333/1000", "667/1000"]);
+  assert.equal(demandStep(slider), "0.1");
+  assert.deepEqual(outcome({ ...slider, demandStep: "0.001" }, 333, 667).pay, [
+    "333/1000",
+    "667/1000",
+  ]);
   assert.deepEqual(outcome(slider, 0, 1000).pay, ["0", "1"]);
   assert.equal(outcome(slider, 334, 667).agreement, false);
   assert.equal(
     settingsSchema.safeParse({ ...slider, rounds: 1000 }).success,
     true,
   );
-  const d = { ...slider, options: ["1/3", "1/2", "2/3"] };
+  const d = {
+    ...slider,
+    demandStep: undefined,
+    options: ["1/3", "1/2", "2/3"],
+  };
   assert.equal(d.mode, "demand");
   assert.deepEqual(outcome(d, 0, 2).pay, ["1/3", "2/3"]);
   assert.deepEqual(outcome(d, 1, 1).pay, ["1/2", "1/2"]);
@@ -101,6 +110,34 @@ test("both payoff models, orientation and exact input boundaries", () => {
     { feedbackSeconds: -1 },
   ])
     assert.equal(settingsSchema.safeParse({ ...d, ...patch }).success, false);
+});
+
+test("Nash submission uses the configured step and accepts the endpoints", () => {
+  const slider = defaults("demand");
+  assert.equal(slider.mode, "demand");
+  assert.equal(
+    settingsSchema.safeParse({ ...slider, demandStep: "0.03" }).success,
+    false,
+  );
+  const g = newGame(slider);
+  g.seats = ["a", "b"].map(newSeat);
+  closeAdmission(g, 0);
+  start(g, 100);
+  assert.throws(() => choose(g, "a", 1, 301, 101));
+  choose(g, "a", 1, 0, 102);
+  choose(g, "b", 1, 1000, 103);
+  assert.equal(personal(g.round!, "a").pay, "0");
+  assert.equal(personal(g.round!, "b").pay, "1");
+  const fine = newGame({ ...slider, demandStep: "0.005" });
+  fine.seats = ["a", "b"].map(newSeat);
+  closeAdmission(fine, 0);
+  start(fine, 100);
+  assert.throws(() => choose(fine, "a", 1, 331, 101));
+  choose(fine, "a", 1, 335, 102);
+  choose(fine, "b", 1, 665, 103);
+  assert.equal(personal(fine.round!, "a").pay, "67/200");
+  assert.equal(personal(fine.round!, "b").pay, "133/200");
+  assert.equal(demandStep({ ...slider, demandStep: undefined }), "0.001");
 });
 for (const mode of ["demand", "coordination"] as const)
   test(
@@ -169,7 +206,15 @@ test("row locks, reconnects, scoped views, timed advancement and research export
       "Research",
       "room-password",
       process.env.TEACHER_ACCESS_KEY ?? "",
-      { ...defaults("demand"), rounds: 3, seconds: 5, feedbackSeconds: 3 },
+      {
+        mode: "demand",
+        demandStep: "0.001",
+        total: "1",
+        groups: 1,
+        rounds: 3,
+        seconds: 5,
+        feedbackSeconds: 3,
+      },
     );
     const { code, token } = room;
     const join = (nickname: string, pin = "6521") =>
@@ -243,6 +288,7 @@ test("row locks, reconnects, scoped views, timed advancement and research export
       /NickA|NickB|pin_hash|token_hash|room-password/,
     );
     assert.equal(raw.settings.groups, 1);
+    assert.equal(raw.settings.demandStep, "0.001");
     const file = await svc.export(code, token, "csv");
     assert.equal(file.trim().split("\r\n").length, 7);
     assert.match(file, /opponentSubmittedAt/);
@@ -284,6 +330,7 @@ test("a room created before the storage change still settles the original discre
       process.env.TEACHER_ACCESS_KEY ?? "",
       {
         ...defaults("demand"),
+        demandStep: undefined,
         total: "1",
         options: ["1/3", "1/2", "2/3"],
         rounds: 1,

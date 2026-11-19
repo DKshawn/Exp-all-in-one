@@ -2,7 +2,7 @@ import { shuffled } from "@/experiments/double-auction/lib/study-core";
 import { randomInt } from "@/experiments/double-auction/lib/random";
 import { AuctionError } from "@/lib/server/errors";
 import { add } from "./numbers";
-import { choiceCount, outcome, type Settings } from "./settings";
+import { choiceCount, choiceStride, outcome, type Settings } from "./settings";
 
 export type Phase = "open" | "ready" | "playing" | "feedback" | "finished";
 export type Seat = {
@@ -255,10 +255,12 @@ export function choosePair(
   if (g.pausedAt != null) reject("一時停止中です。");
   if (g.phase !== "playing" || now >= r.deadline || e.status !== "choosing")
     reject("このラウンドの回答は締め切られました。");
+  const stride = choiceStride(g.settings);
   if (
     !Number.isInteger(choice) ||
     choice < 0 ||
-    choice >= choiceCount(g.settings)
+    choice % stride !== 0 ||
+    choice / stride >= choiceCount(g.settings)
   )
     reject("選択肢を確認してください。");
   e.choice = choice;

@@ -76,7 +76,7 @@ async function main() {
           const durations = await burst(
             accounts.map(async ({ token }, i) => {
               const sent = performance.now();
-              const choice = mode === "demand" ? 333 + (i % 2) * 334 : i % 2;
+              const choice = mode === "demand" ? 300 + (i % 2) * 400 : i % 2;
               const result = await request(token, {
                 kind: "choose",
                 round: number,
@@ -147,18 +147,18 @@ async function main() {
           code,
           a.token,
           "student",
-          { kind: "choose", round, choice: 333 },
+          { kind: "choose", round, choice: 300 },
           round - 1,
         );
         const v = await svc.view(
           code,
           b.token,
           "student",
-          { kind: "choose", round, choice: 667 },
+          { kind: "choose", round, choice: 700 },
           round - 1,
         );
         assert.equal(v.role, "student");
-        assert.equal(v.current?.pay, "667/1000");
+        assert.equal(v.current?.pay, "7/10");
         assert.equal(v.history.length, 0);
         assert.equal(v.phase, round === 1000 ? "finished" : "feedback");
         now += 3000;
@@ -174,7 +174,7 @@ async function main() {
       assert.equal(report.rows.length, 2000);
       assert.equal(
         report.participants.find((p: { id: string }) => p.id === b.id).total,
-        "667",
+        "700",
       );
       const older = await svc.view(code, a.token, "student", undefined, 0, 21);
       assert.equal(older.history.length, 20);

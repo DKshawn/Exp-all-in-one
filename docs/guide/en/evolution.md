@@ -27,7 +27,9 @@ On the teacher home page, **ルーム管理** labels SEG rooms as **協調ゲー
 | Between-round feedback | 8 seconds  | 3–120    |
 
 - **Coordination.** In formal and demo setup, changing a strategy name updates both the row and column headings. Enter the two payoffs directly in each cell, with the row player's payoff on the left and the column player's payoff on the right. Rows and columns default to Stag, Hare. The cells in row order are (4,4), (0,3), (3,0), (2,2). Positions are redrawn with each match. A player sees their row or column position, which matters for an asymmetric matrix.
-- **Nash demand.** Both sides use a 0–1 slider with a step of 0.001 and a total of 1. If the demands sum to at most 1, each receives their demand. Otherwise both earn zero. The server compares integer thousandths, so 0.333 and 0.667 settle exactly. Previously created discrete rooms keep their settings.
+  The coordination buttons stay visible and lock after submission. The same matrix marks the realized row, column and cell when both players submit, with labels for each payoff.
+
+- **Nash demand.** Both sides use a 0–1 slider and a total of 1. Choose a step of 0.1 (default), 0.01, 0.005 or 0.001 when creating the room. The step is fixed for the session and saved in Research JSON as `settings.demandStep`. If combined demands are at most 1, each receives their demand; otherwise both get zero. Integer thousandths make 0.3 + 0.7 settle exactly. Existing sliders without a saved step use 0.001; existing discrete rooms keep their configured choices.
 
 Above 32 configured rounds, the round display uses a compact progress bar. The student history and teacher results on the live page cover the most recent 20 rounds and the current round. Choose **Older rounds** to page through earlier rounds or **Back to latest** to return.
 

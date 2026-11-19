@@ -5,8 +5,11 @@ import { api, errorMessage } from "@/lib/client";
 import { teacherRoomHref } from "@/lib/room-navigation";
 import {
   defaults,
+  demandStep,
+  DEMAND_STEP_OPTIONS,
   MAX_ROUNDS,
   settingsSchema,
+  type DemandStep,
   type Settings,
   type Mode,
 } from "../settings";
@@ -159,7 +162,24 @@ export function SetupForm({
           />
         </>
       ) : (
-        <PayoffRules s={s} lang={lang} />
+        <>
+          <label className="field">
+            {t("demandStep")}
+            <select
+              value={demandStep(s)}
+              onChange={(e) =>
+                set({ ...s, demandStep: e.target.value as DemandStep })
+              }
+            >
+              {DEMAND_STEP_OPTIONS.map((step) => (
+                <option key={step} value={step}>
+                  {step}
+                </option>
+              ))}
+            </select>
+          </label>
+          <PayoffRules s={s} lang={lang} />
+        </>
       )}
       {!parsed.success && (
         <p className="error-message" role="alert">

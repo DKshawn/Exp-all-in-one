@@ -40,6 +40,7 @@ import {
 } from "../views";
 import {
   continuous,
+  DEFAULT_DEMAND_STEP,
   HISTORY_ROUNDS,
   MAX_ROUNDS,
   settingsSchema,
@@ -216,6 +217,12 @@ export class EvolutionService {
       password.length > 128
     )
       throw new AuctionError("設定を確認してください。");
+    const settings = continuous(parsed.data)
+      ? {
+          ...parsed.data,
+          demandStep: parsed.data.demandStep ?? DEFAULT_DEMAND_STEP,
+        }
+      : parsed.data;
     const token = newToken();
     return this.db.transaction(async (tx) => {
       const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -226,7 +233,7 @@ export class EvolutionService {
         ).join("");
         if (!(await claimCode(tx, code, "evolution"))) continue;
         const now = await this.time(tx);
-        const game: Game = { ...newGame(parsed.data), distributed: true };
+        const game: Game = { ...newGame(settings), distributed: true };
         await tx.query(
           "INSERT INTO evolution_rooms VALUES($1,$2,$3,$4,$5,$6::jsonb)",
           [

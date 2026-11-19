@@ -20,10 +20,14 @@ const messages = {
   ],
   total: ["分配総額", "可分配总额", "Available amount"],
   demandAmount: ["要求額", "需求额", "Demand"],
+  demandStep: ["要求額の刻み", "需求步长", "Demand step"],
+  you: ["自分", "我", "You"],
+  peer: ["相手", "对方", "Peer"],
+  matrixResult: ["今回の結果", "本轮结果", "Round outcome"],
   sliderRule: [
-    "0.001刻み。指を離すと確定。キーボードでは矢印キーで調整し、Enterで確定します。",
-    "步长为 0.001。松手即提交，也可用方向键调整，按 Enter 提交。",
-    "Step size: 0.001. Release to submit. With a keyboard, adjust with the arrow keys and press Enter to submit.",
+    "{step}刻み。指を離すと確定。キーボードでは矢印キーで調整し、Enterで確定します。",
+    "步长为 {step}。松手即提交，也可用方向键调整，按 Enter 提交。",
+    "Step size: {step}. Release to submit. With a keyboard, adjust with the arrow keys and press Enter to submit.",
   ],
   demandRule: [
     "要求額の合計が総額以下なら各自が要求額を得ます。超えた場合は双方の利得が0になります。",
@@ -185,6 +189,8 @@ const messages = {
 export type Key = keyof typeof messages;
 export const label = (lang: Lang, key: Key) =>
   messages[key][lang === "ja" ? 0 : lang === "zh-CN" ? 1 : 2];
+export const sliderInstructions = (lang: Lang, step: string) =>
+  label(lang, "sliderRule").replace("{step}", step);
 export function displayChoices(lang: Lang, s: Settings) {
   if (s.mode === "coordination" && s.names[0] === "鹿" && s.names[1] === "兎")
     return [label(lang, "stag"), label(lang, "hare")];
