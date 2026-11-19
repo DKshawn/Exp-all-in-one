@@ -72,8 +72,7 @@ test("room works without copied-array methods or language storage", async ({
     await page.getByRole("button", { name: "Confirm and start" }).click();
     await expect(page.locator(".ev-analysis")).toBeVisible();
     for (const p of players) {
-      await p.getByRole("radio").last().check();
-      await p.getByRole("button", { name: "Submit choice" }).click();
+      await p.getByRole("button", { name: "Hare", exact: true }).click();
     }
     for (const p of players)
       await expect(p.getByRole("table", { name: "My rounds" })).toContainText(

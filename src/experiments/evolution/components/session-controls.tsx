@@ -55,13 +55,24 @@ export function SessionOverview({
     <div className="emh-app ev-overview">
       <div className="wide">
         <div className="session-overview">
-          <RoundStrip
-            rounds={v.settings.rounds}
-            current={v.round}
-            finished={v.phase === "finished"}
-            label={t("round")}
-            roundLabel={(n) => t("round") + " " + n}
-          />
+          {v.settings.rounds <= 32 ? (
+            <RoundStrip
+              rounds={v.settings.rounds}
+              current={v.round}
+              finished={v.phase === "finished"}
+              label={t("round")}
+              roundLabel={(n) => t("round") + " " + n}
+            />
+          ) : (
+            <progress
+              className="ev-round-progress"
+              aria-label={t("round")}
+              max={v.settings.rounds}
+              value={
+                v.phase === "finished" ? v.round : Math.max(0, v.round - 1)
+              }
+            />
+          )}
           <div className="session-bar">
             <div className="session-phase">
               <strong>

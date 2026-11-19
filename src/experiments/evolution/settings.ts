@@ -5,9 +5,12 @@ const amount = z.string().trim().max(20).refine(validAmount);
 const name = z.string().trim().min(1).max(16);
 const pair = z.tuple([amount, amount]);
 const row = z.tuple([pair, pair]);
+export const MAX_ROUNDS = 10_000;
+export const DEMAND_STEPS = 1000;
+export const HISTORY_ROUNDS = 20;
 const common = {
   groups: z.int().min(1).max(32),
-  rounds: z.int().min(1).max(100),
+  rounds: z.int().min(1).max(MAX_ROUNDS),
   seconds: z.int().min(5).max(600),
   feedbackSeconds: z.int().min(3).max(120),
 };
@@ -26,7 +29,7 @@ export const settingsSchema = z
         ...common,
         mode: z.literal("demand"),
         total: amount,
-        options: z.array(amount).min(2).max(12),
+        options: z.array(amount).min(2).max(12).optional(),
       })
       .strict(),
   ])
@@ -34,6 +37,9 @@ export const settingsSchema = z
     if (s.mode === "coordination") {
       if (s.names[0] === s.names[1])
         ctx.addIssue({ code: "custom", path: ["names"], message: "distinct" });
+    } else if (!s.options) {
+      if (s.total !== "1")
+        ctx.addIssue({ code: "custom", path: ["total"], message: "range" });
     } else if ([s.total, ...s.options].every(validAmount)) {
       if (
         compare(s.total, "0") <= 0 ||
@@ -48,7 +54,7 @@ export type Mode = Settings["mode"];
 export const defaults = (mode: Mode): Settings => {
   const common = { groups: 1, rounds: 10, seconds: 30, feedbackSeconds: 8 };
   return mode === "demand"
-    ? { ...common, mode, total: "1", options: ["1/3", "1/2", "2/3"] }
+    ? { ...common, mode, total: "1" }
     : {
         ...common,
         mode,
@@ -66,13 +72,28 @@ export const defaults = (mode: Mode): Settings => {
       };
 };
 export const choices = (s: Settings) =>
-  s.mode === "coordination" ? s.names : s.options;
+  s.mode === "coordination" ? s.names : (s.options ?? []);
+export const continuous = (s: Settings) => s.mode === "demand" && !s.options;
+export const choiceCount = (s: Settings) =>
+  continuous(s) ? DEMAND_STEPS + 1 : choices(s).length;
+export const demandLabel = (choice: number) => String(choice / DEMAND_STEPS);
+export const demandBand = (choice: number) =>
+  Math.min(9, Math.floor((10 * choice) / DEMAND_STEPS));
 export function outcome(s: Settings, left: number, right: number) {
   if (s.mode === "coordination")
     return {
       pay: s.matrix[left][right].map(canonical),
       agreement: left === right,
     };
+  if (!s.options) {
+    const agreement = left + right <= DEMAND_STEPS;
+    return {
+      pay: agreement
+        ? [canonical(demandLabel(left)), canonical(demandLabel(right))]
+        : ["0", "0"],
+      agreement,
+    };
+  }
   const a = s.options[left],
     b = s.options[right];
   const agreement = compare(add(a, b), s.total) <= 0;

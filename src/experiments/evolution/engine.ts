@@ -2,7 +2,7 @@ import { shuffled } from "@/experiments/double-auction/lib/study-core";
 import { randomInt } from "@/experiments/double-auction/lib/random";
 import { AuctionError } from "@/lib/server/errors";
 import { add } from "./numbers";
-import { choices, outcome, type Settings } from "./settings";
+import { choiceCount, outcome, type Settings } from "./settings";
 
 export type Phase = "open" | "ready" | "playing" | "feedback" | "finished";
 export type Seat = {
@@ -38,6 +38,7 @@ export type Round = {
   entries: Record<string, Entry>;
 };
 export type Game = {
+  distributed?: true;
   settings: Settings;
   phase: Phase;
   seats: Seat[];
@@ -173,7 +174,7 @@ export function start(g: Game, now: number) {
   if (g.phase !== "ready") reject("入室を締め切ってから開始してください。");
   openRound(g, now);
 }
-function closeRound(g: Game, at: number) {
+export function closeRound(g: Game, at: number) {
   const r = g.round!;
   r.closedAt = at;
   g.phase = r.number === g.settings.rounds ? "finished" : "feedback";
@@ -223,18 +224,41 @@ export function choose(
   choice: number,
   now: number,
 ) {
-  const r = g.round,
-    e = r?.entries[id];
+  if (!choosePair(g, g.round, id, round, choice, now)) return;
+  const e = g.round!.entries[id];
+  if (e.status === "settled")
+    for (const player of g.seats) {
+      if (player.id === id || player.id === e.opponent)
+        player.total = g.round!.entries[player.id].total;
+    }
+  if (
+    Object.values(g.round!.entries).every(
+      (x) => x.status === "settled" || x.status === "bye",
+    )
+  )
+    closeRound(g, now);
+}
+
+// Settle a pair without requiring access to the rest of the round.
+export function choosePair(
+  g: Pick<Game, "settings" | "phase" | "pausedAt">,
+  r: Round | null,
+  id: string,
+  round: number,
+  choice: number,
+  now: number,
+) {
+  const e = r?.entries[id];
   if (!r || r.number !== round || !e || !e.opponent)
     reject("現在の組合せを確認してください。");
-  if (e.choice === choice) return; // An acknowledged submission can be retried.
+  if (e.choice === choice) return false; // An acknowledged submission can be retried.
   if (g.pausedAt != null) reject("一時停止中です。");
   if (g.phase !== "playing" || now >= r.deadline || e.status !== "choosing")
     reject("このラウンドの回答は締め切られました。");
   if (
     !Number.isInteger(choice) ||
     choice < 0 ||
-    choice >= choices(g.settings).length
+    choice >= choiceCount(g.settings)
   )
     reject("選択肢を確認してください。");
   e.choice = choice;
@@ -242,25 +266,16 @@ export function choose(
   e.seenAt ??= now;
   e.status = "submitted";
   const other = r.entries[e.opponent];
-  if (other.choice === null) return;
+  if (other.choice === null) return true;
   const row = e.position === "row" ? e : other,
     column = e.position === "row" ? other : e;
   const { pay } = outcome(g.settings, row.choice!, column.choice!);
   for (const [index, entry] of [row, column].entries()) {
-    const player = g.seats.find(
-      (p) => p.id === (entry === e ? id : e.opponent),
-    )!;
     entry.status = "settled";
     entry.pay = pay[index];
-    entry.total = add(player.total, entry.pay);
-    player.total = entry.total;
+    entry.total = add(entry.total, entry.pay);
   }
-  if (
-    Object.values(r.entries).every(
-      (x) => x.status === "settled" || x.status === "bye",
-    )
-  )
-    closeRound(g, now);
+  return true;
 }
 
 export function teacherAction(

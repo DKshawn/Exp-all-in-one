@@ -1,7 +1,7 @@
 "use client";
 import { Fragment, useId, type CSSProperties } from "react";
 import { label, displayChoices, type Lang } from "../locale";
-import type { Settings } from "../settings";
+import { continuous, type Settings } from "../settings";
 
 export function PayoffMatrix({
   s,
@@ -97,7 +97,7 @@ export function PayoffRules({ s, lang }: { s: Settings; lang: Lang }) {
     <div className="ev-rules">
       <p>
         {t("total")} <b>{s.total}</b> · {t("choose")}{" "}
-        <b>{s.options.join(" / ")}</b>
+        <b>{s.options?.join(" / ") ?? "0–1"}</b>
       </p>
       <p>{t("demandRule")}</p>
     </div>
@@ -109,6 +109,7 @@ export function Rules({ s, lang }: { s: Settings; lang: Lang }) {
     <section className="ev-rules">
       <h3>{t(s.mode)}</h3>
       <PayoffRules s={s} lang={lang} />
+      {continuous(s) && <p>{t("sliderRule")}</p>}
       {s.mode === "demand" && <p>{t("fixed")}</p>}
       <p>{t("random")}</p>
       <p>{t("missing")}</p>

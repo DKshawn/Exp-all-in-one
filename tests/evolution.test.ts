@@ -65,7 +65,16 @@ test("both payoff models, orientation and exact input boundaries", () => {
   c.matrix[1][0] = ["-1.25", "0.01"];
   assert.deepEqual(outcome(c, 1, 0).pay, ["-5/4", "1/100"]);
   assert.ok(!settingsSchema.safeParse({ ...c, names: ["a", "a"] }).success);
-  const d = defaults("demand");
+  const slider = defaults("demand");
+  assert.equal(slider.mode, "demand");
+  assert.deepEqual(outcome(slider, 333, 667).pay, ["333/1000", "667/1000"]);
+  assert.deepEqual(outcome(slider, 0, 1000).pay, ["0", "1"]);
+  assert.equal(outcome(slider, 334, 667).agreement, false);
+  assert.equal(
+    settingsSchema.safeParse({ ...slider, rounds: 1000 }).success,
+    true,
+  );
+  const d = { ...slider, options: ["1/3", "1/2", "2/3"] };
   assert.equal(d.mode, "demand");
   assert.deepEqual(outcome(d, 0, 2).pay, ["1/3", "2/3"]);
   assert.deepEqual(outcome(d, 1, 1).pay, ["1/2", "1/2"]);
@@ -177,7 +186,7 @@ test("row locks, reconnects, scoped views, timed advancement and research export
     await cmd("close");
     await assert.rejects(join("late"));
     await cmd("start");
-    await submit(a.token, 1, 0);
+    await submit(a.token, 1, 333);
     await assert.rejects(submit(a.token, 1, 1));
     const waiting = await view(b.token);
     assert.equal(waiting.role, "student");
@@ -197,12 +206,14 @@ test("row locks, reconnects, scoped views, timed advancement and research export
       "student",
     );
     assert.equal(restored.role, "student");
-    assert.equal(restored.current!.choice, 0);
+    assert.equal(restored.current!.choice, 333);
     const both = await Promise.all([
-      submit(b.token, 1, 2),
-      submit(b.token, 1, 2),
+      submit(b.token, 1, 667),
+      submit(b.token, 1, 667),
     ]);
-    assert.ok(both.every((v) => v.role === "student" && v.total === "2/3"));
+    assert.ok(
+      both.every((v) => v.role === "student" && v.total === "667/1000"),
+    );
     at += 3000;
     await view(token, "teacher");
     await submit(reconnect.token, 2, 1);
@@ -256,6 +267,61 @@ test("row locks, reconnects, scoped views, timed advancement and research export
     );
     await svc.deleteRoom(code, process.env.TEACHER_ACCESS_KEY ?? "");
     await assert.rejects(view(token, "teacher"));
+  } finally {
+    await pg.close();
+  }
+});
+
+test("a room created before the storage change still settles the original discrete demands", async () => {
+  const pg = new PGlite();
+  try {
+    const db = localDatabase(pg);
+    await migrate(db);
+    const svc = new EvolutionService(db);
+    const { code, token } = await svc.create(
+      "Discrete demand",
+      "legacy-password",
+      process.env.TEACHER_ACCESS_KEY ?? "",
+      {
+        ...defaults("demand"),
+        total: "1",
+        options: ["1/3", "1/2", "2/3"],
+        rounds: 1,
+        mode: "demand",
+      },
+    );
+    await db.query("DELETE FROM evolution_live WHERE room=$1", [code]);
+    await db.query(
+      "UPDATE evolution_rooms SET game=game-'distributed' WHERE code=$1",
+      [code],
+    );
+    const a = await svc.login(code, {
+      role: "student",
+      nickname: "A",
+      pin: "1234",
+    });
+    const b = await svc.login(code, {
+      role: "student",
+      nickname: "B",
+      pin: "5678",
+    });
+    await svc.view(code, token, "teacher", { kind: "close" });
+    await svc.view(code, token, "teacher", { kind: "start" });
+    await svc.view(code, a.token, "student", {
+      kind: "choose",
+      round: 1,
+      choice: 0,
+    });
+    const v = await svc.view(code, b.token, "student", {
+      kind: "choose",
+      round: 1,
+      choice: 2,
+    });
+    assert.equal(v.role, "student");
+    assert.equal(v.total, "2/3");
+    assert.equal(v.phase, "finished");
+    const file = await svc.export(code, token, "csv");
+    assert.doesNotMatch(file.split("\r\n")[0], /opponentDemand/);
   } finally {
     await pg.close();
   }

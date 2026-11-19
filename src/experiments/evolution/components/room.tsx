@@ -6,6 +6,7 @@ import { api, errorMessage } from "@/lib/client";
 import type { Action } from "../engine";
 import type { View } from "../views";
 import { label } from "../locale";
+import { HISTORY_ROUNDS } from "../settings";
 import { Panels } from "./panels";
 import { EvolutionLanguage, useLanguage } from "./language";
 export function EvolutionRoom({
@@ -22,18 +23,51 @@ export function EvolutionRoom({
     [now, setNow] = useState(0);
   const clock = useRef({ now: 0, at: 0 }),
     serial = useRef(0),
-    inAction = useRef(false);
+    inAction = useRef(false),
+    lastRound = useRef(0);
   const url = "/api/rooms/" + code + "/evolution?session=" + role;
   const finished = v?.phase === "finished";
   const update = useCallback(
     async (action?: Action, signal?: AbortSignal) => {
       const request = ++serial.current;
       try {
-        const result = await api<View>(url, action, signal);
+        const result = await api<View>(
+          url + "&after=" + Math.max(0, lastRound.current - 1),
+          action,
+          signal,
+        );
         if (request !== serial.current || signal?.aborted) return;
+        lastRound.current = result.round;
         clock.current = { now: result.now, at: performance.now() };
         setNow(result.now);
-        setView(result);
+        setView((previous) => {
+          const oldest = result.round - HISTORY_ROUNDS;
+          if (result.role === "student" && previous?.role === "student")
+            return {
+              ...result,
+              history: [
+                ...previous.history.filter(
+                  (x) =>
+                    x.round >= oldest &&
+                    x.round < (result.history[0]?.round ?? result.round),
+                ),
+                ...result.history,
+              ],
+            };
+          if (result.role === "teacher" && previous?.role === "teacher")
+            return {
+              ...result,
+              history: [
+                ...previous.history.filter(
+                  (x) =>
+                    x.round >= oldest &&
+                    x.round < (result.history[0]?.round ?? result.round),
+                ),
+                ...result.history,
+              ],
+            };
+          return result;
+        });
         setError("");
       } catch (e) {
         if (request === serial.current && !signal?.aborted)
@@ -48,7 +82,8 @@ export function EvolutionRoom({
     let timer: ReturnType<typeof setTimeout>;
     async function poll() {
       if (!inAction.current) await update(undefined, controller.signal);
-      if (!controller.signal.aborted) timer = setTimeout(poll, 1500);
+      if (!controller.signal.aborted)
+        timer = setTimeout(poll, 1250 + Math.random() * 500);
     }
     void poll();
     return () => {
@@ -106,6 +141,7 @@ export function EvolutionRoom({
           now={now}
           busy={busy}
           act={act}
+          loadHistory={(before) => api<View>(url + "&before=" + before)}
           downloads={["json", "csv"].map((f) => (
             <a
               key={f}

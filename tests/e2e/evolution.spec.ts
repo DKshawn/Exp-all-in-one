@@ -3,6 +3,13 @@ import { enterTeacherPage } from "./helpers/teacher-login";
 import { expectEndButton } from "./helpers/end-experiment";
 import { expectCopiedJoinLink } from "./helpers/copy-join-link";
 
+async function setDemand(page: Page, value: number) {
+  const slider = page.getByRole("slider");
+  await slider.fill(String(value));
+  await expect(slider).toBeVisible(); // Editing alone must not submit.
+  await slider.press("Enter");
+}
+
 async function fit(page: Page) {
   for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
@@ -24,6 +31,61 @@ async function fit(page: Page) {
     expect(overflow, "Control overflow at " + width).toEqual([]);
   }
 }
+
+test("1000-round Nash demo submits a demand on phone tap", async ({
+  browser,
+  baseURL,
+}, info) => {
+  const context = await browser.newContext({
+    baseURL,
+    hasTouch: true,
+    viewport: { width: 390, height: 844 },
+  });
+  try {
+    const page = await context.newPage();
+    await page.goto("/evolution/demo");
+    await enterTeacherPage(page);
+    await page.getByRole("banner").getByLabel("表示言語").selectOption("en");
+    await page
+      .getByRole("combobox", { name: "Game", exact: true })
+      .selectOption("demand");
+    await page.getByLabel("Rounds", { exact: true }).fill("1000");
+    await page.getByRole("button", { name: "Create demo" }).click();
+    await page.getByRole("button", { name: "Close admission" }).click();
+    await page.getByRole("button", { name: "Confirm and start" }).click();
+    await page.getByRole("button", { name: "View student screen" }).click();
+    await expect(page.locator(".ev-round-progress")).toHaveAttribute(
+      "max",
+      "1000",
+    );
+    await expect(page.locator(".round-step")).toHaveCount(0);
+    const slider = page.getByRole("slider", { name: "Demand" });
+    await expect(slider).toBeVisible();
+    await page.setViewportSize({ width: 320, height: 844 });
+    expect(
+      await page
+        .locator(".ev-account")
+        .evaluate((el) => el.scrollWidth <= el.clientWidth),
+    ).toBe(true);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({ path: info.outputPath("long-nash-phone.png") });
+    const { width, height } = (await slider.boundingBox())!;
+    await slider.tap({
+      position: { x: Math.floor(width * 0.3), y: Math.floor(height / 2) },
+    });
+    await expect(slider).toHaveCount(0);
+    await expect(page.locator(".ev-payoffs dd").first()).toHaveText(
+      /^0\.\d{1,3}$/,
+    );
+  } finally {
+    await context.close();
+  }
+});
 for (const mode of ["coordination", "demand"] as const)
   test(
     mode +
@@ -49,12 +111,12 @@ for (const mode of ["coordination", "demand"] as const)
       await page.getByLabel("Room password").fill("review-password");
       await expect(page.getByText("Preview", { exact: true })).toHaveCount(0);
       if (mode === "demand") {
-        await page.getByLabel("Available amount").fill("0.3");
-        await page.getByLabel("Demands (comma-separated)").fill("0.1, 1/10");
+        await page.getByLabel("Rounds", { exact: true }).fill("10000");
         await expect(
           page.getByRole("button", { name: "Create room" }),
-        ).toBeDisabled();
-        await page.getByLabel("Demands (comma-separated)").fill("0.1, 0.2");
+        ).toBeEnabled();
+        await page.getByLabel("Rounds", { exact: true }).fill("2");
+        await expect(page.getByText("0–1", { exact: true })).toBeVisible();
       } else {
         const matrix = page.getByRole("table", { name: "Payoff matrix" });
         const validation = page.locator("form.ev-setup").getByRole("alert");
@@ -184,7 +246,11 @@ for (const mode of ["coordination", "demand"] as const)
         ).toBeVisible();
         await page.getByRole("button", { name: "Confirm and start" }).click();
         await expectEndButton(page, "End experiment");
-        await expect(players[0].getByRole("radio").first()).toBeVisible();
+        await expect(
+          mode === "demand"
+            ? players[0].getByRole("slider")
+            : players[0].getByRole("button", { name: "Pine", exact: true }),
+        ).toBeVisible();
         await expect(
           players[0].getByRole("button", { name: "Pause", exact: true }),
         ).toHaveCount(0);
@@ -195,7 +261,9 @@ for (const mode of ["coordination", "demand"] as const)
           await expect(
             players[0].getByRole("heading", { name: "Paused" }),
           ).toBeVisible();
-          await expect(players[0].getByRole("radio").first()).toBeDisabled();
+          await expect(
+            players[0].getByRole("button", { name: "Pine", exact: true }),
+          ).toBeDisabled();
           await page.reload();
           await page
             .getByRole("button", { name: "Resume", exact: true })
@@ -211,8 +279,11 @@ for (const mode of ["coordination", "demand"] as const)
         }
         for (let n = 1; n <= (mode === "demand" ? 2 : 1); n++) {
           const [first, second] = players;
-          await first.getByRole("radio").first().check();
-          await first.getByRole("button", { name: "Submit choice" }).click();
+          if (mode === "demand") await setDemand(first, 0.333);
+          else
+            await first
+              .getByRole("button", { name: "Pine", exact: true })
+              .click();
           await expect(
             first.getByRole("heading", { name: "Submitted · waiting" }),
           ).toBeVisible();
@@ -243,8 +314,11 @@ for (const mode of ["coordination", "demand"] as const)
               fullPage: true,
             });
           }
-          await second.getByRole("radio").last().check();
-          await second.getByRole("button", { name: "Submit choice" }).click();
+          if (mode === "demand") await setDemand(second, 0.667);
+          else
+            await second
+              .getByRole("button", { name: "Hare", exact: true })
+              .click();
           await expect(
             second.getByRole("heading", { name: "Settled", exact: true }),
           ).toBeVisible();
@@ -266,10 +340,10 @@ for (const mode of ["coordination", "demand"] as const)
         expect(data.rows).toHaveLength(mode === "demand" ? 4 : 2);
         if (mode === "demand") {
           expect(data.rows.map((r: { pay: string }) => r.pay).sort()).toEqual([
-            "1/10",
-            "1/10",
-            "1/5",
-            "1/5",
+            "333/1000",
+            "333/1000",
+            "667/1000",
+            "667/1000",
           ]);
           expect(
             data.participants.map((p: { side: string }) => p.side).sort(),
@@ -420,11 +494,24 @@ for (const mode of ["coordination", "demand"] as const)
       ).toHaveCSS("background-color", resumeColor);
       await page.clock.fastForward(60_000);
       await expect(page.getByRole("timer")).toHaveText(time);
-      await expect(page.getByRole("radio").first()).toBeDisabled();
+      const decision =
+        mode === "demand"
+          ? page.getByRole("slider")
+          : page.getByRole("button", { name: "鹿", exact: true });
+      await expect(decision).toBeDisabled();
       await expect(fast).toBeDisabled();
       await resume.click();
-      await page.getByRole("radio").first().check();
-      await page.getByRole("button", { name: "确认提交" }).click();
+      if (mode === "demand") {
+        const box = (await decision.boundingBox())!;
+        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(box.x + box.width * 0.7, box.y + box.height / 2, {
+          steps: 5,
+        });
+        await expect(decision).toBeVisible();
+        expect(Number(await decision.inputValue())).toBeGreaterThan(0.5);
+        await page.mouse.up();
+      } else await decision.click();
       await expect(
         page.getByRole("heading", { name: "轮间反馈" }),
       ).toBeVisible();

@@ -9,7 +9,7 @@ If the browser blocks preference storage, language changes apply to the open pag
 1. At `/teacher`, select **Stochastic Evolutionary Games**. Choose the game, name the room, set the payoffs and enter a room password. Game, payoff and round settings lock on creation. Teachers and students each choose Japanese, Chinese or English in the page header. This preference is saved in their own browser.
 2. Click **Copy join link** beside the participant allocation heading and share the link. It opens the student entry with the room code filled in. Students join with a nickname and four-digit PIN. They can open **Rules** in the waiting card to check the rules and payoffs for this room.
 3. Check actual enrollment and projected group sizes, then close admission. Closing randomly assigns the roster to fixed, balanced groups. Each group needs at least two people. In the demand game each group also receives fixed, nearly equal A/B sides. In an odd group a random draw determines which side has the extra person. Check the allocation and confirm start.
-4. Each round, choose privately and confirm once. A submitted choice survives reload and re-entry. Both players see their own and their partner’s choice and payoff as soon as the pair settles, plus their own cumulative payoff. Personal round history stays available. Teachers see the group tables and can download data during or after the session.
+4. Click a coordination choice once to submit. For Nash demand, adjust the slider and release it, or use the arrow keys and press Enter. Both decisions are private until the pair settles. The full history stays in the teacher’s export.
 
 Group count remains editable during admission. Close manually or start the 5–3600 second admission timer (default 60). Pause, resume or reset it as needed. When time expires, admission closes if every group can pair at least two people. Otherwise it stays open. Reopen before starting to admit more participants and draw a new allocation at the next cutoff.
 
@@ -19,15 +19,17 @@ On the teacher home page, **ルーム管理** labels SEG rooms as **協調ゲー
 
 ## Parameters and payoff rules
 
-| Setting                | Default    | Range |
-| ---------------------- | ---------- | ----- |
-| Independent groups     | 1          | 1–32  |
-| Rounds                 | 10         | 1–100 |
-| Decision time          | 30 seconds | 5–600 |
-| Between-round feedback | 8 seconds  | 3–120 |
+| Setting                | Default    | Range    |
+| ---------------------- | ---------- | -------- |
+| Independent groups     | 1          | 1–32     |
+| Rounds                 | 10         | 1–10,000 |
+| Decision time          | 30 seconds | 5–600    |
+| Between-round feedback | 8 seconds  | 3–120    |
 
 - **Coordination.** In formal and demo setup, changing a strategy name updates both the row and column headings. Enter the two payoffs directly in each cell, with the row player's payoff on the left and the column player's payoff on the right. Rows and columns default to Stag, Hare. The cells in row order are (4,4), (0,3), (3,0), (2,2). Positions are redrawn with each match. A player sees their row or column position, which matters for an asymmetric matrix.
-- **Nash demand.** Both sides use the same total and the same 2–12 distinct demands from zero to the total. Defaults are 1 and {1/3, 1/2, 2/3}. At or below the total each earns their demand. Above it both earn zero. Integers, decimals and fractions with a positive denominator use exact rational arithmetic. For example, 0.1 and 0.2 both succeed against a total of 0.3.
+- **Nash demand.** Both sides use a 0–1 slider with a step of 0.001 and a total of 1. If the demands sum to at most 1, each receives their demand. Otherwise both earn zero. The server compares integer thousandths, so 0.333 and 0.667 settle exactly. Previously created discrete rooms keep their settings.
+
+Above 32 configured rounds, the round display uses a compact progress bar. The student history and teacher results on the live page cover the most recent 20 rounds and the current round. Choose **Older rounds** to page through earlier rounds or **Back to latest** to return.
 
 ## Matching, deadlines and absence
 
@@ -41,7 +43,11 @@ Closing the page leaves the seat in the draw. There is no permanent withdrawal o
 
 The teacher table shows one group over rounds. Choice shares count all submitted decisions, including those without a partner response. A/B shares have separate denominators. Pair frequencies use row/column order (A/B in demand games). Coordination rate is the fraction of settled pairs with equal choices, even for a custom matrix. Breakdown rate is the fraction of settled pairs whose demands exceeded the total. An empty denominator displays a dash.
 
-**Research JSON** contains the full settings, room code, anonymous fixed roster, group/side assignments, heartbeat gaps, group-by-round totals and participant-by-round raw records. **Responses CSV** contains one row per assigned person per round, including byes. Join with JSON using room, group, round and anonymous ID. Choice indices start at zero in the configured order. Times are Unix milliseconds. `seenAt` is the first server observation of a decision-window visit, and `submittedAt` is server receipt. Counts distinguish assigned, paired, seen and submitted. `pay` and `total` are exact numbers encoded as strings. Missing fields are null in JSON and blank in CSV. Timestamps and status distinguish `bye`, `timeout`, `unmatched` (partner timed out), and `settled`. The nickname, PIN and access credentials are excluded.
+In continuous Nash demand, the teacher sees separate A/B distributions in ten bands and the breakdown rate. Precise choices and paired outcomes are in the raw export.
+
+**Research JSON** contains the full settings, room code, anonymous fixed roster, group/side assignments, heartbeat gaps, group-by-round totals and participant-by-round raw records. **Responses CSV** contains one row per assigned person per round, including byes. Join with JSON using room, group, round and anonymous ID. Times are Unix milliseconds. `seenAt` is the first server observation of a decision-window visit, and `submittedAt` is server receipt. Counts distinguish assigned, paired, seen and submitted. `pay` and `total` are exact numbers encoded as strings. Missing fields are null in JSON and blank in CSV. Timestamps and status distinguish `bye`, `timeout`, `unmatched` (partner timed out), and `settled`. The nickname, PIN and access credentials are excluded.
+
+For new Nash demand rooms, `demand` and `opponentDemand` are the exact displayed values. The corresponding `choice` fields encode integer thousandths. Discrete rooms continue to use zero-based option indices.
 
 ## Research interpretation
 
