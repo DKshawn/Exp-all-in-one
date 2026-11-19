@@ -7,6 +7,7 @@
 随机演化博弈使用平台迁移器及 `evolution_` 表。`npx tsx --test tests/evolution.test.ts` 检查引擎和 PGlite，`npx playwright test evolution.spec.ts` 验证两种正式实验和演示。 [规则与数据](evolution.md)
 
 并发验证时，在 3265 端口启动使用独立本地 PostgreSQL 的平台服务。令 `LOCAL_TEST_DATABASE_URL` 指向该测试数据库，然后运行 `npx tsx scripts/test-seg-scale.ts`。脚本对两种博弈分别测试 2,000 个认证席位同时进行两轮，另测独立的 1,000 轮房间。
+Nash 压测使用默认步长 0.1。1,000 轮房间使用 0.3 和 0.7 验证精确结算和导出的累计收益。
 
 ## 本地启动
 
