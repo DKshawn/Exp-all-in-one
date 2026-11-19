@@ -12,6 +12,13 @@ async function setDemand(page: Page, value: number) {
   await slider.press("Enter");
 }
 
+async function clockPosition(page: Page, name?: string) {
+  const timer = page.getByRole("timer", { name, exact: true });
+  await expect(timer).toBeVisible();
+  const { x, y } = (await timer.boundingBox())!;
+  return { x, y };
+}
+
 async function fit(page: Page) {
   for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
@@ -85,11 +92,12 @@ test("a settled SEG pair waits for room-wide feedback and the next round", async
     const late = contexts.filter((_, i) => groups[i] !== groups[0]);
     expect([early.length, late.length]).toEqual([2, 2]);
     const screens = await Promise.all(
-      early.map(async (context) => {
+      early.map(async (context, i) => {
         await context.addInitScript(() =>
           localStorage.setItem("evolution-language", "zh-CN"),
         );
         const screen = await context.newPage();
+        if (i === 1) await screen.setViewportSize({ width: 1440, height: 900 });
         await screen.goto(`/room/${code}`);
         return screen;
       }),
@@ -97,6 +105,9 @@ test("a settled SEG pair waits for room-wide feedback and the next round", async
     await expect(
       await page.request.post(control, { data: { kind: "start" } }),
     ).toBeOK();
+    const clocks = await Promise.all(
+      screens.map((screen) => clockPosition(screen, "剩余")),
+    );
     async function submit(context: (typeof contexts)[number], choice: number) {
       await expect(
         await context.request.post(participant, {
@@ -108,13 +119,11 @@ test("a settled SEG pair waits for room-wide feedback and the next round", async
       ...early.map((context) => submit(context, 0)),
       submit(late[0], 1),
     ]);
-    for (const screen of screens) {
+    for (const [i, screen] of screens.entries()) {
       await expect(
         screen.getByRole("heading", { name: "等待其他配对完成" }),
       ).toBeVisible();
-      await expect(
-        screen.getByRole("timer", { name: "距作答截止" }),
-      ).toBeVisible();
+      expect(await clockPosition(screen, "距作答截止")).toEqual(clocks[i]);
       await expect(screen.getByRole("timer", { name: "距下一轮" })).toHaveCount(
         0,
       );
@@ -129,10 +138,8 @@ test("a settled SEG pair waits for room-wide feedback and the next round", async
       ).toBe(true);
     }
     await Promise.all(
-      screens.map(async (screen) => {
-        await expect(
-          screen.getByRole("timer", { name: "距下一轮" }),
-        ).toBeVisible();
+      screens.map(async (screen, i) => {
+        expect(await clockPosition(screen, "距下一轮")).toEqual(clocks[i]);
         await expect(
           screen.getByRole("heading", { name: "等待其他配对完成" }),
         ).toHaveCount(0);
@@ -392,12 +399,17 @@ for (const mode of ["coordination", "demand"] as const)
           players[0].getByRole("button", { name: "Pause", exact: true }),
         ).toHaveCount(0);
         if (mode === "coordination") {
+          const teacherClock = await clockPosition(page, "Remaining");
           await page
             .getByRole("button", { name: "Pause", exact: true })
             .click();
           await expect(
             players[0].getByRole("heading", { name: "Paused" }),
           ).toBeVisible();
+          await expect(
+            page.getByRole("heading", { name: "Paused" }),
+          ).toBeVisible();
+          expect(await clockPosition(page, "Remaining")).toEqual(teacherClock);
           await expect(
             players[0].getByRole("button", { name: "Pine", exact: true }),
           ).toBeDisabled();
@@ -644,7 +656,9 @@ for (const mode of ["coordination", "demand"] as const)
       await expect(
         page.getByRole("button", { name: "暂停", exact: true }),
       ).toHaveCount(1);
+      const teacherClock = await clockPosition(page, "剩余");
       await pause.click();
+      expect(await clockPosition(page, "剩余")).toEqual(teacherClock);
       const time = await page.getByRole("timer").innerText();
       await student.click();
       const resumeColor = await resume.evaluate(
@@ -681,6 +695,7 @@ for (const mode of ["coordination", "demand"] as const)
           );
         });
       const beforeChoice = mode === "coordination" ? await boardLayout() : null;
+      const studentClock = await clockPosition(page, "剩余");
       if (mode === "demand") {
         const box = (await decision.boundingBox())!;
         await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
@@ -695,7 +710,9 @@ for (const mode of ["coordination", "demand"] as const)
       await expect(
         page.getByRole("heading", { name: "轮间反馈" }),
       ).toBeVisible();
+      expect(await clockPosition(page, "距下一轮")).toEqual(studentClock);
       await pause.click();
+      expect(await clockPosition(page, "距下一轮")).toEqual(studentClock);
       await expect(page.getByRole("heading", { name: "已结算" })).toBeVisible();
       if (mode === "coordination") {
         expect(await boardLayout()).toEqual(beforeChoice);

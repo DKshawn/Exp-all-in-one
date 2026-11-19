@@ -380,20 +380,47 @@
   overflow-x: auto;
 }
 .ev-overview .wide .session-overview .session-bar {
-  flex: 1 1 auto;
-  flex-wrap: wrap;
+  flex: 1 1 0;
+  min-inline-size: min(100%, 18rem);
+  display: grid;
+  grid-template-columns: minmax(0, 16rem) 5.5rem;
+  align-items: center;
+  gap: 6px 12px;
 }
-.ev-overview .session-phase {
+.ev-overview .session-overview .session-phase {
+  grid-area: 1 / 1;
   flex-wrap: wrap;
   gap: 6px;
+}
+.ev-overview .session-phase > strong {
+  white-space: nowrap;
 }
 .ev-overview h2 {
   margin: 0;
   font-size: 15px;
   white-space: nowrap;
 }
-.ev-overview .control-buttons {
+.ev-overview .session-overview .timers {
+  grid-area: 1 / 2;
+  align-self: start;
+}
+.ev-overview .session-overview .timers > div {
+  inline-size: 100%;
+}
+.ev-overview .session-overview .control-buttons {
+  grid-column: 1 / -1;
+  width: auto;
+  margin: 0;
+  justify-content: flex-end;
   flex-wrap: wrap;
+}
+@media (min-width: 1080px) {
+  .ev-overview .wide .session-overview .session-bar {
+    grid-template-columns: minmax(0, 16rem) 5.5rem minmax(0, 1fr);
+  }
+  .ev-overview .session-overview .control-buttons {
+    grid-area: 1 / 3;
+  }
 }
 .ev-account {
   display: flex;
@@ -503,8 +530,8 @@
   .ev-overview .wide .session-overview .round-strip {
     max-width: 100%;
   }
-  .ev-overview .control-buttons {
-    margin: 0;
+  .ev-overview .wide .session-overview .session-bar {
+    flex-basis: 100%;
   }
   .ev-room .ev-heading {
     gap: 4px 8px;
