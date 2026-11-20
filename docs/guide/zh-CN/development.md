@@ -25,7 +25,9 @@ Windows 上可使用 `pwsh -NoProfile -File scripts/dev-local.ps1` 启动隔离�
 
 要在本地使用教师演示，请在 Git 忽略的 `.env.local` 中设置 `TEACHER_ACCESS_KEY`，然后重启服务。未配置密钥时，本地仍可开发正式课堂流程，演示登录会被禁用。
 
-教师入口及 `?entry=teacher` 的房间页面在服务器端验证登录。`POST /api/teacher/session` 验证密钥后签发8小时有效的签名HttpOnly、SameSite=Lax Cookie，HTTPS下启用Secure；不会把密钥本身存入Cookie或浏览器存储。`DELETE` 用于退出，更换密钥使已有会话失效。创建、管理、删除及Judgment教师预览API验证会话，同时兼容现有已认证脚本的 `accessKey`。无需新增环境变量或数据库迁移。
+教师入口及 `?entry=teacher` 的房间页面在服务器端验证登录。`POST /api/teacher/session` 验证密钥后签发8小时有效的签名HttpOnly、SameSite=Lax Cookie，HTTPS下启用Secure；不会把密钥本身存入Cookie或浏览器存储。`DELETE` 用于退出，更换密钥使已有会话失效。创建、管理、删除及Judgment教师预览API验证会话，同时兼容现有已认证脚本的 `accessKey`。无需新增环境变量或数据库迁移。 原生表单提交后签发会话 Cookie，再以 303 跳转到教师页面。
+
+使用同一局域网的设备检查开发版时，用 `npm run dev -- --hostname <电脑的局域网 IPv4> --port 3001` 启动。在设备上用同一个 IP 和端口打开 `/teacher`。
 
 尺寸预览仅允许同源嵌入 `/demo` 和 `/emh/demo`；教师页面和正式房间仍禁止嵌入。
 

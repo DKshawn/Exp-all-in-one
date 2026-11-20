@@ -110,6 +110,43 @@ test("login validates key and same-origin JSON, sends only a protected cookie; l
   );
 });
 
+test("native teacher login posts the key, checks origin, and redirects without credentials", async () => {
+  const origin = "http://192.0.2.1:3001";
+  const next = "/evolution/demo";
+  function submit(accessKey: string, source: string) {
+    return POST(
+      new NextRequest(`${origin}/api/teacher/session`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          ...(source ? { Origin: source } : {}),
+        },
+        body: new URLSearchParams({ accessKey, next }),
+      }),
+    );
+  }
+  const response = await submit(key, origin);
+  assert.equal(response.status, 303);
+  assert.equal(response.headers.get("location"), next);
+  const session = response.cookies.get(TEACHER_SESSION_COOKIE);
+  assert.equal(validTeacherSession(session?.value), true);
+  assert.equal(session?.httpOnly, true);
+  assert.equal(session?.secure, false);
+  for (const [value, source] of [
+    ["synthetic-invalid-key", origin],
+    [key, "https://foreign.test"],
+    [key, ""],
+  ]) {
+    const rejected = await submit(value, source);
+    assert.equal(rejected.status, 303);
+    const target = new URL(rejected.headers.get("location")!, origin);
+    assert.equal(target.pathname, "/teacher/login");
+    assert.equal(target.searchParams.get("failed"), "1");
+    assert.ok(!target.href.includes(value));
+    assert.equal(rejected.cookies.has(TEACHER_SESSION_COOKIE), false);
+  }
+});
+
 test("protected API access accepts the session without resending a key and rejects anonymous requests", async () => {
   const token = createTeacherSession(key);
   assert.equal(teacherAccessKey(request({}, token)), key);

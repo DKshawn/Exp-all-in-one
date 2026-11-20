@@ -25,7 +25,9 @@ The ordinary development server's teacher entry is `http://localhost:3000/teache
 
 Set `TEACHER_ACCESS_KEY` in the Git-ignored `.env.local` and restart the server to use teacher demos locally. With no key, local classroom development remains available and the demo login stays disabled.
 
-Teacher entry and room pages with `?entry=teacher` validate authentication on the server. `POST /api/teacher/session` validates the key and issues an eight-hour signed HttpOnly, SameSite=Lax cookie, with Secure on HTTPS. The key itself is never stored in the cookie or browser storage. `DELETE` logs out; key rotation invalidates existing sessions. Creation, management, deletion and Judgment teacher-preview APIs validate the session while retaining `accessKey` support for existing authenticated scripts. No new environment variable or database migration is required.
+Teacher entry and room pages with `?entry=teacher` validate authentication on the server. `POST /api/teacher/session` validates the key and issues an eight-hour signed HttpOnly, SameSite=Lax cookie, with Secure on HTTPS. The key itself is never stored in the cookie or browser storage. `DELETE` logs out; key rotation invalidates existing sessions. Creation, management, deletion and Judgment teacher-preview APIs validate the session while retaining `accessKey` support for existing authenticated scripts. No new environment variable or database migration is required. Native form submissions receive the session cookie and a 303 redirect to the teacher page.
+
+To check the development build from another device on the same LAN, start it with `npm run dev -- --hostname <PC LAN IPv4> --port 3001`. Open `/teacher` on that device using the same IP and port.
 
 Screen-size previews allow same-origin embedding only for `/demo` and `/emh/demo`; teacher and formal-room pages remain protected against embedding.
 

@@ -25,7 +25,9 @@ Windows の隔離したローカル検証環境は、`pwsh -NoProfile -File scri
 
 ローカルで教員用デモを利用するには、Gitに含めない `.env.local` に `TEACHER_ACCESS_KEY` を設定し、サーバーを再起動します。キーが未設定でも正式実験のローカル開発は可能ですが、デモのログインは無効になります。
 
-教員入口と `?entry=teacher` のルームページはサーバーで認証します。`POST /api/teacher/session` はキーを検証して8時間の署名付きHttpOnly・SameSite=Lax Cookieを発行し、HTTPSではSecure属性を付けます。キー自体はCookieやブラウザーストレージに保存しません。`DELETE` はログアウトし、キー変更は既存セッションを無効にします。作成・管理・削除・Judgmentの教員用プレビューAPIはセッションを検証し、既存の認証済みスクリプト向け `accessKey` も受け付けます。追加の環境変数やDB移行は不要です。
+教員入口と `?entry=teacher` のルームページはサーバーで認証します。`POST /api/teacher/session` はキーを検証して8時間の署名付きHttpOnly・SameSite=Lax Cookieを発行し、HTTPSではSecure属性を付けます。キー自体はCookieやブラウザーストレージに保存しません。`DELETE` はログアウトし、キー変更は既存セッションを無効にします。作成・管理・削除・Judgmentの教員用プレビューAPIはセッションを検証し、既存の認証済みスクリプト向け `accessKey` も受け付けます。追加の環境変数やDB移行は不要です。 HTMLフォームからPOSTした場合は、Cookieを発行して教員画面へ303でリダイレクトします。
+
+同じLANの端末から開発版を確認する場合は、`npm run dev -- --hostname <PCのLAN IPv4> --port 3001` で起動します。端末では同じIPとポートを使い、`/teacher` を開きます。
 
 サイズ別プレビューの埋め込みは同一オリジンの `/demo` と `/emh/demo` のみ許可し、教員・正式ルームは引き続き禁止します。
 

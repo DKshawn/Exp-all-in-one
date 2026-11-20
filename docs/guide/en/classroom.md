@@ -84,7 +84,7 @@ Login state is scoped by room and role. Ordinary tabs in one browser can show th
 
 Rooms appear newest first, each with an experiment label. Under **実験**, choose **実験1（固定配当）** or **実験2（抽選配当）** for EMH, or **協調ゲーム** (Coordination game) or **ナッシュ要求ゲーム** (Nash demand game) for SEG. **EMH（すべて）** and **SEG（すべて）** each show both variants in their group. The list includes the experiment name, code, creation time, status, market count, attendance, progress, and periods per institution. Load another 20 entries at a time. The platform uses a shared teacher key for online creation and management. Locally, the list shows rooms in the database selected on that computer.
 
-Enter the teacher key once at the teacher entry. The same browser stays signed in for eight hours across reloads, experiment changes, room creation and management. Sign in again after logout, expiry or a key change; each room keeps its separate teacher password.
+Enter the teacher key once at the teacher entry. The same browser stays signed in for eight hours across reloads, experiment changes, room creation and management. Sign in again after logout, expiry or a key change; each room keeps its separate teacher password. The teacher key is submitted by POST even before JavaScript loads, so it stays out of the URL.
 
 To delete a room, click **このルームを削除** in its confirmation dialog. The room teacher password is not requested again, but the server still checks the teacher login session, except in local environments without a configured key. Deletion also removes participants, markets, trading history, audit logs, and results; active students can no longer use that room. Deletion cannot be undone.
 
