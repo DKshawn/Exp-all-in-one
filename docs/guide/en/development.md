@@ -4,7 +4,10 @@
 
 Browser compatibility and mobile trading checks run in Chromium, Firefox and WebKit. `npx playwright install chromium firefox webkit` · `npm run test:e2e -- classroom-compat.spec.ts shared-order-book.spec.ts`
 
-Stochastic games use the shared migrator and four `evolution_` tables. Run `npx tsx --test tests/evolution.test.ts` for engine and PGlite checks, and `npx playwright test evolution.spec.ts` for both classroom flows and the demo. [Rules and data](evolution.md)
+Stochastic games use the shared migrator and the `evolution_` tables. Run `npx tsx --test tests/evolution.test.ts` for engine and PGlite checks, and `npx playwright test evolution.spec.ts` for both classroom flows and the demo. [Rules and data](evolution.md)
+
+For a load check, start an isolated loopback Next server on port 3265 with local PostgreSQL. With `LOCAL_TEST_DATABASE_URL` pointing to that test database, use `npx tsx scripts/test-seg-scale.ts`. It exercises two rounds with 2,000 authenticated sessions in each game and a separate 1,000-round room.
+The Nash load check uses the default step of 0.1. In the long room, demands of 0.3 and 0.7 verify exact settlement and the cumulative total in the export.
 
 ## Local setup
 

@@ -5,26 +5,25 @@ import { api, errorMessage } from "@/lib/client";
 import { teacherRoomHref } from "@/lib/room-navigation";
 import {
   defaults,
+  demandStep,
+  DEMAND_STEP_OPTIONS,
+  MAX_ROUNDS,
   settingsSchema,
+  type DemandStep,
   type Settings,
   type Mode,
 } from "../settings";
 import { label, displayChoices, type Key } from "../locale";
-import { PayoffMatrix } from "./rules";
+import { PayoffMatrix, PayoffRules } from "./rules";
 import { useLanguage } from "./language";
 
 export function useSetupDraft() {
   const [s, set] = useState(() => defaults("coordination")),
     [title, setTitle] = useState(""),
-    [text, setText] = useState("1/3, 1/2, 2/3"),
     [n, setN] = useState(6);
-  const candidate =
-    s.mode === "demand"
-      ? { ...s, options: text.split(/[,，]/).map((x) => x.trim()) }
-      : s;
-  const parsed = settingsSchema.safeParse(candidate);
+  const parsed = settingsSchema.safeParse(s);
   const validDemo = parsed.success && Number.isInteger(n) && n >= 2 && n <= 128;
-  return { s, set, title, setTitle, text, setText, n, setN, parsed, validDemo };
+  return { s, set, title, setTitle, n, setN, parsed, validDemo };
 }
 
 export function EvolutionSetup({ ready }: { ready: boolean }) {
@@ -44,7 +43,7 @@ export function SetupForm({
   const lang = useLanguage(),
     t = (k: Key) => label(lang, k),
     router = useRouter();
-  const { s, set, title, setTitle, text, setText, n, setN, parsed } = draft;
+  const { s, set, title, setTitle, n, setN, parsed } = draft;
   const [password, setPassword] = useState(""),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
@@ -56,11 +55,7 @@ export function SetupForm({
           ["names", "matrix"].includes(String(i.path[0])),
         )
           ? "badMatrix"
-          : parsed.error.issues.some((i) =>
-                ["options", "total"].includes(String(i.path[0])),
-              )
-            ? "badDemand"
-            : "invalid",
+          : "invalid",
       );
   async function create(e: FormEvent) {
     e.preventDefault();
@@ -126,7 +121,7 @@ export function SetupForm({
                 type="number"
                 required
                 min={[1, 1, 5, 3][i]}
-                max={[32, 100, 600, 120][i]}
+                max={[32, MAX_ROUNDS, 600, 120][i]}
                 value={s[key] || ""}
                 onChange={(e) => set({ ...s, [key]: Number(e.target.value) })}
               />
@@ -169,24 +164,21 @@ export function SetupForm({
       ) : (
         <>
           <label className="field">
-            {t("total")}
-            <input
-              value={s.total}
-              required
-              maxLength={20}
-              onChange={(e) => set({ ...s, total: e.target.value })}
-            />
+            {t("demandStep")}
+            <select
+              value={demandStep(s)}
+              onChange={(e) =>
+                set({ ...s, demandStep: e.target.value as DemandStep })
+              }
+            >
+              {DEMAND_STEP_OPTIONS.map((step) => (
+                <option key={step} value={step}>
+                  {step}
+                </option>
+              ))}
+            </select>
           </label>
-          <label className="field">
-            {t("options")}
-            <input
-              value={text}
-              required
-              maxLength={264}
-              onChange={(e) => setText(e.target.value)}
-            />
-          </label>
-          <p>{t("demandRule")}</p>
+          <PayoffRules s={s} lang={lang} />
         </>
       )}
       {!parsed.success && (

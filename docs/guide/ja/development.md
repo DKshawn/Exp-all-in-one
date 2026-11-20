@@ -4,7 +4,10 @@
 
 ブラウザー互換性とスマートフォンの取引操作は、Chromium・Firefox・WebKit で確認します。 `npx playwright install chromium firefox webkit` · `npm run test:e2e -- classroom-compat.spec.ts shared-order-book.spec.ts`
 
-確率的進化ゲームは共通マイグレーターと4個の `evolution_` テーブルを使います。`npx tsx --test tests/evolution.test.ts` でエンジンとPGlite、`npx playwright test evolution.spec.ts` で2つの正式実験とデモを検証します。 [ルールとデータ](evolution.md)
+確率的進化ゲームは共通マイグレーターと `evolution_` テーブルを使います。`npx tsx --test tests/evolution.test.ts` でエンジンとPGlite、`npx playwright test evolution.spec.ts` で2つの正式実験とデモを検証します。 [ルールとデータ](evolution.md)
+
+負荷検証では独立したローカルPostgreSQLを使うNextサーバーを3265番で起動します。`LOCAL_TEST_DATABASE_URL` をそのテストDBに設定し、`npx tsx scripts/test-seg-scale.ts` を実行します。両ゲームで2,000認証済み参加者が2回ずつ回答し、別ルームで1,000回の進行を検証します。
+ナッシュ要求ゲームの負荷検証は初期値の0.1刻みを使います。1,000回のルームでは0.3と0.7の要求で正確な清算と出力の累積利得を確認します。
 
 ## ローカル起動
 

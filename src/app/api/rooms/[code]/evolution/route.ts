@@ -9,6 +9,7 @@ import {
   tokenFor,
 } from "@/lib/server/http";
 import { evolutionService } from "@/experiments/evolution/server/service";
+import { MAX_ROUNDS } from "@/experiments/evolution/settings";
 const schema = z.discriminatedUnion("kind", [
   z
     .object({
@@ -68,7 +69,24 @@ async function handle(request: NextRequest, ctx: Context) {
     return json(
       await (
         await evolutionService()
-      ).view(code, tokenFor(request, code, role), role, action),
+      ).view(
+        code,
+        tokenFor(request, code, role),
+        role,
+        action,
+        z
+          .int()
+          .min(0)
+          .max(MAX_ROUNDS)
+          .catch(0)
+          .parse(Number(request.nextUrl.searchParams.get("after"))),
+        z
+          .int()
+          .min(1)
+          .max(MAX_ROUNDS)
+          .catch(MAX_ROUNDS + 1)
+          .parse(Number(request.nextUrl.searchParams.get("before"))),
+      ),
     );
   } catch (e) {
     return failure(e);

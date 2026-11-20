@@ -21,7 +21,7 @@ import {
   summaries,
   teacherView,
 } from "../views";
-import type { Settings } from "../settings";
+import { continuous, HISTORY_ROUNDS, type Settings } from "../settings";
 import { label, type Lang } from "../locale";
 import { EvolutionLanguage, useLanguage } from "./language";
 import { SetupForm, useSetupDraft } from "./setup";
@@ -159,7 +159,11 @@ function DemoRoom({
             null,
             2,
           )
-        : responsesCsv(rows.map((row) => ({ ...row, heartbeatGap: null })));
+        : responsesCsv(
+            rows.map((row) => ({ ...row, heartbeatGap: null })),
+            true,
+            continuous(g.settings),
+          );
     const url = URL.createObjectURL(
       new Blob([body], {
         type: format === "csv" ? "text/csv;charset=utf-8" : "application/json",
@@ -173,12 +177,16 @@ function DemoRoom({
   }
   const base = baseView(demo.game, "DEMO", demo.title, now);
   const view = teacher
-    ? teacherView(demo.game, base, demo.history)
+    ? teacherView(
+        demo.game,
+        base,
+        demo.history.slice(-HISTORY_ROUNDS * demo.game.settings.groups),
+      )
     : studentView(
         demo.game,
         base,
         demo.human,
-        demo.archive.map((r) => personal(r, demo.human)),
+        demo.archive.slice(-HISTORY_ROUNDS).map((r) => personal(r, demo.human)),
       );
   const active = view.phase === "playing" || view.phase === "feedback";
   return (
@@ -225,6 +233,24 @@ function DemoRoom({
         busy={false}
         now={now}
         act={act}
+        loadHistory={async (before) =>
+          teacher
+            ? teacherView(
+                demo.game,
+                base,
+                demo.history.filter(
+                  (x) => x.round >= before - HISTORY_ROUNDS && x.round < before,
+                ),
+              )
+            : studentView(
+                demo.game,
+                base,
+                demo.human,
+                demo.archive
+                  .slice(Math.max(0, before - HISTORY_ROUNDS - 1), before - 1)
+                  .map((r) => personal(r, demo.human)),
+              )
+        }
         downloads={(["json", "csv"] as const).map((f) => (
           <button
             key={f}

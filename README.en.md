@@ -14,6 +14,8 @@ The EMH order book shows price and quantity and marks your resting orders in bot
 
 Teachers can edit the coordination game's payoff matrix directly when setting up a formal or demo room. In a formal room, use **Copy join link** to invite students. Stochastic games support manual or timed admission, pause/resume, phase advance and early termination. Students can review personal rounds beside their decisions. The demo defaults to one manual seat and five simulated participants. Once you create the demo room, its toolbar lets you switch between teacher and student views. From either view you can pause to read feedback, resume or advance 30 seconds. Each person chooses their display language in the page header.
 
+New SEG rooms support up to 10,000 rounds. A coordination choice submits on click, and the controls and payoff matrix stay in place while the realized cell is highlighted. Nash demand uses a 0–1 slider with a configurable step (default 0.1), submitted on release or with Enter. Settled pairs see **Waiting for other pairs** while room-wide decisions remain open. **Next round in** counts down once feedback starts for the whole room. The countdown stays in place as the status changes.
+
 ## Get started
 
 ```mermaid
