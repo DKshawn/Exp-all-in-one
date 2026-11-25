@@ -409,7 +409,7 @@ export class DemoSession {
 
   private sendBot(bot: Participant, command: Command) {
     // Bots build valid commands from the current state, synchronously. They use
-    // the same validating engine without copying all 192 participants per order.
+    // the same validating engine without copying the entire room per order.
     this.applyCommand(this.room, bot, command, this.events);
   }
 
@@ -633,6 +633,13 @@ export class DemoSession {
   private runBots() {
     if (this.room.phase !== "running") return;
     this.submitSealedBots();
+    const botsByMarket = new Map<number, Participant[]>();
+    for (const bot of this.bots) {
+      const id = studyMarketId(this.room.config, bot.seat);
+      const bots = botsByMarket.get(id);
+      if (bots) bots.push(bot);
+      else botsByMarket.set(id, [bot]);
+    }
     for (const market of this.room.study!.markets) {
       const id = market.id;
       if (!this.botClocks.has(id))
@@ -653,7 +660,7 @@ export class DemoSession {
       }
       if (this.now < clock.nextAt) continue;
       clock.nextAt = this.now + BOT_INTERVAL_MS;
-      const bots = this.bots.filter((p) => marketFor(this.room, p).id === id);
+      const bots = botsByMarket.get(id) ?? [];
       if (market.stage === "purchase") {
         if (market.posted) {
           for (const bot of bots.filter((p) => p.role === "buyer"))

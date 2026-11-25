@@ -1,6 +1,10 @@
 "use client";
 import { useSetupText } from "@/components/experiment-language";
-import type { EmhSettings, Exp2Options } from "../settings";
+import {
+  MAX_EXP2_MARKETS,
+  type EmhSettings,
+  type Exp2Options,
+} from "../settings";
 
 export function SettingsFields({
   settings,
@@ -165,7 +169,7 @@ export function SettingsFields({
                 <input
                   type="number"
                   min={1}
-                  max={333}
+                  max={MAX_EXP2_MARKETS}
                   step={1}
                   value={options.marketCount ?? ""}
                   onChange={(e) =>

@@ -18,6 +18,8 @@ New SEG rooms support up to 10,000 rounds. A coordination choice submits on clic
 
 Use the globe icon at the top right of the header to choose Japanese, Chinese, or English on teacher and student pages, in formal experiments, and in demos. The browser shares the preference across teacher home, room management, and supported experiment settings.
 
+Formal rooms accept up to 5,000 registrations each. The Double Auction, EMH, and Stochastic Evolutionary Games demos support up to 5,000 seats, including the seat you control. The Judgement demo previews individual tasks.
+
 ## Get started
 
 ```mermaid

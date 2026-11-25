@@ -61,6 +61,8 @@ Students open the link, check the code, enter a nickname and their own four-digi
 
 The student homepage is for joining a classroom with its room code. The teacher chooses the experiment and explains its rules. After joining, keep the page open, wait for the start, and follow the teacher’s explanation and the prompts on your own screen.
 
+Each formal room accepts up to 5,000 registrations. Once a room is full, registered students can still reenter with the same student ID or nickname and PIN. See the experiment guides for market and group sizes.
+
 ## 3. Check attendance and run the experiment
 
 In the teacher view, check attendance and settings, complete the preparation shown for the selected experiment, and use its start control. Preparation, grouping, and start requirements differ between experiments. If the start button is missing or unavailable, complete the steps shown on screen first.

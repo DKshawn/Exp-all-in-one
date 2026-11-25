@@ -16,6 +16,8 @@ Sign in at the teacher entry and open **Demo Model** to choose an experiment at 
 
 Select **市場実験室** or **戻る** in the demo header to return to the demo experiment list.
 
+Double Auction, EMH, and Stochastic Evolutionary Games demos support up to 5,000 seats, including the seat you control. The Judgement demo previews individual tasks in each browser without seat allocation.
+
 ## Double Auction
 
 Open [`/demo`](https://exp-all-in-one.vercel.app/demo) directly or choose Double Auction from the demo list. It starts with the same settings form used for production experiments. The defaults are one market and 16 participants; institutions, periods per institution, markets, participants, and timing are configurable using the same validation rules as room creation.
@@ -45,11 +47,11 @@ The interface labels prices, dividends, trading balances and scores in yen.
 
 After starting, a five-second countdown appears directly above the personal conditions panel in its trading-screen position, highlighted with an arrow and border. The page scrolls to reveal it if needed. Pausing also freezes the countdown.
 
-[EMH Demo Model](https://exp-all-in-one.vercel.app/emh/demo) offers **実験1（固定配当）** (fixed dividends) and **実験2（抽選配当）** (dividends determined by a draw). Experiment 1 uses the same settings form, validation limits and defaults as the formal experiment. Set initial securities, target size, type ratios and A/B period duration, then choose **デモルームを作成**. It creates one market of 3–12 participants; everyone except you is virtual, with eight virtual participants by default.
+[EMH Demo Model](https://exp-all-in-one.vercel.app/emh/demo) offers **実験1（固定配当）** (fixed dividends) and **実験2（抽選配当）** (dividends determined by a draw). Experiment 1 uses the same settings form, validation limits and defaults as the formal experiment. Set initial securities, target size, type ratios and A/B period duration, then choose **デモルームを作成**. The default is you and eight simulated participants. Changing the demo attendance automatically allocates markets of 3–12 participants.
 
 Saving settings during admission, confirming and locking allocation, and explicitly releasing it before starting follow the formal workflow. Starting does not redraw confirmed types. Rounds, trade-attempt duration and break duration are configurable (defaults: 6 rounds, 30 seconds and 60 seconds). Securities, timing, payouts and efficiency use the shared engine. Practice A/B dividends in yen for types 1–3 are 120/40, 100/60 and 150/30; private classroom dividends are not used.
 
-Experiment 2 uses one market of 3–999 people, with you and 11 virtual participants by default. Configure initial securities, target size, type ratios, the consecutive unsuccessful-attempt limit, insider start round and number per type, state probabilities and dividends. At start, each round’s state is drawn independently from those probabilities and reflected in Clues. The demo always simulates one market. Default practice dividends in yen are 80/110/170, 60/180/100 and 140/120/90, which differ from formal defaults. Virtual participants trade using their own information.
+Experiment 2 also allocates markets automatically, with 3–999 participants per market. The default is you and 11 simulated participants. Configure initial securities, target size, type ratios, the consecutive unsuccessful-attempt limit, insider start round and number per type, state probabilities and dividends. At start, each round’s state is drawn independently from those probabilities and reflected in Clues. All markets share the draws. Use the toolbar to switch the market you are viewing. Default practice dividends in yen are 80/110/170, 60/180/100 and 140/120/90, which differ from formal defaults. Virtual participants trade using their own information.
 
 Both EMH experiments share the formal conditions panel: the buy and sell sides each place the limit and market buttons side by side. The order book lists price and quantity for both teachers and students. Students can see their own resting limits marked in the list and bar chart. Those limits stay active through other quotes, trades and individual timeouts until period end, unless filled, amended or cancelled. Experiment 2 groups state dividends, probabilities, expected dividend and the Clue, highlights the realized state card at round end, and shows trade and personal round records. Teachers can expand or collapse conditions with **実験条件**.
 

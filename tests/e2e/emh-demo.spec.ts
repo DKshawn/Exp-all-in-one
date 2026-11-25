@@ -6,6 +6,72 @@ test.beforeEach(async ({ page }) => {
   await signInTeacher(page.request);
 });
 
+for (const experiment of ["exp1", "exp2"] as const) {
+  test(`EMH ${experiment} demo opens and switches markets with 5,000 seats`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/emh/demo");
+    await page
+      .getByRole("combobox", { name: "実験", exact: true })
+      .selectOption(experiment);
+    const attendance = page.getByRole("spinbutton", {
+      name: "デモ参加者数",
+      exact: true,
+    });
+    const create = page.getByRole("button", {
+      name: "デモルームを作成",
+      exact: true,
+    });
+    await attendance.fill("5001");
+    expect(
+      await attendance.evaluate(
+        (input: HTMLInputElement) => input.validity.rangeOverflow,
+      ),
+    ).toBe(true);
+    await create.click();
+    await expect(attendance).toBeVisible();
+    await attendance.fill("5000");
+    await create.click();
+    await expect(
+      page.getByRole("heading", { name: "5000人が入室", exact: true }),
+    ).toBeVisible();
+    const selector = page.getByRole("combobox", {
+      name: "表示する市場",
+      exact: true,
+    });
+    const lastMarket = (await selector.locator("option").count()) - 1;
+    expect(lastMarket).toBeGreaterThan(0);
+    await selector.selectOption(String(lastMarket));
+    await expect(page.locator(".emh-allocation h3")).toContainText(
+      `市場 ${lastMarket + 1}`,
+    );
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await page
+      .getByRole("button", { name: "分け方を確定して受付終了", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "全市場で実験を開始", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "一時停止", exact: true })
+      .first()
+      .click();
+    await page
+      .getByRole("button", { name: "学生画面を見る", exact: true })
+      .click();
+    await selector.selectOption("0");
+    await expect(
+      page.getByRole("button", { name: "再開", exact: true }).first(),
+    ).toBeVisible();
+    await expect(page.locator(".emh-personal-account")).toBeVisible();
+  });
+}
+
 async function expectCountdownPlacement(page: Page) {
   await expect
     .poll(() =>

@@ -1,3 +1,4 @@
+import { MAX_ROOM_PARTICIPANTS } from "@/lib/participant-config";
 import { randomInt, randomUUID } from "node:crypto";
 import { claimCode } from "@/lib/server/experiment-registry";
 import {
@@ -298,6 +299,14 @@ export class EvolutionService {
         } else {
           if (room.game.phase !== "open")
             return new AuctionError("新規入室は締め切られました。", 409);
+          const {
+            rows: [attendance],
+          } = await tx.query<{ count: number }>(
+            "SELECT count(*)::int AS count FROM evolution_players WHERE room=$1",
+            [code],
+          );
+          if (attendance.count >= MAX_ROOM_PARTICIPANTS)
+            return new AuctionError("このルームは満員です。", 409);
           const id = randomUUID();
           await tx.query(
             "INSERT INTO evolution_players(room,id,nickname,pin_hash,token_hash,joined_at,last_seen) VALUES($1,$2,$3,$4,$5,$6,$6)",
@@ -638,7 +647,7 @@ export class EvolutionService {
       round: r.round,
       totalRounds: r.rounds,
       participantCount: r.count,
-      capacity: 0,
+      capacity: MAX_ROOM_PARTICIPANTS,
       flexibleAdmission: true,
       marketCount: r.groups,
       institutions: [],

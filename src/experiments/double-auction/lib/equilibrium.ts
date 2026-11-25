@@ -1,5 +1,9 @@
 import type { Equilibrium } from "./types";
 
+export function repeatSeatPrices(prices: number[], seats: number) {
+  return Array.from({ length: seats }, (_, i) => prices[i % prices.length]);
+}
+
 // Pure calculation: this module contains no private experiment settings.
 export function equilibrium(values: number[], costs: number[]): Equilibrium {
   const v = [...values].sort((a, b) => b - a);

@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { api, errorMessage } from "@/lib/client";
 import { teacherRoomHref } from "@/lib/room-navigation";
+import { MAX_ROOM_PARTICIPANTS } from "@/lib/participant-config";
 import {
   defaults,
   demandStep,
@@ -22,7 +23,11 @@ export function useSetupDraft() {
     [title, setTitle] = useState(""),
     [n, setN] = useState(6);
   const parsed = settingsSchema.safeParse(s);
-  const validDemo = parsed.success && Number.isInteger(n) && n >= 2 && n <= 128;
+  const validDemo =
+    parsed.success &&
+    Number.isInteger(n) &&
+    n >= 2 &&
+    n <= MAX_ROOM_PARTICIPANTS;
   return { s, set, title, setTitle, n, setN, parsed, validDemo };
 }
 
@@ -192,7 +197,7 @@ export function SetupForm({
           <input
             type="number"
             min="2"
-            max="128"
+            max={MAX_ROOM_PARTICIPANTS}
             required
             value={n || ""}
             onChange={(e) => setN(Number(e.target.value))}

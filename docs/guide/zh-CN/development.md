@@ -9,6 +9,8 @@
 并发验证时，在 3265 端口启动使用独立本地 PostgreSQL 的平台服务。令 `LOCAL_TEST_DATABASE_URL` 指向该测试数据库，然后运行 `npx tsx scripts/test-seg-scale.ts`。脚本对两种博弈分别测试 2,000 个认证席位同时进行两轮，另测独立的 1,000 轮房间。
 Nash 压测使用默认步长 0.1。1,000 轮房间使用 0.3 和 0.7 验证精确结算和导出的累计收益。
 
+5,000 是单个房间的登记和模拟席位上限。计划正式运行前，请在目标环境分别测量同时连接、集中入室和集中提交的负载。
+
 ## 本地启动
 
 在 Codex 的 Edit project 中，Source folders 只保留 `C:\Users\dksha\Documents\project\Exp-all-in-one`，并设为 Make primary。不要再把旧 `EMH` 或 `Judgment_under_Uncertainty` 添加为开发目录。已有聊天可能仍记录旧工作目录，因此执行命令前核对工作目录和 `git rev-parse --show-toplevel`。旧教师页面分支的来源见[迁移记录](../../upstream/judgment/teacher-management-20261102/README.md)，后续只修改统一仓库。

@@ -9,6 +9,8 @@
 負荷検証では独立したローカルPostgreSQLを使うNextサーバーを3265番で起動します。`LOCAL_TEST_DATABASE_URL` をそのテストDBに設定し、`npx tsx scripts/test-seg-scale.ts` を実行します。両ゲームで2,000認証済み参加者が2回ずつ回答し、別ルームで1,000回の進行を検証します。
 ナッシュ要求ゲームの負荷検証は初期値の0.1刻みを使います。1,000回のルームでは0.3と0.7の要求で正確な清算と出力の累積利得を確認します。
 
+5,000人は登録またはシミュレーションの席数上限です。実施環境での同時接続、入室集中、回答ピークは別途負荷を計測してください。
+
 ## ローカル起動
 
 Codex の「Edit project」では Source folders に `C:\Users\dksha\Documents\project\Exp-all-in-one` だけを登録し、Make primary に設定します。旧 `EMH` と `Judgment_under_Uncertainty` は開発用に追加しません。以前のチャットには旧作業ディレクトリが残る場合があるため、コマンドの作業ディレクトリと `git rev-parse --show-toplevel` を確認してください。教員UIの旧ブランチは [移植元の記録](../../upstream/judgment/teacher-management-20261102/README.md) を参照し、変更は統合リポジトリだけで行います。

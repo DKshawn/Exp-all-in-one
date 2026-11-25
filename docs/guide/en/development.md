@@ -9,6 +9,8 @@ Stochastic games use the shared migrator and the `evolution_` tables. Run `npx t
 For a load check, start an isolated loopback Next server on port 3265 with local PostgreSQL. With `LOCAL_TEST_DATABASE_URL` pointing to that test database, use `npx tsx scripts/test-seg-scale.ts`. It exercises two rounds with 2,000 authenticated sessions in each game and a separate 1,000-round room.
 The Nash load check uses the default step of 0.1. In the long room, demands of 0.3 and 0.7 verify exact settlement and the cumulative total in the export.
 
+The 5,000-seat limit applies to room registration and simulated seats. Measure simultaneous connections, bursts of joins, and bursts of submissions in the intended hosting environment before a large session.
+
 ## Local setup
 
 In Codex **Edit project**, keep only `C:\Users\dksha\Documents\project\Exp-all-in-one` under **Source folders** and choose **Make primary**. Do not attach the old `EMH` or `Judgment_under_Uncertainty` copies for development. Existing chats may retain their recorded working directory, so verify the command directory and `git rev-parse --show-toplevel` before work. The old teacher branch is documented in the [port record](../../upstream/judgment/teacher-management-20261102/README.md); make subsequent changes only in the unified repository.

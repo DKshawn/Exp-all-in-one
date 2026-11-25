@@ -8,8 +8,6 @@ export const NO_STORE = {
   "Cache-Control": "private, no-store, max-age=0",
   Vary: "Cookie",
 };
-// Five-unit schedules for 500 profiles on each side, including all three
-// institutions and the shared settings, must fit in one validated command.
 export const MAX_JSON_BODY_BYTES = 128 * 1024;
 export const FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
 export const cookieName = (code: string, session?: RoomSession) =>
@@ -52,6 +50,7 @@ export async function body<T>(
   schema: z.ZodType<T>,
   contentType:
     "application/json" | typeof FORM_CONTENT_TYPE = "application/json",
+  maxBytes = MAX_JSON_BODY_BYTES,
 ): Promise<T> {
   const origin = request.headers.get("origin");
   if (origin || contentType === FORM_CONTENT_TYPE) {
@@ -71,10 +70,10 @@ export async function body<T>(
   }
   if (!request.headers.get("content-type")?.startsWith(contentType))
     throw new AuctionError("送信形式が正しくありません。", 415);
-  if (Number(request.headers.get("content-length")) > MAX_JSON_BODY_BYTES)
+  if (Number(request.headers.get("content-length")) > maxBytes)
     throw new AuctionError("送信内容が大きすぎます。", 413);
   const text = await request.text();
-  if (Buffer.byteLength(text, "utf8") > MAX_JSON_BODY_BYTES)
+  if (Buffer.byteLength(text, "utf8") > maxBytes)
     throw new AuctionError("送信内容が大きすぎます。", 413);
   let data: unknown;
   try {

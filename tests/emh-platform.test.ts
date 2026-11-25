@@ -563,7 +563,7 @@ test("every attendance 3–999 includes everyone, balances groups and types loca
     allocationPlan(100).map((g) => g.size),
     [10, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
   );
-  for (const bad of [-1, 3.5, 1000]) assert.throws(() => allocationPlan(bad));
+  for (const bad of [-1, 3.5, 5001]) assert.throws(() => allocationPlan(bad));
 });
 
 test("shared registry preserves both experiments and safely backfills existing room codes", async () => {

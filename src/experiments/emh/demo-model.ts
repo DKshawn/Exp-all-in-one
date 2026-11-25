@@ -27,57 +27,69 @@ export function makeDemo(
   input: EmhSettings,
   now: number,
   experiment: "exp1" | "exp2" = "exp1",
-) {
+): Room {
+  return makeDemoMarkets(title, input, now, experiment)[0];
+}
+
+export function makeDemoMarkets(
+  title: string,
+  input: EmhSettings,
+  now: number,
+  experiment: "exp1" | "exp2",
+  attendance = input.targetMarketSize,
+): Room[] {
   const settings = settingsForExperiment(input, experiment);
   const options = settings.exp2 ?? PRACTICE_EXP2_OPTIONS;
-  const allocation = allocationPlan(settings.targetMarketSize, {
+  const allocation = allocationPlan(attendance, {
     ...settings,
     exp2: experiment === "exp2" ? { ...options, marketCount: null } : undefined,
-  })[0];
-  const room = newRoom(
-    "DEMO23",
-    {
-      title,
-      initialUnits: settings.initialUnits,
-      rounds: settings.rounds,
-      periodSeconds: settings.periodSeconds,
-      unitSeconds: settings.unitSeconds,
-      breakSeconds: settings.breakSeconds,
-      ...(experiment === "exp2"
-        ? {
-            experiment: "exp2" as const,
-            states: { ...structuredClone(options.states), outcomes: [] },
-            emptyUnitsLimit: options.emptyUnitsLimit,
-            insiderStartRound: options.insiderStartRound,
-            insiderCountPerType: options.insiderCountPerType,
-          }
-        : {}),
-      // Practice dividends stay separate from the private classroom protocol.
-      dividends:
-        experiment === "exp2"
-          ? []
-          : [
-              { a: 120, b: 40 },
-              { a: 100, b: 60 },
-              { a: 150, b: 30 },
-            ],
-    },
-    now,
-  );
-  room.typeCounts = allocation.typeCounts;
-  for (let i = 0; i < allocation.size; i++)
-    addParticipant(
-      room,
+  });
+  return allocation.map(({ size, typeCounts }) => {
+    const room = newRoom(
+      "DEMO23",
       {
-        id: `demo-${i}`,
-        name: i === 0 ? "あなた" : `参加者 ${i + 1}`,
-        studentId: `demo${i + 1}`,
-        pinHash: "",
-        tokenHash: "",
+        title,
+        initialUnits: settings.initialUnits,
+        rounds: settings.rounds,
+        periodSeconds: settings.periodSeconds,
+        unitSeconds: settings.unitSeconds,
+        breakSeconds: settings.breakSeconds,
+        ...(experiment === "exp2"
+          ? {
+              experiment: "exp2" as const,
+              states: { ...structuredClone(options.states), outcomes: [] },
+              emptyUnitsLimit: options.emptyUnitsLimit,
+              insiderStartRound: options.insiderStartRound,
+              insiderCountPerType: options.insiderCountPerType,
+            }
+          : {}),
+        // Practice dividends stay separate from the private classroom protocol.
+        dividends:
+          experiment === "exp2"
+            ? []
+            : [
+                { a: 120, b: 40 },
+                { a: 100, b: 60 },
+                { a: 150, b: 30 },
+              ],
       },
       now,
     );
-  return room;
+    room.typeCounts = typeCounts;
+    for (let i = 0; i < size; i++)
+      addParticipant(
+        room,
+        {
+          id: `demo-${i}`,
+          name: i === 0 ? "あなた" : `参加者 ${i + 1}`,
+          studentId: `demo${i + 1}`,
+          pinHash: "",
+          tokenHash: "",
+        },
+        now,
+      );
+    return room;
+  });
 }
 
 /** Virtual traders only use their own information, just like a participant. */
@@ -102,18 +114,25 @@ export function advanceDemoTime(
   now: number,
   lastBotAt: number,
   bot: (room: Room, at: number) => void,
-  mode: "30-seconds" | "next-period",
+  mode: "30-seconds" | "next-period" | number,
 ) {
-  if (room.pausedAt !== null || !["trading", "break"].includes(room.status))
+  if (
+    room.pausedAt !== null ||
+    (room.status !== "trading" &&
+      room.status !== "break" &&
+      !(typeof mode === "number" && room.status === "countdown"))
+  )
     return { now, lastBotAt };
   const initialYear = room.year;
   const initialPeriod = room.period;
   const end =
-    now +
-    (mode === "30-seconds"
-      ? 30_000
-      : (room.config.periodSeconds + room.config.breakSeconds + 1) * 1000);
-  while (now < end && room.status !== "completed") {
+    typeof mode === "number"
+      ? mode
+      : now +
+        (mode === "30-seconds"
+          ? 30_000
+          : (room.config.periodSeconds + room.config.breakSeconds + 1) * 1000);
+  while (now < end) {
     const deadlines = [
       room.countdownEndsAt,
       room.unitEndsAt,
@@ -124,10 +143,9 @@ export function advanceDemoTime(
     advanceClock(room, now);
     const status: Room["status"] = (room as Room).status;
     if (
-      mode === "next-period" &&
-      (room.year !== initialYear ||
-        room.period !== initialPeriod ||
-        status === "completed")
+      status === "completed" ||
+      (mode === "next-period" &&
+        (room.year !== initialYear || room.period !== initialPeriod))
     )
       break;
     if (now - lastBotAt >= 1800) {
