@@ -8,6 +8,7 @@ import { notFound } from "next/navigation";
 import { Room } from "@/experiments/double-auction/components/room";
 import { requireTeacherPage } from "@/lib/server/teacher-page-access";
 import { aiRoomRun, aiSetup } from "@/lib/server/ai-console";
+import { isAiExperiment } from "@/lib/ai-console";
 
 export const dynamic = "force-dynamic";
 
@@ -24,12 +25,21 @@ export default async function RoomPage({
   if (entry === "teacher")
     await requireTeacherPage(`/room/${code.toUpperCase()}?entry=teacher`);
   const experiment = await experimentFor(code.toUpperCase());
+  const aiConfig =
+    entry === "teacher" && experiment && isAiExperiment(experiment)
+      ? aiSetup()
+      : undefined;
+  const aiRun = aiConfig
+    ? ((await aiRoomRun(code.toUpperCase()).catch(() => null)) ?? undefined)
+    : undefined;
   if (experiment === "evolution")
     return (
       <EvolutionRoom
         key={`${code}-${entry === "teacher" ? "teacher" : "student"}`}
         code={code.toUpperCase()}
         role={entry === "teacher" ? "teacher" : "student"}
+        aiRun={aiRun}
+        aiConfig={aiConfig}
       />
     );
   if (experiment === "judgment")
@@ -43,15 +53,10 @@ export default async function RoomPage({
       <SessionClient
         code={code.toUpperCase()}
         role={entry === "teacher" ? "teacher" : "student"}
+        aiRun={aiRun}
+        aiConfig={aiConfig}
       />
     );
-  const aiConfig =
-    entry === "teacher" && experiment === "institutions"
-      ? aiSetup()
-      : undefined;
-  const aiRun = aiConfig
-    ? ((await aiRoomRun(code.toUpperCase()).catch(() => null)) ?? undefined)
-    : undefined;
   return (
     <Room
       key={`${code.toUpperCase()}-${entry === "teacher" ? "teacher" : "student"}`}

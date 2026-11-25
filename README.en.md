@@ -57,7 +57,7 @@ EMH room creation and Demo Model offer **実験1（固定配当）** (fixed divi
 
 In a local Double Auction room, select **Include AI participants** in step 3, **入室締切** (Admission deadline). Up to 9,999 human and AI participants can register in one room.
 
-The [AI experiment console](docs/guide/en/classroom.md#admit-ai-students) opens from the local teacher page. Use it to admit students powered by a local model or OpenAI into a Double Auction, EMH, or SEG room. View live decision reasons, response times, and submission outcomes, and export a CSV. The [command-line runner](ai-emh/README.en.md) is also available.
+The [AI experiment console](docs/guide/en/classroom.md#admit-ai-students) opens in a dialog on the local teacher home or in a room with an AI run. Use it to admit students powered by a local model or OpenAI into a Double Auction, EMH, or SEG room. View live decision reasons, response times, and submission outcomes, and export a CSV. The [command-line runner](ai-emh/README.en.md) is also available.
 
 An optional LM Studio fast mode disables extended reasoning; complete fenced JSON blocks are also supported.
 

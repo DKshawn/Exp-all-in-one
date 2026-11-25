@@ -123,11 +123,12 @@ export function Room({
     );
   const teacher = view.me.role === "teacher";
   const aiAdmission =
-    teacher && roomAiRun !== undefined ? (
+    teacher && aiConfig && roomAiRun !== undefined ? (
       <AiRoomAdmission
         key={roomAiRun?.id}
         code={code}
         status={roomAiRun}
+        config={aiConfig}
         onUpdate={setRoomAiRun}
       />
     ) : undefined;

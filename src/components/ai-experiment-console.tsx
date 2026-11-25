@@ -245,12 +245,20 @@ function Records({ records }: { records: AiRecord[] }) {
 export function AiExperimentConsole({
   localModel,
   openaiAvailable,
+  initialRoom,
+  initialRun,
+  active = true,
+  onNavigate,
 }: {
   localModel: string;
   openaiAvailable: boolean;
+  initialRoom?: string;
+  initialRun?: string;
+  active?: boolean;
+  onNavigate?: () => void;
 }) {
   const [roomList, setRoomList] = useState<RoomSummary[] | null>(null);
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(initialRoom ?? "");
   const [provider, setProvider] = useState<AiProvider>("local");
   const [model, setModel] = useState(localModel);
   const [view, setView] = useState<AiConsoleView>({
@@ -258,17 +266,19 @@ export function AiExperimentConsole({
     records: [],
     selected: null,
   });
-  const [requested, setRequested] = useState<string | null>(null);
+  const [requested, setRequested] = useState<string | null>(initialRun ?? null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [liveError, setLiveError] = useState("");
   const mutation = useRef(false);
   const choice = view.runs.find((run) => run.id === view.selected);
+  const canSelectRoom = roomList?.some((room) => room.code === code);
   const roomBusy = view.runs.some(
     (run) => run.code === code && aiRunActive(run.phase),
   );
 
   useEffect(() => {
+    if (!active) return;
     const controller = new AbortController();
     api<{ rooms: RoomSummary[] }>("/api/rooms/manage", {}, controller.signal)
       .then(({ rooms }) =>
@@ -283,9 +293,10 @@ export function AiExperimentConsole({
         if (!controller.signal.aborted) setError(errorMessage(error));
       });
     return () => controller.abort();
-  }, []);
+  }, [active]);
 
   useEffect(() => {
+    if (!active) return;
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout>;
     async function refresh() {
@@ -310,7 +321,7 @@ export function AiExperimentConsole({
       controller.abort();
       clearTimeout(timer);
     };
-  }, [requested]);
+  }, [active, requested]);
 
   async function submit(payload: object) {
     if (mutation.current) return;
@@ -366,7 +377,7 @@ export function AiExperimentConsole({
                 id="ai-room"
                 name="code"
                 required
-                value={code}
+                value={canSelectRoom ? code : ""}
                 onChange={(e) => setCode(e.target.value)}
               >
                 <option value="">
@@ -472,12 +483,16 @@ export function AiExperimentConsole({
               <button
                 type="submit"
                 className="button primary"
-                disabled={busy || roomBusy || !code || !model.trim()}
+                disabled={busy || roomBusy || !canSelectRoom || !model.trim()}
               >
                 AI を入室させる
               </button>
               {roomList?.length === 0 && (
-                <Link href="/teacher" className="button secondary">
+                <Link
+                  href="/teacher"
+                  className="button secondary"
+                  onNavigate={onNavigate}
+                >
                   ルームを作る
                 </Link>
               )}
@@ -554,6 +569,7 @@ export function AiExperimentConsole({
                 <Link
                   href={teacherRoomHref(choice.code)}
                   className="button secondary"
+                  onNavigate={onNavigate}
                 >
                   ルームを開く
                 </Link>

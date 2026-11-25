@@ -23,6 +23,7 @@ type Props = {
   busy: boolean;
   now: number;
   act: (action: Action) => void | Promise<void>;
+  teacherToolbar?: ReactNode;
   loadHistory?: (before: number) => Promise<View>;
   downloads?: React.ReactNode;
 };
@@ -311,6 +312,7 @@ export function Panels({
   act,
   downloads,
   loadHistory,
+  teacherToolbar,
 }: Props) {
   const t = (k: Key) => label(lang, k),
     waiting = v.round === 0,
@@ -369,6 +371,7 @@ export function Panels({
   );
   return (
     <main className="ev ev-room" lang={lang}>
+      {v.role === "teacher" && teacherToolbar}
       <div className="ev-heading">
         <h1>{v.title}</h1>
         <span className="ev-code">

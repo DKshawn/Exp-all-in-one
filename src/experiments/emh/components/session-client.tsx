@@ -16,13 +16,19 @@ import { EmhEndExperiment } from "./end-experiment";
 import { SettingsFields } from "./settings-fields";
 import { SettingsSummary } from "./settings-summary";
 import { settingsSchema, type EmhSettings } from "../settings";
+import { AiRoomAdmission } from "@/components/ai-room-admission";
+import type { AiRun, AiSetup } from "@/lib/ai-console";
 
 export function SessionClient({
   code,
   role,
+  aiRun,
+  aiConfig,
 }: {
   code: string;
   role: "teacher" | "student";
+  aiRun?: AiRun | null;
+  aiConfig?: AiSetup;
 }) {
   const [state, setState] = useState<SessionView | null>(null);
   const latest = useRef<SessionView | null>(null);
@@ -219,6 +225,9 @@ export function SessionClient({
             <p role="status">ルームを読み込み中…</p>
           ) : (
             <>
+              {teacher && aiConfig && aiRun !== undefined && (
+                <AiRoomAdmission code={code} status={aiRun} config={aiConfig} />
+              )}
               {teacher && state.settings && (
                 <section className="panel emh-session-settings">
                   {state.status === "open" ? (

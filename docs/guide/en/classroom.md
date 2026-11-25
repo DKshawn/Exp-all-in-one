@@ -65,7 +65,7 @@ Set `AI_EXPERIMENTS_ENABLED=1` and bind the local platform to `127.0.0.1` before
 
 In the Double Auction teacher room, open step 3, **入室締切** (Admission deadline), and select **Include AI participants**. Set the provider, model, and count, then select **Admit AI**. AI can use any remaining places regardless of planned attendance, up to 9,999 human and AI participants combined.
 
-1. Create a Double Auction, EMH, or SEG room, then open **AI 実験台** from the teacher page.
+1. Create a Double Auction, EMH, or SEG room, then open the **AI 実験台** dialog on the teacher home. The same dialog is available from rooms with an AI run.
 2. Select the room, provider, model, and count, then click **AI を入室させる**. After everyone joins, use **ルームを開く** to assign roles and start the experiment in the room.
 3. The console shows decision reasons, response times, accepted operations, and confirmed fills. **AI を停止** stops the AI operations. Control the room separately from the teacher room page. Choose a run under **実行履歴**, then select **CSV を保存** to export its records.
 

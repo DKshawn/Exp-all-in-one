@@ -36,7 +36,7 @@ Windows の隔離したローカル検証環境は、`pwsh -NoProfile -File scri
 
 ### ローカル AI 実験台
 
-`AI_EXPERIMENTS_ENABLED=1` を設定し、`npm run dev -- --hostname 127.0.0.1` で起動します。教員トップの **AI 実験台** から入室と記録を確認できます。接続先の環境変数は[授業ガイド](classroom.md#ai-学生を参加させる)を参照してください。実行記録と参加者の復旧ファイルは Git の対象外の `ai-emh/.local/console/` に保存されます。
+`AI_EXPERIMENTS_ENABLED=1` を設定し、`npm run dev -- --hostname 127.0.0.1` で起動します。教員トップまたは AI の実行履歴があるルームで **AI 実験台** のダイアログを開き、入室と記録を確認します。接続先の環境変数は[授業ガイド](classroom.md#ai-学生を参加させる)を参照してください。実行記録と参加者の復旧ファイルは Git の対象外の `ai-emh/.local/console/` に保存されます。
 
 ## Vercel + Neon
 

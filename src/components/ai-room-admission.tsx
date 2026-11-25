@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useId, useState, type FormEvent } from "react";
 import {
   AI_ADMISSION_DEFAULTS,
@@ -13,6 +12,7 @@ import {
   type AiSetup,
 } from "@/lib/ai-console";
 import { api, errorMessage } from "@/lib/client";
+import { AiExperimentDialog } from "./ai-experiment-dialog";
 
 const labels = {
   enable: ["AI を参加させる", "让 AI 参与", "Include AI participants"],
@@ -23,6 +23,7 @@ const labels = {
   admission: ["AI 入室", "AI 入室", "AI admission"],
   start: ["AI を入室させる", "让 AI 入室", "Admit AI"],
   console: ["AI 実験台", "AI 实验台", "AI console"],
+  close: ["閉じる", "关闭", "Close"],
   startFailed: [
     "AI の入室を開始できませんでした。",
     "AI 入室未能启动。",
@@ -207,11 +208,13 @@ export function AiRoomAdmissionForm({
 export function AiRoomAdmission({
   code,
   status,
+  config,
   language = "ja",
   onUpdate,
 }: {
   code: string;
   status: AiRun | null;
+  config: AiSetup;
   language?: Language;
   onUpdate?: (run: AiRun) => void;
 }) {
@@ -266,12 +269,13 @@ export function AiRoomAdmission({
           <span>{text(language, "startFailed")}</span>
         )}
       </div>
-      <Link
-        className="button secondary small-button"
-        href={`/teacher/ai?room=${code}`}
-      >
-        {text(language, "console")}
-      </Link>
+      <AiExperimentDialog
+        config={config}
+        label={text(language, "console")}
+        closeLabel={text(language, "close")}
+        initialRoom={code}
+        initialRun={run?.id}
+      />
     </aside>
   );
 }

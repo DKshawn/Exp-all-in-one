@@ -57,7 +57,7 @@ EMH の正式ルーム作成と Demo Model では「実験1（固定配当）」
 
 ローカルの Double Auction では、教員ルームの第3ステップ **入室締切** で **AI を参加させる** を選べます。学生と AI を合わせた入室上限は9,999人です。
 
-[AI 実験台](docs/guide/ja/classroom.md#ai-学生を参加させる) はローカルの教員画面から開けます。Double Auction、EMH、SEG のルームを選び、ローカルモデルまたは OpenAI の AI 学生を入室させます。決定の理由・応答時間・提出結果を表示し、CSV に保存できます。[コマンドライン版](ai-emh/README.md)も利用できます。
+[AI 実験台](docs/guide/ja/classroom.md#ai-学生を参加させる) は教員トップや AI の実行履歴があるローカルルームの現在の画面にダイアログで開きます。Double Auction、EMH、SEG のルームを選び、ローカルモデルまたは OpenAI の AI 学生を入室させます。決定の理由・応答時間・提出結果を表示し、CSV に保存できます。[コマンドライン版](ai-emh/README.md)も利用できます。
 
 LM Studio には長い思考を無効にする任意の高速モードがあり、完全な JSON コードブロックも読み取れます。
 

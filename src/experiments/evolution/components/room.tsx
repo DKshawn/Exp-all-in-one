@@ -9,12 +9,18 @@ import { label } from "../locale";
 import { HISTORY_ROUNDS } from "../settings";
 import { Panels } from "./panels";
 import { EvolutionLanguage, useLanguage } from "./language";
+import { AiRoomAdmission } from "@/components/ai-room-admission";
+import type { AiRun, AiSetup } from "@/lib/ai-console";
 export function EvolutionRoom({
   code,
   role,
+  aiRun,
+  aiConfig,
 }: {
   code: string;
   role: "teacher" | "student";
+  aiRun?: AiRun | null;
+  aiConfig?: AiSetup;
 }) {
   const lang = useLanguage(),
     [v, setView] = useState<View | null>(null),
@@ -141,6 +147,16 @@ export function EvolutionRoom({
           now={now}
           busy={busy}
           act={act}
+          teacherToolbar={
+            v.role === "teacher" && aiConfig && aiRun !== undefined ? (
+              <AiRoomAdmission
+                code={code}
+                status={aiRun}
+                config={aiConfig}
+                language={lang}
+              />
+            ) : undefined
+          }
           loadHistory={(before) => api<View>(url + "&before=" + before)}
           downloads={["json", "csv"].map((f) => (
             <a

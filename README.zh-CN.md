@@ -57,7 +57,7 @@ EMH 在教师开始后在交易画面原位置的个人条件正上方显示5秒
 
 在本地 Double Auction 教师房间的第 3 步 **入室締切**，可勾选 **让 AI 参与**。真人和 AI 合计最多注册 9,999 人。
 
-从本地教师页面可打开 [AI 实验台](docs/guide/zh-CN/classroom.md#安排-ai-学生入室)。选择 Double Auction、EMH 或 SEG 房间后，可安排本地模型或 OpenAI 的 AI 学生入室，并查看决策理由、请求耗时和提交结果，支持导出 CSV。[命令行版](ai-emh/README.zh-CN.md)也可使用。
+本地教师首页和已有 AI 运行记录的房间，可在当前页面弹窗打开 [AI 实验台](docs/guide/zh-CN/classroom.md#安排-ai-学生入室)。选择 Double Auction、EMH 或 SEG 房间后，可安排本地模型或 OpenAI 的 AI 学生入室，并查看决策理由、请求耗时和提交结果，支持导出 CSV。[命令行版](ai-emh/README.zh-CN.md)也可使用。
 
 LM Studio 可选择关闭长思考的快速模式；程序也能识别完整的 JSON 代码框。
 

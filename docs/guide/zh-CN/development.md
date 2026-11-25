@@ -36,7 +36,7 @@ Windows 上可使用 `pwsh -NoProfile -File scripts/dev-local.ps1` 启动隔离�
 
 ### 本地 AI 实验台
 
-设置 `AI_EXPERIMENTS_ENABLED=1` 后，运行 `npm run dev -- --hostname 127.0.0.1`。在教师首页打开 **AI 実験台**，查看 AI 入室和决策记录。连接模型所需的环境变量见[课堂指南](classroom.md#安排-ai-学生入室)。运行记录和学生恢复文件保存在 Git 忽略的 `ai-emh/.local/console/`。
+设置 `AI_EXPERIMENTS_ENABLED=1` 后，运行 `npm run dev -- --hostname 127.0.0.1`。在教师首页或已有 AI 运行记录的房间打开 **AI 実験台** 弹窗，查看 AI 入室和决策记录。连接模型所需的环境变量见[课堂指南](classroom.md#安排-ai-学生入室)。运行记录和学生恢复文件保存在 Git 忽略的 `ai-emh/.local/console/`。
 
 ## Vercel + Neon
 

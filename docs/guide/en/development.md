@@ -36,7 +36,7 @@ Screen-size previews allow same-origin embedding only for `/demo` and `/emh/demo
 
 ### Local AI experiment console
 
-Set `AI_EXPERIMENTS_ENABLED=1` and run `npm run dev -- --hostname 127.0.0.1`. Open **AI 実験台** from the teacher page to see admission and decision records. See the [classroom guide](classroom.md#admit-ai-students) for model connection variables. Run logs and student recovery files are saved under `ai-emh/.local/console/`, which Git ignores.
+Set `AI_EXPERIMENTS_ENABLED=1` and run `npm run dev -- --hostname 127.0.0.1`. Open the **AI 実験台** dialog from the teacher home or a room with an AI run to see admission and decision records. See the [classroom guide](classroom.md#admit-ai-students) for model connection variables. Run logs and student recovery files are saved under `ai-emh/.local/console/`, which Git ignores.
 
 ## Vercel + Neon
 
