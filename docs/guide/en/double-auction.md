@@ -10,7 +10,7 @@ Student waiting screens share a consistent card design while retaining experimen
 
 In a formal room, **参加リンクをコピー** copies the student entry with the room code filled in. [Student entry instructions](classroom.md)
 
-From the local teacher page, you can admit AI students and review their orders and fills. [AI experiment console instructions](classroom.md#admit-ai-students)
+While admission is open in the local teacher room, select **Include AI participants** in step 3, **入室締切** (Admission deadline). Set the provider, model, and AI count, then select **Admit AI**. AI can use any remaining places. With the default planned attendance of 16, you can still add 40 AI participants. Check progress in the teacher room. [AI experiment console instructions](classroom.md#admit-ai-students)
 
 [Demo Model](https://exp-all-in-one.vercel.app/demo) · [Demo controls](demo.md)
 
@@ -30,7 +30,7 @@ Create a room first and configure it while students join. Set the desired number
 
 After the experiment starts, **学生の割り当て** collapses by default. Select **割り当てを表示** to inspect it and collapse it again when finished. The demo behaves the same way.
 
-With a requested market count, the app creates the smaller of that count and `floor(N / 2)`, where N is attendance at closure. Market sizes differ by at most one. Automatic mode fills markets with 16 participants in sequence; a final market containing only one person waits for another participant. Odd attendance still allows everyone to participate, with registration capped at 999. The condition template rounds the largest market size up to an even number, so a single market with 999 participants uses a 1,000-person template. Before starting, **入室を再開** reopens admission and allocation with the same room code.
+With a requested market count, the app creates the smaller of that count and `floor(N / 2)`, where N is attendance at closure. Market sizes differ by at most one. Automatic mode fills markets with 16 participants in sequence; a final market containing only one person waits for another participant. Odd attendance still allows everyone to participate, with registration capped at 9,999 human and AI participants combined. The condition template rounds the largest market size up to an even number, so a single market with 9,999 participants uses a 10,000-person template. Before starting, **入室を再開** reopens admission and allocation with the same room code.
 
 Template prices and generation parameters remain unchanged. Conditions are sampled evenly or duplicated to match each market's actual buyer and seller counts. Equilibrium, maximum surplus, and efficiency use actual values and costs. Different attendance can produce different curves; compare `config.studyLayout`, `markets[].schedules`, and `marketEquilibria` in the conditions JSON. The same attendance, entry order, requested markets, and seed produce the same seats and roles. The seed also determines which side gets the extra person in an odd-sized market. Institution order is randomized separately.
 

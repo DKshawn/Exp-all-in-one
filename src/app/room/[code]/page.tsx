@@ -7,6 +7,7 @@ import { studies } from "@/experiments/judgment/server/core";
 import { notFound } from "next/navigation";
 import { Room } from "@/experiments/double-auction/components/room";
 import { requireTeacherPage } from "@/lib/server/teacher-page-access";
+import { aiRoomRun, aiSetup } from "@/lib/server/ai-console";
 
 export const dynamic = "force-dynamic";
 
@@ -44,11 +45,20 @@ export default async function RoomPage({
         role={entry === "teacher" ? "teacher" : "student"}
       />
     );
+  const aiConfig =
+    entry === "teacher" && experiment === "institutions"
+      ? aiSetup()
+      : undefined;
+  const aiRun = aiConfig
+    ? ((await aiRoomRun(code.toUpperCase()).catch(() => null)) ?? undefined)
+    : undefined;
   return (
     <Room
       key={`${code.toUpperCase()}-${entry === "teacher" ? "teacher" : "student"}`}
       code={code.toUpperCase()}
       entry={entry}
+      aiRun={aiRun}
+      aiConfig={aiConfig}
     />
   );
 }

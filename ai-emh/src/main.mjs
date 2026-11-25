@@ -369,7 +369,12 @@ export function makeManifest(code, count, baseUrl) {
     baseUrl,
     createdAt: new Date().toISOString(),
     students: Array.from({ length: count }, (_, index) => ({
-      nickname: `${prefix}${String(index + 1).padStart(3, "0")}`,
+      // Keep the existing numeric suffixes and reserve letter-prefixed ones for larger runs.
+      nickname: `${prefix}${
+        index < 999
+          ? String(index + 1).padStart(3, "0")
+          : (index - 999 + 10 * 36 ** 2).toString(36).toUpperCase()
+      }`,
       pin: String(randomInt(10000)).padStart(4, "0"),
     })),
   };
@@ -398,13 +403,17 @@ function validateManifest(manifest) {
     !/^[A-Z2-9]{6}$/.test(manifest.code) ||
     !Array.isArray(manifest.students) ||
     manifest.students.length < 1 ||
-    manifest.students.length > 999 ||
+    manifest.students.length >
+      (manifest.experiment === "institutions" ? 9999 : 999) ||
     new Set(manifest.students.map((student) => student.nickname)).size !==
       manifest.students.length ||
     manifest.students.some(
       (student) =>
-        !/^A[A-Z0-9]{3}\d{3}$/.test(student.nickname) ||
-        !/^\d{4}$/.test(student.pin),
+        !(
+          manifest.experiment === "institutions"
+            ? /^A[A-Z0-9]{6}$/
+            : /^A[A-Z0-9]{3}\d{3}$/
+        ).test(student.nickname) || !/^\d{4}$/.test(student.pin),
     )
   )
     throw new Error("恢复文件格式不正确");

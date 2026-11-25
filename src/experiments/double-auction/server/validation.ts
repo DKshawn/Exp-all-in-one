@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { aiAdmissionSchema } from "@/lib/server/ai-admission";
 import { interactionSchema } from "./action-log";
 import { marketSettingsSchema } from "./market-settings";
 import {
@@ -16,6 +17,7 @@ import {
 import {
   MAX_STUDY_ROUNDS,
   MAX_STUDY_MARKETS,
+  MAX_STUDY_PARTICIPANTS,
   MAX_STUDY_UNITS,
   studyUnits,
   studyUnitsPerSide,
@@ -23,6 +25,12 @@ import {
 } from "../lib/study-config";
 import { studyCommissionSchema } from "../lib/study-commission";
 import { MAX_PRICE } from "../lib/price";
+
+// Allow the base schedule and separate five-unit schedules for each institution.
+export const MAX_STUDY_COMMAND_BODY_BYTES = 2 * 1024 * 1024;
+export const studyAiAdmissionSchema = aiAdmissionSchema.extend({
+  count: z.int().min(1).max(MAX_STUDY_PARTICIPANTS),
+});
 
 const legacyConfigSchema = z
   .object({

@@ -16,11 +16,26 @@ import {
 } from "../src/decision.mjs";
 import {
   localModelAddress,
+  makeManifest,
   platformAddress,
   resolveRoomCode,
   runStudent,
 } from "../src/main.mjs";
 import { createPrompts } from "../src/prompts.mjs";
+
+test("a 9999-student manifest keeps unique seven-character names", () => {
+  const { students } = makeManifest("ABC234", 9_999, "http://127.0.0.1:3100");
+  assert.equal(new Set(students.map(({ nickname }) => nickname)).size, 9_999);
+  assert.match(students[0].nickname, /^A[A-Z0-9]{3}001$/);
+  assert.match(students[998].nickname, /^A[A-Z0-9]{3}999$/);
+  assert.match(students[999].nickname, /^A[A-Z0-9]{3}A00$/);
+  assert.ok(
+    students.every(
+      ({ nickname, pin }) =>
+        /^A[A-Z0-9]{6}$/.test(nickname) && /^\d{4}$/.test(pin),
+    ),
+  );
+});
 
 function snapshot() {
   return {

@@ -8,6 +8,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import path from "node:path";
+import type { NextRequest } from "next/server";
 import { checkRoom, type StudentClient } from "../../../ai-emh/src/client.mjs";
 import {
   joinStudents,
@@ -18,12 +19,16 @@ import {
 } from "../../../ai-emh/src/main.mjs";
 import { resultsCsv } from "../../../ai-emh/src/results.mjs";
 import {
+  AI_ADMISSION_DEFAULTS,
   aiRunActive,
   isAiExperiment,
+  type AiAdmission,
   type AiConsoleView,
+  type AiExperiment,
   type AiProvider,
   type AiRecord,
   type AiRun,
+  type AiSetup,
 } from "../ai-console";
 import { AuctionError } from "./errors";
 
@@ -36,10 +41,19 @@ export function aiConsoleEnabled() {
   return process.env.AI_EXPERIMENTS_ENABLED === "1" && !process.env.VERCEL;
 }
 
-export function aiConsoleOrigin(origin: string) {
+export function aiSetup(): AiSetup | undefined {
+  if (aiConsoleEnabled())
+    return {
+      localModel: process.env.AI_EXPERIMENTS_LOCAL_MODEL ?? "",
+      openaiAvailable: Boolean(process.env.OPENAI_API_KEY?.trim()),
+    };
+}
+
+export function aiConsoleOrigin(request: NextRequest) {
   if (!aiConsoleEnabled())
     throw new AuctionError("AI 実験台は利用できません。", 404);
-  const url = new URL(origin);
+  const host = request.headers.get("host") ?? request.nextUrl.host;
+  const url = new URL(`${request.nextUrl.protocol}//${host}`);
   if (!loopbackNames.has(url.hostname))
     throw new AuctionError("ローカルホストで開いてください。", 403);
   return url.origin;
@@ -135,15 +149,27 @@ async function knownRuns() {
     if (!missing(error)) throw error;
     ids = [];
   }
+  const live = Array.from(active.values(), ({ run }) => ({ ...run }));
+  const liveIds = new Set(live.map(({ id }) => id));
   const previous = await Promise.all(
     ids
-      .filter((id) => /^[0-9a-f-]{36}$/.test(id) && !active.has(id))
+      .filter((id) => /^[0-9a-f-]{36}$/.test(id) && !liveIds.has(id))
       .map(fromDisk),
   );
-  return [
-    ...Array.from(active.values(), ({ run }) => ({ ...run })),
-    ...previous.filter((run) => run !== null),
-  ].sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+  return [...live, ...previous.filter((run) => run !== null)].sort((a, b) =>
+    b.startedAt.localeCompare(a.startedAt),
+  );
+}
+
+export async function aiRoomRun(code: string) {
+  const matches = (await knownRuns()).filter((run) => run.code === code);
+  return matches.find((run) => aiRunActive(run.phase)) ?? matches[0] ?? null;
+}
+
+export async function aiRunStatus(id: string) {
+  const run = active.get(id)?.run ?? (await fromDisk(id));
+  if (!run) throw new AuctionError("実行記録が見つかりません。", 404);
+  return { ...run };
 }
 
 export async function aiConsoleView(id?: string): Promise<AiConsoleView> {
@@ -303,6 +329,30 @@ export async function startAiRun(input: Input, origin: string) {
   }
   if (!isAiExperiment(experiment))
     throw new AuctionError("この実験には対応していません。");
+  return enqueueAiRun(input, origin, experiment, connection);
+}
+
+export function prepareAiAdmission(
+  input: AiAdmission,
+  origin: string,
+  experiment: AiExperiment,
+) {
+  const connection = modelConnection(input.provider);
+  return (code: string) =>
+    enqueueAiRun(
+      { ...AI_ADMISSION_DEFAULTS, ...input, code },
+      origin,
+      experiment,
+      connection,
+    );
+}
+
+async function enqueueAiRun(
+  input: Input,
+  origin: string,
+  experiment: AiExperiment,
+  connection: ReturnType<typeof modelConnection>,
+) {
   if (
     Array.from(active.values()).some(
       ({ run }) => run.code === input.code && aiRunActive(run.phase),

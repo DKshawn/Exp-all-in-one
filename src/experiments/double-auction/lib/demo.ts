@@ -633,6 +633,7 @@ export class DemoSession {
   private runBots() {
     if (this.room.phase !== "running") return;
     this.submitSealedBots();
+    let botsByMarket: Map<number, Participant[]> | undefined;
     for (const market of this.room.study!.markets) {
       const id = market.id;
       if (!this.botClocks.has(id))
@@ -653,7 +654,17 @@ export class DemoSession {
       }
       if (this.now < clock.nextAt) continue;
       clock.nextAt = this.now + BOT_INTERVAL_MS;
-      const bots = this.bots.filter((p) => marketFor(this.room, p).id === id);
+      if (market.stage !== "purchase" && market.stage !== "cda") continue;
+      if (!botsByMarket) {
+        botsByMarket = new Map();
+        for (const bot of this.bots) {
+          const marketId = marketFor(this.room, bot).id;
+          const group = botsByMarket.get(marketId);
+          if (group) group.push(bot);
+          else botsByMarket.set(marketId, [bot]);
+        }
+      }
+      const bots = botsByMarket.get(id) ?? [];
       if (market.stage === "purchase") {
         if (market.posted) {
           for (const bot of bots.filter((p) => p.role === "buyer"))

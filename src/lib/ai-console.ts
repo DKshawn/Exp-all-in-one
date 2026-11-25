@@ -6,6 +6,20 @@ export const aiExperiments = {
 
 export type AiExperiment = keyof typeof aiExperiments;
 export type AiProvider = "local" | "openai";
+export const AI_ADMISSION_LIMIT = 999;
+export const AI_ADMISSION_DEFAULTS = {
+  count: 40,
+  parallel: 8,
+  interval: 10,
+  timeout: 60,
+  maxOutputTokens: 2048,
+};
+export type AiSetup = { localModel: string; openaiAvailable: boolean };
+export type AiAdmission = {
+  provider: AiProvider;
+  model: string;
+  count: number;
+};
 export type AiPhase =
   | "joining"
   | "ready"

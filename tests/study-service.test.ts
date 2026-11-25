@@ -696,7 +696,7 @@ test("96 students receive six isolated balanced markets and six distinct institu
   );
 });
 
-test("custom layout accepts odd groups and rejects invalid sizes, market counts and totals above 999", async () => {
+test("custom layout accepts odd groups and rejects invalid sizes, market counts and totals above 9999", async () => {
   const config = {
     title: "人数の検証",
     protocol: "institutions-v1" as const,
@@ -734,12 +734,13 @@ test("custom layout accepts odd groups and rejects invalid sizes, market counts 
   );
   for (const change of [
     { marketSize: 1 },
-    { marketSize: 1000 },
+    { marketSize: 10_000 },
     { marketSize: 0 },
     { marketSize: 6.5 },
     { markets: 0 },
     { markets: 2.5 },
-    { markets: 500 },
+    { markets: 5_000 },
+    { markets: 100, marketSize: 100, capacity: 10_000 },
   ]) {
     const invalid = { ...config, ...change };
     assert.equal(configSchema.safeParse(invalid).success, false);

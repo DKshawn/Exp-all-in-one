@@ -52,14 +52,14 @@ function config(size: number, units = 2, flexible = true): RoomConfig {
   };
 }
 
-test("creation accepts every integer attendance from 2 to 999, including odd sizes, while keeping range and capacity validation", () => {
-  for (let size = 2; size <= 999; size++)
+test("creation accepts every integer attendance from 2 to 9999, including odd sizes, while keeping range and capacity validation", () => {
+  for (let size = 2; size <= 9_999; size++)
     for (const flexible of [false, true]) {
       const draft = config(size, 2, flexible);
       assert.equal(studyLayoutError(1, size, flexible), "");
       assert.equal(studyRoomConfigSchema.safeParse(draft).success, true);
     }
-  for (const size of [1, 1000, 3.5, NaN, Infinity]) {
+  for (const size of [1, 10_000, 3.5, NaN, Infinity]) {
     assert.ok(studyLayoutError(1, size, true));
     assert.equal(studyRoomConfigSchema.safeParse(config(size)).success, false);
   }

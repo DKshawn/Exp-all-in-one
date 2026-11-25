@@ -155,11 +155,15 @@ export function resizeStudySettings(
     costs: resize(settings.costs, false),
   };
 }
-export const MAX_STUDY_PARTICIPANTS = 999;
+export const MAX_STUDY_PARTICIPANTS = 9_999;
 export const MAX_STUDY_MARKETS = Math.floor(MAX_STUDY_PARTICIPANTS / 2);
 // An odd largest market needs one unused profile on its smaller side.
 export const MAX_STUDY_PROFILES = Math.ceil(MAX_STUDY_PARTICIPANTS / 2);
 export const MAX_STUDY_TEMPLATE_SIZE = MAX_STUDY_PROFILES * 2;
+
+export function studyAdmissionSeatsRemaining(registered: number) {
+  return Math.max(0, MAX_STUDY_PARTICIPANTS - registered);
+}
 
 // Missing size belongs to an existing room with the original 8 + 8 design.
 export const studyMarketSize = (config: Pick<RoomConfig, "marketSize">) =>

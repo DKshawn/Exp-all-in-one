@@ -80,6 +80,7 @@ type Props = {
   retry: () => void;
   demo?: boolean;
   toolbar?: ReactNode;
+  admissionControls?: ReactNode;
   onConfigure?: () => void;
   loadExport?: ExportProvider;
 };
@@ -112,6 +113,7 @@ export function StudyRoom({
   retry,
   demo = false,
   toolbar,
+  admissionControls,
   onConfigure,
   loadExport,
 }: Props) {
@@ -533,6 +535,7 @@ export function StudyRoom({
             disabled={disabled}
             onSelectMarket={setSelected}
             onOpenMarket={openMarketActivity}
+            admissionControls={admissionControls}
           />
         ) : (
           teacher &&

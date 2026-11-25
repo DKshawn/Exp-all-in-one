@@ -4,32 +4,26 @@ import {
   aiConsoleCsv,
   aiConsoleOrigin,
   aiConsoleView,
+  aiRunStatus,
   startAiRun,
   stopAiRun,
 } from "@/lib/server/ai-console";
 import { body, codeFor, failure, json, NO_STORE } from "@/lib/server/http";
 import { teacherAccessKey } from "@/lib/server/teacher-session";
 import { AuctionError } from "@/lib/server/errors";
+import { aiAdmissionSchema } from "@/lib/server/ai-admission";
 
 export const runtime = "nodejs";
 
 const idSchema = z.uuid();
 const input = z.discriminatedUnion("action", [
-  z
-    .object({
+  aiAdmissionSchema
+    .extend({
       action: z.literal("start"),
       code: z
         .string()
         .trim()
         .regex(/^[a-z2-9]{6}$/i),
-      provider: z.enum(["local", "openai"]),
-      model: z
-        .string()
-        .trim()
-        .min(1)
-        .max(200)
-        .regex(/^[^\r\n]+$/),
-      count: z.int().min(1).max(999),
       parallel: z.int().min(1).max(999),
       interval: z.int().min(1).max(3600),
       timeout: z.int().min(1).max(300),
@@ -40,8 +34,7 @@ const input = z.discriminatedUnion("action", [
 ]);
 
 function authorize(request: NextRequest) {
-  const host = request.headers.get("host") ?? request.nextUrl.host;
-  const origin = aiConsoleOrigin(`${request.nextUrl.protocol}//${host}`);
+  const origin = aiConsoleOrigin(request);
   teacherAccessKey(request);
   if (request.headers.get("sec-fetch-site") === "cross-site")
     throw new AuctionError("この送信元からは操作できません。", 403);
@@ -58,6 +51,8 @@ function runId(value: string | null) {
 export async function GET(request: NextRequest) {
   try {
     authorize(request);
+    const statusId = runId(request.nextUrl.searchParams.get("status"));
+    if (statusId) return json(await aiRunStatus(statusId));
     const exportId = runId(request.nextUrl.searchParams.get("export"));
     if (exportId) {
       const { content, name } = await aiConsoleCsv(exportId);

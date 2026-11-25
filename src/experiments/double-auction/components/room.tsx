@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   CircleHelp,
   Clock3,
@@ -19,6 +19,12 @@ import { useRoom } from "./use-room";
 import { StudyRoom } from "./study-room";
 import type { Phase } from "@/experiments/double-auction/lib/types";
 import { roomNavigation } from "@/lib/room-navigation";
+import {
+  AiRoomAdmission,
+  AiRoomAdmissionForm,
+} from "@/components/ai-room-admission";
+import { aiRunActive, type AiRun, type AiSetup } from "@/lib/ai-console";
+import { studyAdmissionSeatsRemaining } from "@/experiments/double-auction/lib/study-config";
 
 const labels: Record<Phase, string> = {
   waiting: "開始待ち",
@@ -28,7 +34,18 @@ const labels: Record<Phase, string> = {
   finished: "実験終了",
 };
 
-export function Room({ code, entry }: { code: string; entry?: string }) {
+export function Room({
+  code,
+  entry,
+  aiRun,
+  aiConfig,
+}: {
+  code: string;
+  entry?: string;
+  aiRun?: AiRun | null;
+  aiConfig?: AiSetup;
+}) {
+  const [roomAiRun, setRoomAiRun] = useState(aiRun);
   const {
     view,
     connected,
@@ -104,7 +121,37 @@ export function Room({ code, entry }: { code: string; entry?: string }) {
         </main>
       </>
     );
-  if (view.study)
+  const teacher = view.me.role === "teacher";
+  const aiAdmission =
+    teacher && roomAiRun !== undefined ? (
+      <AiRoomAdmission
+        key={roomAiRun?.id}
+        code={code}
+        status={roomAiRun}
+        onUpdate={setRoomAiRun}
+      />
+    ) : undefined;
+  if (view.study) {
+    const capacity = studyAdmissionSeatsRemaining(
+      view.study.teacher?.participants.length ?? 0,
+    );
+    const aiControls =
+      teacher &&
+      aiConfig &&
+      capacity > 0 &&
+      view.study.lobby?.admission?.status === "open" ? (
+        <AiRoomAdmissionForm
+          code={code}
+          config={aiConfig}
+          capacity={capacity}
+          disabled={
+            pending ||
+            !connected ||
+            Boolean(roomAiRun && aiRunActive(roomAiRun.phase))
+          }
+          onStart={setRoomAiRun}
+        />
+      ) : undefined;
     return (
       <StudyRoom
         view={view}
@@ -115,9 +162,11 @@ export function Room({ code, entry }: { code: string; entry?: string }) {
         error={error}
         notice={notice ?? ""}
         retry={retry}
+        toolbar={aiAdmission}
+        admissionControls={aiControls}
       />
     );
-  const teacher = view.me.role === "teacher";
+  }
   const remaining =
     view.phase === "running"
       ? Math.max(0, (view.deadline ?? now) - now)
@@ -155,6 +204,7 @@ export function Room({ code, entry }: { code: string; entry?: string }) {
         </span>
       </Header>
       <main className="room-main">
+        {aiAdmission}
         <div className="room-heading">
           <div>
             <div className="eyebrow">

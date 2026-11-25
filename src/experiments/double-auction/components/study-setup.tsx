@@ -1,7 +1,7 @@
 "use client";
 
 import { Shuffle } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useState, type ReactNode } from "react";
 import type { Command, RoomView } from "@/experiments/double-auction/lib/types";
 import {
   MAX_STUDY_MARKETS,
@@ -26,6 +26,7 @@ export function StudySetup({
   disabled,
   onSelectMarket,
   onOpenMarket,
+  admissionControls,
 }: {
   view: RoomView;
   now: number;
@@ -33,6 +34,7 @@ export function StudySetup({
   disabled: boolean;
   onSelectMarket: (id: number) => void;
   onOpenMarket: (id: number) => void;
+  admissionControls?: ReactNode;
 }) {
   const lobby = view.study!.lobby!;
   const admission = lobby.admission!;
@@ -194,6 +196,7 @@ export function StudySetup({
                 <p className="study-setup-arrivals">
                   <b>{view.participantCount}</b> 人入室
                 </p>
+                {admissionControls}
                 <StudyAdmission
                   view={view}
                   now={now}
