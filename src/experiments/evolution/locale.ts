@@ -25,10 +25,21 @@ const messages = {
   you: ["自分", "我", "You"],
   peer: ["相手", "对方", "Peer"],
   matrixResult: ["今回の結果", "本轮结果", "Round outcome"],
+  chooseOnScale: [
+    "目盛りで要求額を選ぶ",
+    "在刻度上选择需求额",
+    "Choose on the scale",
+  ],
+  confirmDemand: ["回答を確定", "确认提交", "Submit demand"],
+  invalidDemand: [
+    "0から1までの範囲で、指定の刻みに合う金額を入力してください。",
+    "请输入 0 到 1 之间、符合步长的需求额。",
+    "Enter a demand from 0 to 1 that matches the step size.",
+  ],
   sliderRule: [
-    "{step}刻み。指を離すと確定。キーボードでは矢印キーで調整し、Enterで確定します。",
-    "步长为 {step}。松手即提交，也可用方向键调整，按 Enter 提交。",
-    "Step size: {step}. Release to submit. With a keyboard, adjust with the arrow keys and press Enter to submit.",
+    "{step}刻み。目盛りを選ぶか数値を入力し、Enterまたはボタンで確定します。",
+    "步长为 {step}。点选刻度或输入数值，按 Enter 或点「确认提交」。",
+    "Step size: {step}. Choose on the scale or enter a number. Submit with Enter or the button.",
   ],
   demandRule: [
     "要求額の合計が総額以下なら各自が要求額を得ます。超えた場合は双方の利得が0になります。",

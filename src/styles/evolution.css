@@ -155,14 +155,53 @@
 .ev-filter {
   justify-self: start;
 }
-.ev-demand input[type="range"] {
+.ev-demand input[type="range"],
+.ev-demand-track {
+  display: block;
   width: 100%;
-  height: 36px;
+  height: 44px;
   padding: 0;
   margin: 0;
   accent-color: var(--accent);
 }
-.ev-demand output,
+.ev-demand-track {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.ev-demand-track::before {
+  content: "";
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--muted);
+}
+.ev-demand-track:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.ev-demand-entry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px;
+}
+.ev-demand-entry .field {
+  flex: 1 0 7rem;
+  margin: 0;
+}
+.ev-demand-entry .button {
+  white-space: nowrap;
+}
+.ev-demand-entry input[type="number"] {
+  appearance: textfield;
+  font-variant-numeric: tabular-nums;
+}
+.ev-demand-entry input::-webkit-inner-spin-button,
+.ev-demand-entry input::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
 .ev-demand-endpoints {
   font-variant-numeric: tabular-nums;
 }
@@ -197,7 +236,8 @@
     background: var(--accent);
   }
 }
-.ev-demand input[type="range"]:focus-visible {
+.ev-demand input:focus-visible,
+.ev-demand-track:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }

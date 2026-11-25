@@ -1,21 +1,16 @@
 "use client";
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { CopyJoinLinkButton } from "@/components/copy-join-link-button";
 import { StudentWaitingCard } from "@/components/student-waiting-card";
 import { StudyDetailDialog } from "@/experiments/double-auction/components/study-detail-dialog";
 import { studentJoinHref } from "@/lib/room-navigation";
-import {
-  label,
-  displayChoices,
-  sliderInstructions,
-  type Key,
-  type Lang,
-} from "../locale";
+import { label, displayChoices, type Key, type Lang } from "../locale";
 import type { Action } from "../engine";
 import type { View, Personal } from "../views";
 import { Admission, SessionOverview } from "./session-controls";
 import { PayoffMatrix, PayoffRules, Rules } from "./rules";
-import { continuous, DEMAND_STEPS, demandLabel, demandStep } from "../settings";
+import { continuous, DEMAND_STEPS, demandLabel } from "../settings";
+import { DemandDecision } from "./demand-decision";
 
 type Props = {
   view: View;
@@ -39,60 +34,19 @@ function Decision({
   act: Props["act"];
   selected: number | null;
 }) {
-  const [value, setValue] = useState(DEMAND_STEPS / 2);
-  const slider = useRef<HTMLInputElement>(null);
-  const id = useId();
-  useEffect(() => {
-    if (!busy) slider.current?.focus({ preventScroll: true });
-  }, [busy]);
-  const options = displayChoices(lang, view.settings);
   const commit = (choice: number) => {
     if (!busy) void act({ kind: "choose", round: view.round, choice });
   };
-  if (continuous(view.settings)) {
-    const step = demandStep(view.settings);
+  if (continuous(view.settings))
     return (
-      <div className="ev-demand">
-        <div className="ev-heading">
-          <label htmlFor={id}>{label(lang, "demandAmount")}</label>
-          <output htmlFor={id} aria-live="off">
-            {demandLabel(value)}
-          </output>
-        </div>
-        <input
-          ref={slider}
-          id={id}
-          type="range"
-          min={0}
-          max={1}
-          step={step}
-          value={demandLabel(value)}
-          disabled={busy}
-          aria-describedby={id + "-help"}
-          onChange={(e) =>
-            setValue(Math.round(e.currentTarget.valueAsNumber * DEMAND_STEPS))
-          }
-          onPointerUp={(e) => {
-            if (e.isPrimary && e.button === 0)
-              commit(Math.round(e.currentTarget.valueAsNumber * DEMAND_STEPS));
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.repeat) {
-              e.preventDefault();
-              commit(value);
-            }
-          }}
-        />
-        <div className="ev-demand-endpoints" aria-hidden="true">
-          <span>0</span>
-          <span>1</span>
-        </div>
-        <p id={id + "-help"} className="field-help">
-          {sliderInstructions(lang, step)}
-        </p>
-      </div>
+      <DemandDecision
+        settings={view.settings}
+        lang={lang}
+        busy={busy}
+        commit={commit}
+      />
     );
-  }
+  const options = displayChoices(lang, view.settings);
   return (
     <div className="ev-decision">
       <fieldset
