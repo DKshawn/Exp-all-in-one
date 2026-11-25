@@ -12,9 +12,10 @@ import {
 export default async function TeacherLoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; failed?: string }>;
 }) {
-  const returnTo = teacherReturnPath((await searchParams).next);
+  const { next, failed } = await searchParams;
+  const returnTo = teacherReturnPath(next);
   if (await teacherPageAuthorized(returnTo)) redirect(returnTo);
   return (
     <>
@@ -25,6 +26,7 @@ export default async function TeacherLoginPage({
       </Header>
       <main className="narrow-main">
         <TeacherLogin
+          failed={failed === "1"}
           returnTo={returnTo}
           ready={getServerStatus().ready && teacherPageAvailable(returnTo)}
         />

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Pause, Play, SkipForward } from "lucide-react";
 import { EndExperimentButton } from "@/components/end-experiment-button";
 import { RoundStrip, clockText } from "@/components/round-strip";
@@ -26,7 +26,23 @@ export function SessionOverview({
 }) {
   const t = (k: Key) => label(lang, k);
   const [confirm, setConfirm] = useState<RunControl | null>(null);
+  const timerLabelId = useId();
   const paused = v.pausedAt !== null;
+  const waitingForPairs =
+    v.phase === "playing" &&
+    v.role === "student" &&
+    v.current?.status === "settled";
+  const phaseLabel = paused
+    ? "paused"
+    : waitingForPairs
+      ? "waitingForPairs"
+      : v.phase;
+  const timerLabel =
+    v.phase === "feedback"
+      ? "next"
+      : waitingForPairs
+        ? "decisionCutoff"
+        : "timeLeft";
   const remaining = Math.max(
     0,
     Math.ceil(((v.deadline ?? now) - (v.pausedAt ?? now)) / 1000),
@@ -55,29 +71,46 @@ export function SessionOverview({
     <div className="emh-app ev-overview">
       <div className="wide">
         <div className="session-overview">
-          <RoundStrip
-            rounds={v.settings.rounds}
-            current={v.round}
-            finished={v.phase === "finished"}
-            label={t("round")}
-            roundLabel={(n) => t("round") + " " + n}
-          />
+          {v.settings.rounds <= 32 ? (
+            <RoundStrip
+              rounds={v.settings.rounds}
+              current={v.round}
+              finished={v.phase === "finished"}
+              label={t("round")}
+              roundLabel={(n) => t("round") + " " + n}
+            />
+          ) : (
+            <progress
+              className="ev-round-progress"
+              aria-label={t("round")}
+              max={v.settings.rounds}
+              value={
+                v.phase === "finished" ? v.round : Math.max(0, v.round - 1)
+              }
+            />
+          )}
           <div className="session-bar">
             <div className="session-phase">
               <strong>
                 {t("round")} {v.round}/{v.settings.rounds}
               </strong>
-              <h2>{t(paused ? "paused" : v.phase)}</h2>
+              <h2 aria-live={v.role === "student" ? "polite" : undefined}>
+                {t(phaseLabel)}
+              </h2>
             </div>
             {v.deadline !== null && (
               <div className="timers">
                 <div className={remaining <= 5 ? "urgent" : ""}>
-                  <span>{t(v.phase === "feedback" ? "next" : "timeLeft")}</span>
-                  <strong className="timer" role="timer">
+                  <span id={timerLabelId}>{t(timerLabel)}</span>
+                  <strong
+                    className="timer"
+                    role="timer"
+                    aria-labelledby={timerLabelId}
+                  >
                     {clockText(remaining)}
                   </strong>
                   <progress
-                    aria-label={t("timeLeft")}
+                    aria-labelledby={timerLabelId}
                     max={
                       v.phase === "feedback"
                         ? v.settings.feedbackSeconds

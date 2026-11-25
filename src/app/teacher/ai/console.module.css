@@ -1,0 +1,268 @@
+.entry {
+  flex-wrap: wrap;
+}
+
+.entry h1 {
+  white-space: nowrap;
+}
+
+.entry :global(.teacher-room-actions) {
+  margin-block-start: 0;
+}
+
+.main {
+  inline-size: min(100% - 2rem, 74rem);
+  margin-inline: auto;
+  padding-block: clamp(1.5rem, 4vw, 2.75rem) 3rem;
+}
+
+.title {
+  font-size: clamp(1.65rem, 3.6vw, 2.35rem);
+  line-height: 1.15;
+  margin-block-end: 1.35rem;
+  white-space: nowrap;
+}
+
+.stack,
+.form {
+  display: grid;
+  gap: 1rem;
+  min-inline-size: 0;
+}
+
+.overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 1rem;
+}
+
+.panel {
+  min-inline-size: 0;
+  padding: clamp(1rem, 2.2vw, 1.5rem);
+  display: grid;
+  gap: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.panel h2 {
+  white-space: nowrap;
+  font-size: 1.13rem;
+}
+
+.heading,
+.progressRow,
+.actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.heading,
+.progressRow {
+  justify-content: space-between;
+}
+
+.actions :global(.button) {
+  white-space: nowrap;
+  min-block-size: 2.65rem;
+}
+
+.fields,
+.filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+  min-inline-size: 0;
+}
+
+.filters {
+  grid-template-columns: repeat(3, minmax(0, 11rem));
+}
+
+.panel :global(.field) {
+  min-inline-size: 0;
+  margin: 0;
+}
+
+.panel :global(.field) > span {
+  white-space: nowrap;
+}
+
+.panel :global(.field) :is(input, select) {
+  min-inline-size: 0;
+  width: 100%;
+  min-block-size: 2.7rem;
+}
+
+.advanced summary {
+  display: list-item;
+  inline-size: fit-content;
+  cursor: pointer;
+  padding: 0.42rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.advanced[open] .fields {
+  margin-block-start: 0.9rem;
+}
+
+.status {
+  padding: 0.18rem 0.65rem;
+  border-radius: 1rem;
+  background: var(--lavender);
+  color: var(--accent);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status[data-phase="finished"] {
+  background: var(--buy-bg);
+  color: var(--buy);
+}
+
+.status[data-phase="failed"] {
+  color: var(--red);
+}
+
+.runModel {
+  overflow-wrap: anywhere;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.progressRow {
+  font-variant-numeric: tabular-nums;
+}
+
+.progress {
+  inline-size: 100%;
+  block-size: 0.65rem;
+  margin-block-start: -0.55rem;
+  accent-color: var(--accent);
+}
+
+.metrics {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.metrics div {
+  padding: 0.65rem 0.75rem;
+  border-radius: 9px;
+  background: var(--bg);
+}
+
+.metrics dt {
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.metrics dd {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.tableViewport {
+  overflow: auto;
+  max-block-size: 34rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.89rem;
+}
+
+.table th,
+.table td {
+  padding: 0.62rem 0.7rem;
+  border-block-end: 1px solid var(--line);
+  text-align: start;
+  white-space: nowrap;
+  vertical-align: top;
+  font-variant-numeric: tabular-nums;
+}
+
+.table th {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  background: var(--bg);
+  font-weight: 700;
+}
+
+.table tr:last-child td {
+  border-block-end: 0;
+}
+
+.table .reason {
+  min-inline-size: 16rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+}
+
+.reasonDetails summary {
+  inline-size: fit-content;
+  white-space: nowrap;
+}
+
+.reasonDetails:not([open]) summary span:last-child,
+.reasonDetails[open] summary span:first-child {
+  display: none;
+}
+
+.reasonDetails p {
+  margin-block: 0.65rem 0;
+}
+
+.fill {
+  display: block;
+  color: var(--buy);
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.accepted {
+  color: var(--buy);
+  font-weight: 700;
+}
+.muted,
+.empty {
+  color: var(--muted);
+}
+.errorText {
+  color: var(--red);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 46rem) {
+  .overview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 28rem) {
+  .fields,
+  .filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .main {
+    inline-size: calc(100% - 1.25rem);
+  }
+}

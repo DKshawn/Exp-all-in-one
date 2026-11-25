@@ -765,6 +765,38 @@ test("model timeout records duration and does not trade", async (t) => {
   assert.equal(transactions, 0);
 });
 
+test("stopping an in-flight model request records cancellation without a transaction", async (t) => {
+  const controller = new AbortController();
+  const model = await server(() => controller.abort());
+  t.after(() => model.instance.closeAllConnections());
+  t.after(() => model.instance.close());
+  const events = [];
+  let transactions = 0;
+  await runStudent(
+    {
+      identity: { nickname: "AABC001" },
+      state: async () => snapshot(),
+      act: async () => transactions++,
+    },
+    {
+      provider: "local",
+      modelUrl: `${model.url}/v1`,
+      model: "test",
+      interval: 1,
+      timeout: 1,
+      pollSeconds: 0.01,
+    },
+    { acquire: () => true, release() {} },
+    controller.signal,
+    (event) => events.push(event),
+  );
+  assert.equal(events.length, 1);
+  assert.equal(events[0].type, "skipped");
+  assert.equal(events[0].skipReason, "run_stopped");
+  assert.ok(events[0].modelDurationMs >= 0);
+  assert.equal(transactions, 0);
+});
+
 test("full model concurrency records a deferral without a model request", async () => {
   const controller = new AbortController();
   const events = [];

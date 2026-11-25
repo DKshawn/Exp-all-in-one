@@ -19,10 +19,15 @@ const messages = {
     "Row and column each choose once. Each cell lists the row payoff first and the column payoff second.",
   ],
   total: ["分配総額", "可分配总额", "Available amount"],
-  options: [
-    "要求額（カンマ区切り）",
-    "需求选项（逗号分隔）",
-    "Demands (comma-separated)",
+  demandAmount: ["要求額", "需求额", "Demand"],
+  demandStep: ["要求額の刻み", "需求步长", "Demand step"],
+  you: ["自分", "我", "You"],
+  peer: ["相手", "对方", "Peer"],
+  matrixResult: ["今回の結果", "本轮结果", "Round outcome"],
+  sliderRule: [
+    "{step}刻み。指を離すと確定。キーボードでは矢印キーで調整し、Enterで確定します。",
+    "步长为 {step}。松手即提交，也可用方向键调整，按 Enter 提交。",
+    "Step size: {step}. Release to submit. With a keyboard, adjust with the arrow keys and press Enter to submit.",
   ],
   demandRule: [
     "要求額の合計が総額以下なら各自が要求額を得ます。超えた場合は双方の利得が0になります。",
@@ -37,11 +42,6 @@ const messages = {
     "異なる戦略名と、全8個の有効な利得を入力してください。",
     "请填写两个不同策略名称和八个有效收益。",
     "Use two distinct strategy names and eight valid payoffs.",
-  ],
-  badDemand: [
-    "正の総額と、0〜総額の異なる要求額を2〜12個入力してください。分数・小数も使えます。",
-    "总额须为正，需求选项须有 2–12 个，数值互异且介于 0 与总额之间。可用分数或小数。",
-    "Use a positive total and 2–12 distinct demands between zero and that total. Fractions and decimals are accepted.",
   ],
   position: ["位置", "矩阵位置", "Position"],
   row: ["行", "行方", "Row"],
@@ -75,6 +75,12 @@ const messages = {
   open: ["入室受付中", "正在入室", "Admission open"],
   ready: ["開始待ち", "等待开始", "Ready to start"],
   playing: ["回答受付中", "正在作答", "Decisions open"],
+  waitingForPairs: [
+    "他の組の回答待ち",
+    "等待其他配对完成",
+    "Waiting for other pairs",
+  ],
+  decisionCutoff: ["回答締切まで", "距作答截止", "Decision cutoff"],
   feedback: ["結果確認", "轮间反馈", "Round feedback"],
   finished: ["実験終了", "实验结束", "Finished"],
   close: ["入室を締め切る", "截止入室", "Close admission"],
@@ -95,7 +101,6 @@ const messages = {
   timeLeft: ["残り", "剩余", "Remaining"],
   sec: ["秒", "秒", "s"],
   choose: ["選択", "选择", "Choice"],
-  submit: ["回答を確定", "确认提交", "Submit choice"],
   choosing: ["回答してください", "请作答", "Choose an option"],
   submitted: ["相手の回答待ち", "已提交，等待对方", "Submitted · waiting"],
   settled: ["成立", "已结算", "Settled"],
@@ -108,6 +113,8 @@ const messages = {
   otherPay: ["相手の利得", "对方收益", "Partner payoff"],
   sum: ["累積利得", "累计收益", "Cumulative payoff"],
   history: ["個人の記録", "个人记录", "My rounds"],
+  older: ["前の20回", "前 20 轮", "Older rounds"],
+  latest: ["最新に戻る", "返回最新", "Back to latest"],
   status: ["状態", "状态", "Status"],
   results: ["ラウンド別結果", "逐轮结果", "Round results"],
   share: ["選択割合", "选择比例", "Choice shares"],
@@ -188,6 +195,8 @@ const messages = {
 export type Key = keyof typeof messages;
 export const label = (lang: Lang, key: Key) =>
   messages[key][lang === "ja" ? 0 : lang === "zh-CN" ? 1 : 2];
+export const sliderInstructions = (lang: Lang, step: string) =>
+  label(lang, "sliderRule").replace("{step}", step);
 export function displayChoices(lang: Lang, s: Settings) {
   if (s.mode === "coordination" && s.names[0] === "鹿" && s.names[1] === "兎")
     return [label(lang, "stag"), label(lang, "hare")];

@@ -8,7 +8,7 @@ import {
   type Entry,
   type Seat,
 } from "./engine";
-import { choices, outcome } from "./settings";
+import { choices, continuous, demandBand, outcome } from "./settings";
 
 export function personal(r: Round, id: string) {
   const e = r.entries[id],
@@ -27,13 +27,15 @@ export function personal(r: Round, id: string) {
 export function summaries(g: Game, r: Round) {
   return groupSizes(g).map((_, i) => {
     const seats = g.seats.filter((s) => s.group === i + 1);
-    const options = choices(g.settings);
+    const slider = continuous(g.settings);
     const counts = (side: Seat["side"]) => {
-      const counts = options.map(() => 0);
+      const counts = Array<number>(
+        slider ? 10 : choices(g.settings).length,
+      ).fill(0);
       for (const s of seats)
         if (side === null || s.side === side) {
           const c = r.entries[s.id].choice;
-          if (c !== null) counts[c]++;
+          if (c !== null) counts[slider ? demandBand(c) : c]++;
         }
       return counts;
     };
@@ -54,8 +56,10 @@ export function summaries(g: Game, r: Round) {
       if (e.pay !== null) total = add(total, e.pay);
       if (e.status !== "settled" || e.position !== "row") continue;
       const right = r.entries[e.opponent!].choice!;
-      const key = e.choice + "," + right;
-      pairs[key] = (pairs[key] ?? 0) + 1;
+      if (!slider) {
+        const key = e.choice + "," + right;
+        pairs[key] = (pairs[key] ?? 0) + 1;
+      }
       settled++;
       if (outcome(g.settings, e.choice!, right).agreement) agreements++;
     }
@@ -152,6 +156,12 @@ export function rawRows(g: Game, r: Round, code: string) {
       opponent: e.opponent,
       choice: e.choice,
       opponentChoice: p?.choice ?? null,
+      ...(continuous(g.settings)
+        ? {
+            demand: e.choice === null ? null : e.choice / 1000,
+            opponentDemand: p?.choice == null ? null : p.choice / 1000,
+          }
+        : {}),
       pay: e.pay,
       opponentPay: p?.pay ?? null,
       total: e.total,

@@ -8,6 +8,8 @@ Teachers can end the current experiment by confirming the red **実験を終了*
 
 In Stochastic Evolutionary Games, teachers and students each choose their own display language in the page header. Group count remains editable during admission. Close manually or start the 5–3600 second admission timer (default 60). Pause, resume or reset it as needed. When time expires, admission closes if every group can pair at least two people. Otherwise it stays open. Reopen before starting to admit more participants and draw a new allocation at the next cutoff. [Rules and data](evolution.md)
 
+New SEG rooms support up to 10,000 rounds. A coordination choice submits on click, and the controls and payoff matrix stay in place while the realized cell is highlighted. Nash demand uses a 0–1 slider with a configurable step (default 0.1), submitted on release or with Enter. Settled pairs see **Waiting for other pairs** while room-wide decisions remain open. **Next round in** counts down once feedback starts for the whole room. The countdown stays in place as the status changes.
+
 In EMH and Stochastic Evolutionary Games, teachers and students see completed rounds in bright green. The current round has a double ring, gold in demos and purple in formal rooms.
 
 Student waiting screens use a consistent design. In EMH, a five-second preparation countdown appears in the center of the student screen after the teacher starts, before trading begins.
@@ -57,6 +59,16 @@ Students open the link, check the code, enter a nickname and their own four-digi
 
 The student homepage is for joining a classroom with its room code. The teacher chooses the experiment and explains its rules. After joining, keep the page open, wait for the start, and follow the teacher’s explanation and the prompts on your own screen.
 
+## Admit AI students
+
+Set `AI_EXPERIMENTS_ENABLED=1` and bind the local platform to `127.0.0.1` before starting it. Set `AI_EXPERIMENTS_LOCAL_URL` to your local model endpoint (default `http://127.0.0.1:11434/v1`). You can set `AI_EXPERIMENTS_LOCAL_MODEL` and `LOCAL_MODEL_API_KEY` as needed. For OpenAI, set `OPENAI_API_KEY` on the server.
+
+1. Create a Double Auction, EMH, or SEG room, then open **AI 実験台** from the teacher page.
+2. Select the room, provider, model, and count, then click **AI を入室させる**. After everyone joins, use **ルームを開く** to assign roles and start the experiment in the room.
+3. The console shows decision reasons, response times, accepted operations, and confirmed fills. **AI を停止** stops the AI operations. Control the room separately from the teacher room page. Choose a run under **実行履歴**, then select **CSV を保存** to export its records.
+
+Run status and saved records remain visible after refreshing the browser. A server restart interrupts active runs, and their saved records remain available. SEG supports coordination and both discrete and continuous Nash demand. [AI runner guide](../../../ai-emh/README.en.md)
+
 ## 3. Check attendance and run the experiment
 
 In the teacher view, check attendance and settings, complete the preparation shown for the selected experiment, and use its start control. Preparation, grouping, and start requirements differ between experiments. If the start button is missing or unavailable, complete the steps shown on screen first.
@@ -84,7 +96,7 @@ Login state is scoped by room and role. Ordinary tabs in one browser can show th
 
 Rooms appear newest first, each with an experiment label. Under **実験**, choose **実験1（固定配当）** or **実験2（抽選配当）** for EMH, or **協調ゲーム** (Coordination game) or **ナッシュ要求ゲーム** (Nash demand game) for SEG. **EMH（すべて）** and **SEG（すべて）** each show both variants in their group. The list includes the experiment name, code, creation time, status, market count, attendance, progress, and periods per institution. Load another 20 entries at a time. The platform uses a shared teacher key for online creation and management. Locally, the list shows rooms in the database selected on that computer.
 
-Enter the teacher key once at the teacher entry. The same browser stays signed in for eight hours across reloads, experiment changes, room creation and management. Sign in again after logout, expiry or a key change; each room keeps its separate teacher password.
+Enter the teacher key once at the teacher entry. The same browser stays signed in for eight hours across reloads, experiment changes, room creation and management. Sign in again after logout, expiry or a key change; each room keeps its separate teacher password. The teacher key is submitted by POST even before JavaScript loads, so it stays out of the URL.
 
 To delete a room, click **このルームを削除** in its confirmation dialog. The room teacher password is not requested again, but the server still checks the teacher login session, except in local environments without a configured key. Deletion also removes participants, markets, trading history, audit logs, and results; active students can no longer use that room. Deletion cannot be undone.
 

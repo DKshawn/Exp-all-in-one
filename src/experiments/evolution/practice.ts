@@ -10,7 +10,7 @@ import {
   type Round,
 } from "./engine";
 import { summaries, type Summary } from "./views";
-import { choices, type Settings } from "./settings";
+import { choiceCount, choiceStride, type Settings } from "./settings";
 
 export type PracticeAction = Action | { kind: "playback"; paused: boolean };
 
@@ -50,7 +50,9 @@ export class EvolutionPractice {
       .map(([id]) => ({
         id,
         at: round.openedAt + 800 + randomInt(Math.floor(window)),
-        choice: randomInt(choices(this.game.settings).length),
+        choice:
+          randomInt(choiceCount(this.game.settings)) *
+          choiceStride(this.game.settings),
       }))
       .sort((a, b) => a.at - b.at);
   }

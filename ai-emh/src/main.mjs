@@ -155,7 +155,7 @@ function positive(value, label, max) {
   return number;
 }
 
-class ModelSlots {
+export class ModelSlots {
   constructor(limit) {
     this.limit = limit;
     this.active = 0;
@@ -176,6 +176,18 @@ async function wait(seconds, signal) {
   } catch (error) {
     if (error.name !== "AbortError") throw error;
   }
+}
+
+function ownFills(state) {
+  if (state?.study)
+    return state.study.myTradeNotifications ?? state.study.myTrades ?? [];
+  const market = state?.market ?? state;
+  const id = market?.me?.id;
+  return id
+    ? (market.trades ?? []).filter(
+        (trade) => trade.buyerId === id || trade.sellerId === id,
+      )
+    : [];
 }
 
 export async function runStudent(client, config, slots, signal, report) {
@@ -199,7 +211,7 @@ export async function runStudent(client, config, slots, signal, report) {
     let stage = "state";
     let attempt;
     try {
-      const state = await client.state();
+      const state = await client.state(signal);
       if (adapter.isComplete(state)) {
         endWaiting("experiment_completed");
         report({ student: client.identity.nickname, type: "completed" });
@@ -240,6 +252,7 @@ export async function runStudent(client, config, slots, signal, report) {
             role: observation.role ?? observation.position,
             modelRequestedAt: new Date().toISOString(),
           };
+          config.onDecisionStart?.();
           modelStartedAt = performance.now();
           const result = await requestModel({
             baseUrl: config.modelUrl,
@@ -250,12 +263,15 @@ export async function runStudent(client, config, slots, signal, report) {
             ...request,
             provider: config.provider,
             lmstudioFast: config.lmstudioFast,
+            signal,
           });
           Object.assign(attempt, result);
           if (Number.isInteger(result.decision?.choice)) {
             const choice = result.decision.choice;
             attempt.selectedOption =
-              observation.options?.[choice] ?? observation.choices?.[choice];
+              adapter.selectedOption?.(state, choice) ??
+              observation.options?.[choice] ??
+              observation.choices?.[choice];
           }
         } finally {
           if (modelStartedAt !== undefined)
@@ -265,16 +281,9 @@ export async function runStudent(client, config, slots, signal, report) {
           slots.release();
         }
         stage = "refresh";
-        const latest = signal.aborted ? null : await client.state();
-        if (signal.aborted) {
-          report({
-            student: client.identity.nickname,
-            type: "skipped",
-            ...attempt,
-            skipReason: "run_stopped",
-          });
-          break;
-        }
+        signal.throwIfAborted();
+        const latest = await client.state(signal);
+        signal.throwIfAborted();
         if (
           isWait(attempt.decision) &&
           adapter.isActive(latest) &&
@@ -303,7 +312,12 @@ export async function runStudent(client, config, slots, signal, report) {
         if (action) {
           stage = "submit";
           attempt.command = action;
-          await client.act(adapter.target(latest), action);
+          const after = await client.act(adapter.target(latest), action);
+          const known = new Set(ownFills(latest).map(({ id }) => id));
+          const fills = ownFills(after)
+            .filter(({ id }) => !known.has(id))
+            .map(({ id, price }) => ({ id, price }));
+          if (fills.length) attempt.fills = fills;
         }
         report({
           student: client.identity.nickname,
@@ -313,6 +327,17 @@ export async function runStudent(client, config, slots, signal, report) {
         });
       }
     } catch (error) {
+      if (signal.aborted && stage !== "submit") {
+        if (attempt?.modelDurationMs !== undefined) {
+          report({
+            student: client.identity.nickname,
+            type: "skipped",
+            ...attempt,
+            skipReason: "run_stopped",
+          });
+        }
+        break;
+      }
       report({
         student: client.identity.nickname,
         type: "error",
@@ -329,13 +354,14 @@ export async function runStudent(client, config, slots, signal, report) {
             : error.message,
       });
       nextDecisionAt = Date.now() + config.interval * 1000;
+      if (signal.aborted) break;
     }
     await wait(config.pollSeconds, signal);
   }
   endWaiting("run_stopped");
 }
 
-async function makeManifest(code, count, baseUrl) {
+export function makeManifest(code, count, baseUrl) {
   const prefix = `A${randomBytes(3).readUIntBE(0, 3).toString(36).padStart(5, "0").slice(-3).toUpperCase()}`;
   return {
     version: 1,
@@ -347,6 +373,21 @@ async function makeManifest(code, count, baseUrl) {
       pin: String(randomInt(10000)).padStart(4, "0"),
     })),
   };
+}
+
+export async function joinStudents(manifest, experiment, signal, onJoin) {
+  const clients = manifest.students.map(
+    (student) =>
+      new StudentClient(manifest.baseUrl, manifest.code, student, experiment),
+  );
+  for (const [index, client] of clients.entries()) {
+    signal.throwIfAborted();
+    await client.join();
+    onJoin(index + 1);
+    if (index === 0) await client.state(signal);
+  }
+  signal.throwIfAborted();
+  return clients;
 }
 
 function validateManifest(manifest) {
@@ -559,28 +600,28 @@ export async function main(args = process.argv.slice(2)) {
   if (logFailure) throw logFailure;
 
   // Verify the first student session before registering the remaining identities.
-  const clients = manifest.students.map(
-    (student) =>
-      new StudentClient(manifest.baseUrl, manifest.code, student, experiment),
-  );
-  await clients[0].join();
-  await clients[0].state();
-  for (let index = 1; index < clients.length; index++) {
-    await clients[index].join();
-    if ((index + 1) % 10 === 0 || index + 1 === clients.length)
-      console.log(`已入室 ${index + 1}/${clients.length}`);
-  }
-  console.log(
-    `全部 ${clients.length} 人已入室。请在教师页面开始或恢复实验，按 Ctrl+C 停止 AI。`,
-  );
   process.once("SIGINT", stop);
   const slots = new ModelSlots(config.parallel);
   try {
+    const clients = await joinStudents(
+      manifest,
+      experiment,
+      controller.signal,
+      (joined) => {
+        if (joined % 10 === 0 || joined === manifest.students.length)
+          console.log(`已入室 ${joined}/${manifest.students.length}`);
+      },
+    );
+    console.log(
+      `全部 ${clients.length} 人已入室。请在教师页面开始或恢复实验，按 Ctrl+C 停止 AI。`,
+    );
     await Promise.all(
       clients.map((client) =>
         runStudent(client, config, slots, controller.signal, report),
       ),
     );
+  } catch (error) {
+    if (!controller.signal.aborted) throw error;
   } finally {
     process.removeListener("SIGINT", stop);
     await logging;

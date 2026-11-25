@@ -1,7 +1,23 @@
 import { test, expect, type Page } from "@playwright/test";
-import { enterTeacherPage } from "./helpers/teacher-login";
+import { enterTeacherPage, signInTeacher } from "./helpers/teacher-login";
 import { expectEndButton } from "./helpers/end-experiment";
 import { expectCopiedJoinLink } from "./helpers/copy-join-link";
+import { defaults } from "../../src/experiments/evolution/settings";
+import type { View } from "../../src/experiments/evolution/views";
+
+async function setDemand(page: Page, value: number) {
+  const slider = page.getByRole("slider");
+  await slider.fill(String(value));
+  await expect(slider).toBeVisible(); // Editing alone must not submit.
+  await slider.press("Enter");
+}
+
+async function clockPosition(page: Page, name?: string) {
+  const timer = page.getByRole("timer", { name, exact: true });
+  await expect(timer).toBeVisible();
+  const { x, y } = (await timer.boundingBox())!;
+  return { x, y };
+}
 
 async function fit(page: Page) {
   for (const width of [320, 390, 768, 1440]) {
@@ -24,6 +40,193 @@ async function fit(page: Page) {
     expect(overflow, "Control overflow at " + width).toEqual([]);
   }
 }
+
+test("a settled SEG pair waits for room-wide feedback and the next round", async ({
+  page,
+  browser,
+  baseURL,
+}) => {
+  await signInTeacher(page.request);
+  const created = await page.request.post("/api/evolution/rooms", {
+    data: {
+      title: "Shared round clock",
+      password: "review-password",
+      settings: {
+        ...defaults("coordination"),
+        groups: 2,
+        rounds: 2,
+        seconds: 10,
+        feedbackSeconds: 6,
+      },
+    },
+  });
+  await expect(created).toBeOK();
+  const { code } = await created.json();
+  const control = `/api/rooms/${code}/evolution?session=teacher`;
+  const participant = `/api/rooms/${code}/evolution?session=student`;
+  const contexts = await Promise.all(
+    Array.from({ length: 4 }, () =>
+      browser.newContext({ baseURL, viewport: { width: 320, height: 844 } }),
+    ),
+  );
+  try {
+    for (const [i, context] of contexts.entries()) {
+      await expect(
+        await context.request.post(`/api/rooms/${code}/join`, {
+          data: { nickname: `Seat ${i + 1}`, pin: "1234" },
+        }),
+      ).toBeOK();
+    }
+    await expect(
+      await page.request.post(control, { data: { kind: "close" } }),
+    ).toBeOK();
+    async function view(context: (typeof contexts)[number]) {
+      const response = await context.request.get(participant);
+      await expect(response).toBeOK();
+      return (await response.json()) as Extract<View, { role: "student" }>;
+    }
+    const groups = await Promise.all(
+      contexts.map(async (context) => (await view(context)).group),
+    );
+    const early = contexts.filter((_, i) => groups[i] === groups[0]);
+    const late = contexts.filter((_, i) => groups[i] !== groups[0]);
+    expect([early.length, late.length]).toEqual([2, 2]);
+    const screens = await Promise.all(
+      early.map(async (context, i) => {
+        await context.addInitScript(() =>
+          localStorage.setItem("evolution-language", "zh-CN"),
+        );
+        const screen = await context.newPage();
+        if (i === 1) await screen.setViewportSize({ width: 1440, height: 900 });
+        await screen.goto(`/room/${code}`);
+        return screen;
+      }),
+    );
+    await expect(
+      await page.request.post(control, { data: { kind: "start" } }),
+    ).toBeOK();
+    const clocks = await Promise.all(
+      screens.map((screen) => clockPosition(screen, "剩余")),
+    );
+    async function submit(context: (typeof contexts)[number], choice: number) {
+      await expect(
+        await context.request.post(participant, {
+          data: { kind: "choose", round: 1, choice },
+        }),
+      ).toBeOK();
+    }
+    await Promise.all([
+      ...early.map((context) => submit(context, 0)),
+      submit(late[0], 1),
+    ]);
+    for (const [i, screen] of screens.entries()) {
+      await expect(
+        screen.getByRole("heading", { name: "等待其他配对完成" }),
+      ).toBeVisible();
+      expect(await clockPosition(screen, "距作答截止")).toEqual(clocks[i]);
+      await expect(screen.getByRole("timer", { name: "距下一轮" })).toHaveCount(
+        0,
+      );
+      await expect(screen.locator(".ev-matrix-result")).toBeVisible();
+      await expect(screen.locator(".session-phase strong")).toHaveText(
+        "轮次 1/2",
+      );
+      expect(
+        await screen.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
+    }
+    await Promise.all(
+      screens.map(async (screen, i) => {
+        expect(await clockPosition(screen, "距下一轮")).toEqual(clocks[i]);
+        await expect(
+          screen.getByRole("heading", { name: "等待其他配对完成" }),
+        ).toHaveCount(0);
+        await expect(screen.locator(".session-phase strong")).toHaveText(
+          "轮次 1/2",
+        );
+      }),
+    );
+    const [answered, timedOut] = await Promise.all(late.map(view));
+    expect(answered.current).toMatchObject({
+      choice: 1,
+      status: "unmatched",
+      pay: null,
+    });
+    expect(timedOut.current).toMatchObject({
+      choice: null,
+      status: "timeout",
+      pay: null,
+    });
+    await Promise.all(
+      screens.map((screen) =>
+        expect(screen.locator(".session-phase strong")).toHaveText("轮次 2/2"),
+      ),
+    );
+  } finally {
+    await Promise.all(contexts.map((context) => context.close()));
+  }
+});
+
+test("1000-round Nash demo submits a demand on phone tap", async ({
+  browser,
+  baseURL,
+}, info) => {
+  const context = await browser.newContext({
+    baseURL,
+    hasTouch: true,
+    viewport: { width: 390, height: 844 },
+  });
+  try {
+    const page = await context.newPage();
+    await page.goto("/evolution/demo");
+    await enterTeacherPage(page);
+    await page.getByRole("banner").getByLabel("表示言語").selectOption("en");
+    await page
+      .getByRole("combobox", { name: "Game", exact: true })
+      .selectOption("demand");
+    await expect(
+      page.getByRole("combobox", { name: "Demand step" }),
+    ).toHaveValue("0.1");
+    await page.getByLabel("Rounds", { exact: true }).fill("1000");
+    await page.getByRole("button", { name: "Create demo" }).click();
+    await page.getByRole("button", { name: "Close admission" }).click();
+    await page.getByRole("button", { name: "Confirm and start" }).click();
+    await page.getByRole("button", { name: "View student screen" }).click();
+    await expect(page.locator(".ev-round-progress")).toHaveAttribute(
+      "max",
+      "1000",
+    );
+    await expect(page.locator(".round-step")).toHaveCount(0);
+    const slider = page.getByRole("slider", { name: "Demand" });
+    await expect(slider).toBeVisible();
+    await expect(slider).toHaveAttribute("step", "0.1");
+    await slider.press("ArrowRight");
+    await expect(slider).toHaveValue("0.6");
+    await page.setViewportSize({ width: 320, height: 844 });
+    expect(
+      await page
+        .locator(".ev-account")
+        .evaluate((el) => el.scrollWidth <= el.clientWidth),
+    ).toBe(true);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({ path: info.outputPath("long-nash-phone.png") });
+    const { width, height } = (await slider.boundingBox())!;
+    await slider.tap({
+      position: { x: Math.floor(width * 0.3), y: Math.floor(height / 2) },
+    });
+    await expect(slider).toHaveCount(0);
+    await expect(page.locator(".ev-payoffs dd").first()).toHaveText("0.3");
+  } finally {
+    await context.close();
+  }
+});
 for (const mode of ["coordination", "demand"] as const)
   test(
     mode +
@@ -49,12 +252,15 @@ for (const mode of ["coordination", "demand"] as const)
       await page.getByLabel("Room password").fill("review-password");
       await expect(page.getByText("Preview", { exact: true })).toHaveCount(0);
       if (mode === "demand") {
-        await page.getByLabel("Available amount").fill("0.3");
-        await page.getByLabel("Demands (comma-separated)").fill("0.1, 1/10");
+        await page
+          .getByRole("combobox", { name: "Demand step" })
+          .selectOption("0.001");
+        await page.getByLabel("Rounds", { exact: true }).fill("10000");
         await expect(
           page.getByRole("button", { name: "Create room" }),
-        ).toBeDisabled();
-        await page.getByLabel("Demands (comma-separated)").fill("0.1, 0.2");
+        ).toBeEnabled();
+        await page.getByLabel("Rounds", { exact: true }).fill("2");
+        await expect(page.getByText("0–1", { exact: true })).toBeVisible();
       } else {
         const matrix = page.getByRole("table", { name: "Payoff matrix" });
         const validation = page.locator("form.ev-setup").getByRole("alert");
@@ -184,18 +390,29 @@ for (const mode of ["coordination", "demand"] as const)
         ).toBeVisible();
         await page.getByRole("button", { name: "Confirm and start" }).click();
         await expectEndButton(page, "End experiment");
-        await expect(players[0].getByRole("radio").first()).toBeVisible();
+        await expect(
+          mode === "demand"
+            ? players[0].getByRole("slider")
+            : players[0].getByRole("button", { name: "Pine", exact: true }),
+        ).toBeVisible();
         await expect(
           players[0].getByRole("button", { name: "Pause", exact: true }),
         ).toHaveCount(0);
         if (mode === "coordination") {
+          const teacherClock = await clockPosition(page, "Remaining");
           await page
             .getByRole("button", { name: "Pause", exact: true })
             .click();
           await expect(
             players[0].getByRole("heading", { name: "Paused" }),
           ).toBeVisible();
-          await expect(players[0].getByRole("radio").first()).toBeDisabled();
+          await expect(
+            page.getByRole("heading", { name: "Paused" }),
+          ).toBeVisible();
+          expect(await clockPosition(page, "Remaining")).toEqual(teacherClock);
+          await expect(
+            players[0].getByRole("button", { name: "Pine", exact: true }),
+          ).toBeDisabled();
           await page.reload();
           await page
             .getByRole("button", { name: "Resume", exact: true })
@@ -211,11 +428,21 @@ for (const mode of ["coordination", "demand"] as const)
         }
         for (let n = 1; n <= (mode === "demand" ? 2 : 1); n++) {
           const [first, second] = players;
-          await first.getByRole("radio").first().check();
-          await first.getByRole("button", { name: "Submit choice" }).click();
+          if (mode === "demand") await setDemand(first, 0.333);
+          else
+            await first
+              .getByRole("button", { name: "Pine", exact: true })
+              .click();
           await expect(
             first.getByRole("heading", { name: "Submitted · waiting" }),
           ).toBeVisible();
+          if (mode === "coordination") {
+            await expect(
+              first.getByRole("button", { name: "Pine", pressed: true }),
+            ).toBeDisabled();
+            await expect(first.locator(".ev-reference table")).toBeVisible();
+            await expect(first.locator(".ev-matrix-result")).toHaveCount(0);
+          }
           const privateView = await (
             await second.request.get(
               "/api/rooms/" + code + "/evolution?session=student",
@@ -243,11 +470,30 @@ for (const mode of ["coordination", "demand"] as const)
               fullPage: true,
             });
           }
-          await second.getByRole("radio").last().check();
-          await second.getByRole("button", { name: "Submit choice" }).click();
+          if (mode === "demand") await setDemand(second, 0.667);
+          else
+            await second
+              .getByRole("button", { name: "Hare", exact: true })
+              .click();
           await expect(
             second.getByRole("heading", { name: "Settled", exact: true }),
           ).toBeVisible();
+          if (mode === "coordination") {
+            const secondIsRow = privateView.current.position === "row";
+            const [firstResult, secondResult] = secondIsRow
+              ? ["Peer 3 · You 0", "You 3 · Peer 0"]
+              : ["You -1/3 · Peer 1.5", "Peer -1/3 · You 1.5"];
+            for (const [student, result] of [
+              [first, firstResult],
+              [second, secondResult],
+            ] as const) {
+              const matrix = student.locator(".ev-reference table");
+              await expect(
+                matrix.getByRole("cell", { name: "Round outcome · " + result }),
+              ).toBeVisible();
+              await expect(matrix.locator("th.ev-matrix-axis")).toHaveCount(2);
+            }
+          }
         }
         await expect(
           page.getByRole("heading", { name: "Finished" }),
@@ -265,11 +511,12 @@ for (const mode of ["coordination", "demand"] as const)
         ).json();
         expect(data.rows).toHaveLength(mode === "demand" ? 4 : 2);
         if (mode === "demand") {
+          expect(data.settings.demandStep).toBe("0.001");
           expect(data.rows.map((r: { pay: string }) => r.pay).sort()).toEqual([
-            "1/10",
-            "1/10",
-            "1/5",
-            "1/5",
+            "333/1000",
+            "333/1000",
+            "667/1000",
+            "667/1000",
           ]);
           expect(
             data.participants.map((p: { side: string }) => p.side).sort(),
@@ -409,7 +656,9 @@ for (const mode of ["coordination", "demand"] as const)
       await expect(
         page.getByRole("button", { name: "暂停", exact: true }),
       ).toHaveCount(1);
+      const teacherClock = await clockPosition(page, "剩余");
       await pause.click();
+      expect(await clockPosition(page, "剩余")).toEqual(teacherClock);
       const time = await page.getByRole("timer").innerText();
       await student.click();
       const resumeColor = await resume.evaluate(
@@ -420,16 +669,56 @@ for (const mode of ["coordination", "demand"] as const)
       ).toHaveCSS("background-color", resumeColor);
       await page.clock.fastForward(60_000);
       await expect(page.getByRole("timer")).toHaveText(time);
-      await expect(page.getByRole("radio").first()).toBeDisabled();
+      const decision =
+        mode === "demand"
+          ? page.getByRole("slider")
+          : page.getByRole("button", { name: "鹿", exact: true });
+      await expect(decision).toBeDisabled();
       await expect(fast).toBeDisabled();
       await resume.click();
-      await page.getByRole("radio").first().check();
-      await page.getByRole("button", { name: "确认提交" }).click();
+      if (mode === "coordination")
+        await page.setViewportSize({ width: 390, height: 844 });
+      const boardLayout = () =>
+        page.locator(".ev-play-column").evaluate((board) => {
+          const origin = board.getBoundingClientRect();
+          return Array.from(
+            board.querySelectorAll(".ev-task button, .ev-reference table"),
+            (child) => {
+              const box = child.getBoundingClientRect();
+              return [
+                box.x - origin.x,
+                box.y - origin.y,
+                box.width,
+                box.height,
+              ];
+            },
+          );
+        });
+      const beforeChoice = mode === "coordination" ? await boardLayout() : null;
+      const studentClock = await clockPosition(page, "剩余");
+      if (mode === "demand") {
+        const box = (await decision.boundingBox())!;
+        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(box.x + box.width * 0.7, box.y + box.height / 2, {
+          steps: 5,
+        });
+        await expect(decision).toBeVisible();
+        expect(Number(await decision.inputValue())).toBeGreaterThan(0.5);
+        await page.mouse.up();
+      } else await decision.click();
       await expect(
         page.getByRole("heading", { name: "轮间反馈" }),
       ).toBeVisible();
+      expect(await clockPosition(page, "距下一轮")).toEqual(studentClock);
       await pause.click();
+      expect(await clockPosition(page, "距下一轮")).toEqual(studentClock);
       await expect(page.getByRole("heading", { name: "已结算" })).toBeVisible();
+      if (mode === "coordination") {
+        expect(await boardLayout()).toEqual(beforeChoice);
+        await expect(decision).toBeDisabled();
+        await expect(page.locator(".ev-matrix-result")).toBeVisible();
+      }
       await expect(page.locator(".ev-payoffs dd").nth(1)).not.toHaveText("—");
       const payoffs = await page.locator(".ev-payoffs dd").allTextContents();
       const feedbackTime = await page.getByRole("timer").innerText();

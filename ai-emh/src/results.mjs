@@ -27,6 +27,7 @@ const columns = [
   "price",
   "reason",
   "command",
+  "fills",
   "skipReason",
   "errorStage",
   "error",

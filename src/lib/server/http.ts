@@ -11,6 +11,7 @@ export const NO_STORE = {
 // Five-unit schedules for 500 profiles on each side, including all three
 // institutions and the shared settings, must fit in one validated command.
 export const MAX_JSON_BODY_BYTES = 128 * 1024;
+export const FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
 export const cookieName = (code: string, session?: RoomSession) =>
   `auction_${code}${session ? `_${session}` : ""}`;
 
@@ -49,12 +50,14 @@ export function codeFor(code: string) {
 export async function body<T>(
   request: NextRequest,
   schema: z.ZodType<T>,
+  contentType:
+    "application/json" | typeof FORM_CONTENT_TYPE = "application/json",
 ): Promise<T> {
   const origin = request.headers.get("origin");
-  if (origin) {
+  if (origin || contentType === FORM_CONTENT_TYPE) {
     let sameOrigin = false;
     try {
-      const source = new URL(origin);
+      const source = new URL(origin ?? "");
       // NextURL normalizes loopback hostnames; Host retains the actual browser
       // origin. Browsers cannot replace Host in a cross-origin request.
       sameOrigin =
@@ -66,7 +69,7 @@ export async function body<T>(
     if (!sameOrigin)
       throw new AuctionError("この送信元からは操作できません。", 403);
   }
-  if (!request.headers.get("content-type")?.startsWith("application/json"))
+  if (!request.headers.get("content-type")?.startsWith(contentType))
     throw new AuctionError("送信形式が正しくありません。", 415);
   if (Number(request.headers.get("content-length")) > MAX_JSON_BODY_BYTES)
     throw new AuctionError("送信内容が大きすぎます。", 413);
@@ -75,7 +78,10 @@ export async function body<T>(
     throw new AuctionError("送信内容が大きすぎます。", 413);
   let data: unknown;
   try {
-    data = JSON.parse(text);
+    data =
+      contentType === FORM_CONTENT_TYPE
+        ? Object.fromEntries(new URLSearchParams(text))
+        : JSON.parse(text);
   } catch {
     throw new AuctionError("送信内容を読み取れません。");
   }

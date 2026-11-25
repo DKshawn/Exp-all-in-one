@@ -58,7 +58,7 @@ After a model chooses to wait, the program checks the student view about every t
 
 - **Double Auction** supports CDA, Call Market, Posted Offer, and legacy three-good CDA. The model uses its own values or costs and public information to pick an available action. Each AI order or purchase is for one unit. Sealed Call orders from other students are excluded from model prompts.
 - **EMH** supports Experiment 1 (fixed dividends) and Experiment 2 (dividends determined by a draw). The model trades using its own dividends, holdings, trade history, and public prices. Only a Clue the student actually received is included in Experiment 2.
-- **SEG** supports the coordination and Nash demand games. Each model makes one choice per round using its own position, payoff rules, and personal history. The current opponent's choice stays private before the student's submission.
+- **SEG** supports coordination and both discrete and continuous Nash demand. Each model makes one choice per round using its own position, payoff rules, and personal history. Continuous demands use the room's configured increment. The current opponent's choice stays private before the student's submission.
 
 The program validates the model's JSON and refreshes the student view before submitting a decision. It skips a timed-out, invalid, or stale decision without substituting a rule-based robot. OpenAI mode sends these observations to OpenAI and incurs charges according to model and usage.
 

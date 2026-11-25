@@ -1,14 +1,21 @@
 "use client";
-import { useState } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { CopyJoinLinkButton } from "@/components/copy-join-link-button";
 import { StudentWaitingCard } from "@/components/student-waiting-card";
 import { StudyDetailDialog } from "@/experiments/double-auction/components/study-detail-dialog";
 import { studentJoinHref } from "@/lib/room-navigation";
-import { label, displayChoices, type Key, type Lang } from "../locale";
+import {
+  label,
+  displayChoices,
+  sliderInstructions,
+  type Key,
+  type Lang,
+} from "../locale";
 import type { Action } from "../engine";
 import type { View, Personal } from "../views";
 import { Admission, SessionOverview } from "./session-controls";
-import { PayoffRules, Rules } from "./rules";
+import { PayoffMatrix, PayoffRules, Rules } from "./rules";
+import { continuous, DEMAND_STEPS, demandLabel, demandStep } from "../settings";
 
 type Props = {
   view: View;
@@ -16,6 +23,7 @@ type Props = {
   busy: boolean;
   now: number;
   act: (action: Action) => void | Promise<void>;
+  loadHistory?: (before: number) => Promise<View>;
   downloads?: React.ReactNode;
 };
 function Decision({
@@ -23,48 +31,91 @@ function Decision({
   lang,
   busy,
   act,
+  selected,
 }: {
   view: Extract<View, { role: "student" }>;
   lang: Lang;
   busy: boolean;
   act: Props["act"];
+  selected: number | null;
 }) {
-  const [selected, setSelected] = useState<number | null>(null),
-    options = displayChoices(lang, view.settings);
+  const [value, setValue] = useState(DEMAND_STEPS / 2);
+  const id = useId();
+  const options = displayChoices(lang, view.settings);
+  const commit = (choice: number) => {
+    if (!busy) void act({ kind: "choose", round: view.round, choice });
+  };
+  if (continuous(view.settings)) {
+    const step = demandStep(view.settings);
+    return (
+      <div className="ev-demand">
+        <div className="ev-heading">
+          <label htmlFor={id}>{label(lang, "demandAmount")}</label>
+          <output htmlFor={id} aria-live="off">
+            {demandLabel(value)}
+          </output>
+        </div>
+        <input
+          id={id}
+          type="range"
+          min={0}
+          max={1}
+          step={step}
+          value={demandLabel(value)}
+          disabled={busy}
+          aria-describedby={id + "-help"}
+          onChange={(e) =>
+            setValue(Math.round(e.currentTarget.valueAsNumber * DEMAND_STEPS))
+          }
+          onPointerUp={(e) => {
+            if (e.isPrimary && e.button === 0)
+              commit(Math.round(e.currentTarget.valueAsNumber * DEMAND_STEPS));
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.repeat) {
+              e.preventDefault();
+              commit(value);
+            }
+          }}
+        />
+        <div className="ev-demand-endpoints" aria-hidden="true">
+          <span>0</span>
+          <span>1</span>
+        </div>
+        <p id={id + "-help"} className="field-help">
+          {sliderInstructions(lang, step)}
+        </p>
+      </div>
+    );
+  }
   return (
-    <form
-      className="ev-decision"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (selected !== null)
-          act({ kind: "choose", round: view.round, choice: selected });
-      }}
-    >
-      <fieldset>
-        <legend>{label(lang, "choose")}</legend>
+    <div className="ev-decision">
+      <fieldset
+        aria-label={
+          view.settings.mode === "coordination"
+            ? label(lang, "choose")
+            : undefined
+        }
+      >
+        {view.settings.mode !== "coordination" && (
+          <legend>{label(lang, "choose")}</legend>
+        )}
         <div className="ev-options">
           {options.map((c, i) => (
-            <label
-              className={"button " + (selected === i ? "primary" : "secondary")}
+            <button
+              type="button"
+              className={"button " + (i === selected ? "primary" : "secondary")}
+              aria-pressed={i === selected}
               key={i}
+              disabled={busy}
+              onClick={() => commit(i)}
             >
-              <input
-                type="radio"
-                name="choice"
-                value={i}
-                checked={selected === i}
-                disabled={busy}
-                onChange={() => setSelected(i)}
-              />
               {c}
-            </label>
+            </button>
           ))}
         </div>
       </fieldset>
-      <button className="button primary" disabled={busy || selected === null}>
-        {label(lang, "submit")}
-      </button>
-    </form>
+    </div>
   );
 }
 function History({
@@ -78,7 +129,8 @@ function History({
 }) {
   const t = (k: Key) => label(lang, k),
     options = displayChoices(lang, view.settings);
-  const name = (c: number | null) => (c === null ? "—" : options[c]);
+  const name = (c: number | null) =>
+    c === null ? "—" : continuous(view.settings) ? demandLabel(c) : options[c];
   return (
     <div
       className="ev-scroll ev-history-scroll"
@@ -133,21 +185,35 @@ function History({
 function Analysis({
   view,
   lang,
+  controls,
 }: {
   view: Extract<View, { role: "teacher" }>;
   lang: Lang;
+  controls: ReactNode;
 }) {
   const t = (k: Key) => label(lang, k),
     [group, setGroup] = useState(1),
     names = displayChoices(lang, view.settings),
-    demand = view.settings.mode === "demand";
+    demand = view.settings.mode === "demand",
+    slider = continuous(view.settings);
+  const bands = Array.from(
+    { length: 10 },
+    (_, i) => `${i / 10}–${i === 9 ? 1 : ((i + 1) * 100 - 1) / DEMAND_STEPS}`,
+  );
   function shares(counts: number[]) {
     const n = counts.reduce((a, b) => a + b, 0);
     return counts.map((v, i) => (
       <div className="ev-share" key={i}>
-        <span>{names[i]}</span>{" "}
+        <span>{slider ? bands[i] : names[i]}</span>{" "}
         <b>{n ? Math.round((1000 * v) / n) / 10 + "%" : "—"}</b>
-        {n > 0 && <meter min={0} max={n} value={v} aria-label={names[i]} />}
+        {n > 0 && (
+          <meter
+            min={0}
+            max={n}
+            value={v}
+            aria-label={slider ? bands[i] : names[i]}
+          />
+        )}
       </div>
     ));
   }
@@ -178,7 +244,7 @@ function Analysis({
                 {demand ? " · A" : ""}
               </th>
               {demand && <th>{t("share")} · B</th>}
-              <th>{t("pair")}</th>
+              {!slider && <th>{t("pair")}</th>}
               <th>{t("settledCount")}</th>
               <th>{t(demand ? "rateDemand" : "rateCoord")}</th>
               <th>{t("earnings")}</th>
@@ -199,18 +265,20 @@ function Analysis({
                   </td>
                   <td>{shares(x.a ?? x.counts)}</td>
                   {x.b && <td>{shares(x.b)}</td>}
-                  <td>
-                    {Object.entries(x.pairs).map(([pair, n]) => (
-                      <div key={pair}>
-                        {pair
-                          .split(",")
-                          .map((i) => names[Number(i)])
-                          .join(" / ")}{" "}
-                        × {n}
-                      </div>
-                    ))}
-                    {!x.settled && "—"}
-                  </td>
+                  {!slider && (
+                    <td>
+                      {Object.entries(x.pairs).map(([pair, n]) => (
+                        <div key={pair}>
+                          {pair
+                            .split(",")
+                            .map((i) => names[Number(i)])
+                            .join(" / ")}{" "}
+                          × {n}
+                        </div>
+                      ))}
+                      {!x.settled && "—"}
+                    </td>
+                  )}
                   <td>{x.settled}</td>
                   <td>
                     {x.settled
@@ -231,15 +299,74 @@ function Analysis({
           </tbody>
         </table>
       </div>
+      {controls}
     </section>
   );
 }
-export function Panels({ view: v, lang, busy, now, act, downloads }: Props) {
+export function Panels({
+  view: v,
+  lang,
+  busy,
+  now,
+  act,
+  downloads,
+  loadHistory,
+}: Props) {
   const t = (k: Key) => label(lang, k),
     waiting = v.round === 0,
     demand = v.settings.mode === "demand";
   const mine = v.role === "student" ? v.current : null,
     names = displayChoices(lang, v.settings);
+  const coordination = v.settings.mode === "coordination";
+  const name = (c: number | null) =>
+    c === null ? null : continuous(v.settings) ? demandLabel(c) : names[c];
+  const [page, setPage] = useState<View | null>(null);
+  const [historyPending, setHistoryPending] = useState(false);
+  const [historyError, setHistoryError] = useState(false);
+  const oldest = (page ?? v).history[0]?.round ?? 1;
+  const controls = loadHistory && (oldest > 1 || page) && (
+    <div className="ev-options">
+      {oldest > 1 && (
+        <button
+          type="button"
+          className="button secondary small-button"
+          disabled={historyPending}
+          onClick={async () => {
+            setHistoryPending(true);
+            setHistoryError(false);
+            try {
+              const result = await loadHistory(oldest);
+              if (result.role === "teacher")
+                result.history = result.history.filter(
+                  (row) => row.round < oldest,
+                );
+              setPage(result);
+            } catch {
+              setHistoryError(true);
+            } finally {
+              setHistoryPending(false);
+            }
+          }}
+        >
+          {t("older")}
+        </button>
+      )}
+      {page && (
+        <button
+          type="button"
+          className="button secondary small-button"
+          disabled={historyPending}
+          onClick={() => {
+            setPage(null);
+            setHistoryError(false);
+          }}
+        >
+          {t("latest")}
+        </button>
+      )}
+      {historyError && <span role="alert">{t("unavailable")}</span>}
+    </div>
+  );
   return (
     <main className="ev ev-room" lang={lang}>
       <div className="ev-heading">
@@ -320,7 +447,11 @@ export function Panels({ view: v, lang, busy, now, act, downloads }: Props) {
               </div>
             </section>
           ) : (
-            <Analysis view={v} lang={lang} />
+            <Analysis
+              view={page?.role === "teacher" ? page : v}
+              lang={lang}
+              controls={controls}
+            />
           )}
           <div className="ev-options">{downloads}</div>
         </>
@@ -375,65 +506,78 @@ export function Panels({ view: v, lang, busy, now, act, downloads }: Props) {
             </div>
             <div
               className={
-                "ev-workbench" + (v.history.length ? " has-history" : "")
+                "ev-workbench" +
+                (v.history.length ? " has-history" : "") +
+                (coordination ? " ev-workbench-coordination" : "")
               }
             >
-              <section className="panel ev-panel ev-task">
-                <h2>{t(mine.status)}</h2>
-                {mine.status === "choosing" ? (
-                  <Decision
-                    key={v.round}
-                    view={v}
-                    lang={lang}
-                    busy={
-                      busy ||
-                      v.pausedAt !== null ||
-                      now >= (v.deadline ?? Infinity)
-                    }
-                    act={act}
-                  />
+              <div className="ev-play-column">
+                <section className="panel ev-panel ev-task">
+                  <h2>{t(mine.status)}</h2>
+                  {(coordination || mine.status === "choosing") && (
+                    <Decision
+                      key={v.round}
+                      view={v}
+                      lang={lang}
+                      selected={mine.choice}
+                      busy={
+                        mine.status !== "choosing" ||
+                        busy ||
+                        v.pausedAt !== null ||
+                        now >= (v.deadline ?? Infinity)
+                      }
+                      act={act}
+                    />
+                  )}
+                  {(coordination || mine.status !== "choosing") && (
+                    <dl className="ev-payoffs">
+                      {(
+                        [
+                          ["mine", name(mine.choice)],
+                          ["other", name(mine.otherChoice)],
+                          ...(!coordination
+                            ? ([
+                                ["pay", mine.pay],
+                                ["otherPay", mine.otherPay],
+                              ] as const)
+                            : []),
+                        ] as const
+                      ).map(([k, val]) => (
+                        <div key={k}>
+                          <dt>{t(k)}</dt>
+                          <dd>{val ?? "—"}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  )}
+                </section>
+                {v.settings.mode === "coordination" ? (
+                  <section className="panel ev-panel ev-reference">
+                    <PayoffMatrix s={v.settings} lang={lang} player={mine} />
+                  </section>
                 ) : (
-                  <dl className="ev-payoffs">
-                    {(
-                      [
-                        [
-                          "mine",
-                          mine.choice === null ? null : names[mine.choice],
-                        ],
-                        [
-                          "other",
-                          mine.otherChoice === null
-                            ? null
-                            : names[mine.otherChoice],
-                        ],
-                        ["pay", mine.pay],
-                        ["otherPay", mine.otherPay],
-                      ] as const
-                    ).map(([k, val]) => (
-                      <div key={k}>
-                        <dt>{t(k)}</dt>
-                        <dd>{val ?? "—"}</dd>
-                      </div>
-                    ))}
-                  </dl>
+                  mine.status === "choosing" && (
+                    <section className="panel ev-panel ev-reference">
+                      <PayoffRules s={v.settings} lang={lang} />
+                    </section>
+                  )
                 )}
-              </section>
+              </div>
               <section className="panel ev-panel ev-history">
                 <History
                   view={v}
                   lang={lang}
                   rows={
-                    mine.status === "choosing" || mine.status === "submitted"
-                      ? v.history
-                      : [...v.history, mine]
+                    page?.role === "student"
+                      ? page.history
+                      : mine.status === "choosing" ||
+                          mine.status === "submitted"
+                        ? v.history
+                        : [...v.history, mine]
                   }
                 />
+                {controls}
               </section>
-              {mine.status === "choosing" && (
-                <section className="panel ev-panel ev-reference">
-                  <PayoffRules s={v.settings} lang={lang} />
-                </section>
-              )}
             </div>
           </>
         )

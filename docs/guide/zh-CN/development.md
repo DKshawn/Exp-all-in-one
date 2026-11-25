@@ -4,7 +4,10 @@
 
 浏览器兼容性和手机交易操作使用 Chromium、Firefox、WebKit 验证。 `npx playwright install chromium firefox webkit` · `npm run test:e2e -- classroom-compat.spec.ts shared-order-book.spec.ts`
 
-随机演化博弈使用平台迁移器及四张 `evolution_` 表。`npx tsx --test tests/evolution.test.ts` 检查引擎和 PGlite，`npx playwright test evolution.spec.ts` 验证两种正式实验和演示。 [规则与数据](evolution.md)
+随机演化博弈使用平台迁移器及 `evolution_` 表。`npx tsx --test tests/evolution.test.ts` 检查引擎和 PGlite，`npx playwright test evolution.spec.ts` 验证两种正式实验和演示。 [规则与数据](evolution.md)
+
+并发验证时，在 3265 端口启动使用独立本地 PostgreSQL 的平台服务。令 `LOCAL_TEST_DATABASE_URL` 指向该测试数据库，然后运行 `npx tsx scripts/test-seg-scale.ts`。脚本对两种博弈分别测试 2,000 个认证席位同时进行两轮，另测独立的 1,000 轮房间。
+Nash 压测使用默认步长 0.1。1,000 轮房间使用 0.3 和 0.7 验证精确结算和导出的累计收益。
 
 ## 本地启动
 
@@ -25,9 +28,15 @@ Windows 上可使用 `pwsh -NoProfile -File scripts/dev-local.ps1` 启动隔离�
 
 要在本地使用教师演示，请在 Git 忽略的 `.env.local` 中设置 `TEACHER_ACCESS_KEY`，然后重启服务。未配置密钥时，本地仍可开发正式课堂流程，演示登录会被禁用。
 
-教师入口及 `?entry=teacher` 的房间页面在服务器端验证登录。`POST /api/teacher/session` 验证密钥后签发8小时有效的签名HttpOnly、SameSite=Lax Cookie，HTTPS下启用Secure；不会把密钥本身存入Cookie或浏览器存储。`DELETE` 用于退出，更换密钥使已有会话失效。创建、管理、删除及Judgment教师预览API验证会话，同时兼容现有已认证脚本的 `accessKey`。无需新增环境变量或数据库迁移。
+教师入口及 `?entry=teacher` 的房间页面在服务器端验证登录。`POST /api/teacher/session` 验证密钥后签发8小时有效的签名HttpOnly、SameSite=Lax Cookie，HTTPS下启用Secure；不会把密钥本身存入Cookie或浏览器存储。`DELETE` 用于退出，更换密钥使已有会话失效。创建、管理、删除及Judgment教师预览API验证会话，同时兼容现有已认证脚本的 `accessKey`。无需新增环境变量或数据库迁移。 原生表单提交后签发会话 Cookie，再以 303 跳转到教师页面。
+
+使用同一局域网的设备检查开发版时，用 `npm run dev -- --hostname <电脑的局域网 IPv4> --port 3001` 启动。在设备上用同一个 IP 和端口打开 `/teacher`。
 
 尺寸预览仅允许同源嵌入 `/demo` 和 `/emh/demo`；教师页面和正式房间仍禁止嵌入。
+
+### 本地 AI 实验台
+
+设置 `AI_EXPERIMENTS_ENABLED=1` 后，运行 `npm run dev -- --hostname 127.0.0.1`。在教师首页打开 **AI 実験台**，查看 AI 入室和决策记录。连接模型所需的环境变量见[课堂指南](classroom.md#安排-ai-学生入室)。运行记录和学生恢复文件保存在 Git 忽略的 `ai-emh/.local/console/`。
 
 ## Vercel + Neon
 

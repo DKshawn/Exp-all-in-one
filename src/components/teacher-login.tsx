@@ -4,15 +4,19 @@ import { api, errorMessage } from "@/lib/client";
 import { TeacherKeyHelp } from "./teacher-key-help";
 
 export function TeacherLogin({
+  failed,
   returnTo,
   ready,
 }: {
+  failed: boolean;
   returnTo: string;
   ready: boolean;
 }) {
   const [key, setKey] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(
+    failed ? "ログインできませんでした。教員用キーを確認してください。" : "",
+  );
   async function submit(event: FormEvent) {
     event.preventDefault();
     setBusy(true);
@@ -28,7 +32,13 @@ export function TeacherLogin({
     }
   }
   return (
-    <form className="panel teacher-login" onSubmit={submit}>
+    <form
+      className="panel teacher-login"
+      method="post"
+      action="/api/teacher/session"
+      onSubmit={submit}
+    >
+      <input type="hidden" name="next" value={returnTo} />
       <h1>教員ログイン</h1>
       <label className="field">
         教員用キー
@@ -49,12 +59,16 @@ export function TeacherLogin({
           管理者が接続設定を完了してからログインしてください。
         </p>
       )}
-      {error && (
+      {ready && error && (
         <p className="error-message" role="alert">
           {error}
         </p>
       )}
-      <button className="button primary full" disabled={busy || !ready}>
+      <button
+        type="submit"
+        className="button primary full"
+        disabled={busy || !ready}
+      >
         {busy ? "確認中…" : "ログイン"}
       </button>
     </form>

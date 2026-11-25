@@ -4,7 +4,10 @@
 
 Browser compatibility and mobile trading checks run in Chromium, Firefox and WebKit. `npx playwright install chromium firefox webkit` · `npm run test:e2e -- classroom-compat.spec.ts shared-order-book.spec.ts`
 
-Stochastic games use the shared migrator and four `evolution_` tables. Run `npx tsx --test tests/evolution.test.ts` for engine and PGlite checks, and `npx playwright test evolution.spec.ts` for both classroom flows and the demo. [Rules and data](evolution.md)
+Stochastic games use the shared migrator and the `evolution_` tables. Run `npx tsx --test tests/evolution.test.ts` for engine and PGlite checks, and `npx playwright test evolution.spec.ts` for both classroom flows and the demo. [Rules and data](evolution.md)
+
+For a load check, start an isolated loopback Next server on port 3265 with local PostgreSQL. With `LOCAL_TEST_DATABASE_URL` pointing to that test database, use `npx tsx scripts/test-seg-scale.ts`. It exercises two rounds with 2,000 authenticated sessions in each game and a separate 1,000-round room.
+The Nash load check uses the default step of 0.1. In the long room, demands of 0.3 and 0.7 verify exact settlement and the cumulative total in the export.
 
 ## Local setup
 
@@ -25,9 +28,15 @@ The ordinary development server's teacher entry is `http://localhost:3000/teache
 
 Set `TEACHER_ACCESS_KEY` in the Git-ignored `.env.local` and restart the server to use teacher demos locally. With no key, local classroom development remains available and the demo login stays disabled.
 
-Teacher entry and room pages with `?entry=teacher` validate authentication on the server. `POST /api/teacher/session` validates the key and issues an eight-hour signed HttpOnly, SameSite=Lax cookie, with Secure on HTTPS. The key itself is never stored in the cookie or browser storage. `DELETE` logs out; key rotation invalidates existing sessions. Creation, management, deletion and Judgment teacher-preview APIs validate the session while retaining `accessKey` support for existing authenticated scripts. No new environment variable or database migration is required.
+Teacher entry and room pages with `?entry=teacher` validate authentication on the server. `POST /api/teacher/session` validates the key and issues an eight-hour signed HttpOnly, SameSite=Lax cookie, with Secure on HTTPS. The key itself is never stored in the cookie or browser storage. `DELETE` logs out; key rotation invalidates existing sessions. Creation, management, deletion and Judgment teacher-preview APIs validate the session while retaining `accessKey` support for existing authenticated scripts. No new environment variable or database migration is required. Native form submissions receive the session cookie and a 303 redirect to the teacher page.
+
+To check the development build from another device on the same LAN, start it with `npm run dev -- --hostname <PC LAN IPv4> --port 3001`. Open `/teacher` on that device using the same IP and port.
 
 Screen-size previews allow same-origin embedding only for `/demo` and `/emh/demo`; teacher and formal-room pages remain protected against embedding.
+
+### Local AI experiment console
+
+Set `AI_EXPERIMENTS_ENABLED=1` and run `npm run dev -- --hostname 127.0.0.1`. Open **AI 実験台** from the teacher page to see admission and decision records. See the [classroom guide](classroom.md#admit-ai-students) for model connection variables. Run logs and student recovery files are saved under `ai-emh/.local/console/`, which Git ignores.
 
 ## Vercel + Neon
 

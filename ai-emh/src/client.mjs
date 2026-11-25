@@ -9,8 +9,9 @@ export class RequestError extends Error {
 
 async function request(
   url,
-  { body, cookie, timeoutMs = 10000, headers = {} } = {},
+  { body, cookie, timeoutMs = 10000, headers = {}, signal } = {},
 ) {
+  const timeout = AbortSignal.timeout(timeoutMs);
   const response = await fetch(url, {
     method: body === undefined ? "GET" : "POST",
     headers: {
@@ -19,12 +20,14 @@ async function request(
       ...headers,
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-    signal: AbortSignal.timeout(timeoutMs),
+    signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
+    redirect: "error",
   });
   let data;
   try {
     data = await response.json();
   } catch {
+    signal?.throwIfAborted();
     throw new RequestError(
       `服务器返回了无法解析的内容（HTTP ${response.status}）`,
       response.status,
@@ -59,11 +62,12 @@ export class StudentClient {
     this.cookie = found.split(";", 1)[0];
   }
 
-  async state() {
+  async state(signal = undefined) {
     const endpoint =
       this.experiment === "institutions" ? "" : `/${this.experiment}`;
     const { data } = await request(`${this.path}${endpoint}?session=student`, {
       cookie: this.cookie,
+      signal,
     });
     return this.experiment === "emh" ? data.state : data;
   }
@@ -137,10 +141,12 @@ export async function requestModel({
   provider = "local",
   maxOutputTokens = DEFAULT_MAX_OUTPUT_TOKENS,
   lmstudioFast = false,
+  signal = undefined,
 }) {
   if (lmstudioFast) {
     const { data } = await request(`${baseUrl.replace(/\/$/, "")}/responses`, {
       timeoutMs,
+      signal,
       headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {},
       body: {
         model,
@@ -180,6 +186,7 @@ export async function requestModel({
     `${baseUrl.replace(/\/$/, "")}/chat/completions`,
     {
       timeoutMs,
+      signal,
       headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {},
       body: {
         model,

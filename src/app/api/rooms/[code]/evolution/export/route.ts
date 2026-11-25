@@ -11,7 +11,7 @@ export async function GET(
         request.nextUrl.searchParams.get("format") === "csv" ? "csv" : "json";
     const data = await (
       await evolutionService()
-    ).export(code, tokenFor(request, code, "teacher"), format);
+    ).exportStream(code, tokenFor(request, code, "teacher"), format);
     return new Response(data, {
       headers: {
         ...NO_STORE,

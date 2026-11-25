@@ -292,3 +292,38 @@ for (const mode of ["coordination", "demand"]) {
     assert.equal(evolutionAdapter.isActive(state), false);
   });
 }
+
+test("SEG continuous demand uses thousandths and rejects off-step answers", () => {
+  const state = {
+    role: "student",
+    phase: "playing",
+    round: 1,
+    group: 1,
+    now: 1000,
+    deadline: 12000,
+    settings: { mode: "demand", total: "1", demandStep: "0.1", rounds: 1 },
+    current: { status: "choosing", round: 1, position: "row", choice: null },
+    history: [],
+  };
+  const { observation } = evolutionAdapter.request(state).prompt;
+  assert.equal(observation.choiceFormat, "thousandths");
+  assert.equal(observation.choiceStep, 100);
+  assert.deepEqual(
+    evolutionAdapter.classify(choose(500), state, state).action,
+    { kind: "choose", round: 1, choice: 500 },
+  );
+  assert.equal(evolutionAdapter.selectedOption(state, 500), "0.5");
+  assert.equal(
+    evolutionAdapter.classify(choose(501), state, state).skipReason,
+    "invalid_decision",
+  );
+  assert.equal(
+    evolutionAdapter.classify(choose(1100), state, state).skipReason,
+    "invalid_decision",
+  );
+  delete state.settings.demandStep;
+  assert.equal(
+    evolutionAdapter.classify(choose(501), state, state).action.choice,
+    501,
+  );
+});

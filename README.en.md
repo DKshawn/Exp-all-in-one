@@ -14,6 +14,8 @@ The EMH order book shows price and quantity and marks your resting orders in bot
 
 Teachers can edit the coordination game's payoff matrix directly when setting up a formal or demo room. In a formal room, use **Copy join link** to invite students. Stochastic games support manual or timed admission, pause/resume, phase advance and early termination. Students can review personal rounds beside their decisions. The demo defaults to one manual seat and five simulated participants. Once you create the demo room, its toolbar lets you switch between teacher and student views. From either view you can pause to read feedback, resume or advance 30 seconds. Each person chooses their display language in the page header.
 
+New SEG rooms support up to 10,000 rounds. A coordination choice submits on click, and the controls and payoff matrix stay in place while the realized cell is highlighted. Nash demand uses a 0–1 slider with a configurable step (default 0.1), submitted on release or with Enter. Settled pairs see **Waiting for other pairs** while room-wide decisions remain open. **Next round in** counts down once feedback starts for the whole room. The countdown stays in place as the status changes.
+
 ## Get started
 
 ```mermaid
@@ -45,7 +47,7 @@ The teacher creates and shares a room, and students join with its code, using a 
 
 In Double Auction, the teacher's student allocation panel collapses after the experiment starts and can be reopened at any time; the demo behaves the same way.
 
-Enter the teacher key once at the teacher entry. The same browser stays signed in for eight hours across reloads, experiment changes, room creation and management. Sign in again after logout, expiry or a key change; each room keeps its separate teacher password.
+Enter the teacher key once at the teacher entry. The same browser stays signed in for eight hours across reloads, experiment changes, room creation and management. Sign in again after logout, expiry or a key change; each room keeps its separate teacher password. The teacher key is submitted by POST even before JavaScript loads, so it stays out of the URL.
 
 EMH labels prices, dividends, trading balances and profits in yen.
 
@@ -53,11 +55,9 @@ After the teacher starts EMH, a five-second countdown appears directly above the
 
 EMH room creation and Demo Model offer **実験1（固定配当）** (fixed dividends) and **実験2（抽選配当）** (dividends determined by a draw). Experiment 2 defaults to a 12-person market and uses separate practice dividends and states. Students see their state-contingent dividends and probabilities. In both experiments, students see buy and sell controls in separate columns, market prices, and personal records together; teachers can expand or collapse conditions during play. Open `/emh/demo/preview` to view the demo at different screen sizes.
 
-[Agent-Based Behavioral Experiments](ai-emh/README.en.md) adds AI students to formal rooms for Double Auction, EMH Experiments 1 and 2, and Stochastic Evolutionary Games (SEG). It detects the experiment from the room code and submits complete decisions from a local model or OpenAI when they meet the experiment rules. AI participant development goes to the `Agent-Based-Behavioral-Experiments` branch.
+The [AI experiment console](docs/guide/en/classroom.md#admit-ai-students) opens from the local teacher page. Use it to admit students powered by a local model or OpenAI into a Double Auction, EMH, or SEG room. View live decision reasons, response times, and submission outcomes, and export a CSV. The [command-line runner](ai-emh/README.en.md) is also available.
 
 An optional LM Studio fast mode disables extended reasoning; complete fenced JSON blocks are also supported.
-
-AI answers and trade decisions are saved locally and can be exported to CSV with their model, latency, token usage, and submission status.
 
 Everyone can quote in EMH. Accepting an opposing price or submitting a crossing quote immediately trades one unit. Students see anonymous trade records and their own resting orders highlighted in the book; Experiment 1 profits are marked provisional until period B ends. Holdings, trading balance, and the current round profit appear as three cards in one row in the student’s conditions panel.
 

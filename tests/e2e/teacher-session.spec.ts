@@ -3,6 +3,41 @@ import { verificationTarget } from "../../scripts/verification-target";
 import type { RoomSummary } from "../../src/lib/room-management";
 import { enterTeacherPage } from "./helpers/teacher-login";
 
+test.describe("teacher login without JavaScript", () => {
+  test.use({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } });
+
+  test("uses a POST and returns to the requested experiment", async ({
+    page,
+  }) => {
+    const { accessKey } = verificationTarget("E2E_BASE_URL");
+    test.skip(!accessKey, "Requires a key-enabled verification server");
+    const urlContainsKey: boolean[] = [];
+    page.on("request", (request) => {
+      urlContainsKey.push(new URL(request.url()).searchParams.has("accessKey"));
+    });
+    await page.goto("/evolution/demo");
+    const keyInput = page.getByLabel("教員用キー");
+    await keyInput.fill("invalid-test-key");
+    await keyInput.press("Enter");
+    await expect(page.getByRole("alert")).toContainText("教員用キーを確認");
+    await keyInput.fill(accessKey);
+    const login = page.waitForResponse((response) =>
+      response.url().endsWith("/api/teacher/session"),
+    );
+    await page.getByRole("button", { name: "ログイン", exact: true }).click();
+    const response = await login;
+    expect(response.request().method()).toBe("POST");
+    expect(response.status()).toBe(303);
+    await expect(page).toHaveURL("/evolution/demo");
+    expect(urlContainsKey).not.toContain(true);
+    expect(
+      (await page.context().cookies()).some(
+        (cookie) => cookie.name === "lab_teacher_session" && cookie.httpOnly,
+      ),
+    ).toBe(true);
+  });
+});
+
 test("room management labels all experiments and combines its filters in Japan time", async ({
   page,
 }) => {
@@ -221,9 +256,9 @@ test("one teacher login protects entry and authorizes all experiments and manage
       .getByLabel("教員用キー", { exact: false })
       .fill("invalid-test-key");
     await page.getByRole("button", { name: "ログイン", exact: true }).click();
-    await expect(
-      page.locator(".teacher-login").getByRole("alert"),
-    ).toContainText("正しくありません");
+    await expect(page.locator(".teacher-login").getByRole("alert")).toHaveText(
+      /正しくありません|教員用キーを確認/,
+    );
     for (const width of [1440, 390, 320]) {
       await page.setViewportSize({ width, height: 1000 });
       expect(
@@ -240,7 +275,7 @@ test("one teacher login protects entry and authorizes all experiments and manage
         r.request().method() === "POST",
     );
     await page.getByRole("button", { name: "ログイン", exact: true }).click();
-    expect((await loginResponse).ok()).toBe(true);
+    expect([200, 303]).toContain((await loginResponse).status());
     await expect(page).toHaveURL(/\/teacher\?experiment=emh$/);
     const cookies = await page.context().cookies();
     const session = cookies.find(
@@ -391,6 +426,7 @@ test("direct demo links, embedded previews and question requests require a teach
     "/emh/demo",
     "/emh/demo/preview",
     "/judgment/demo",
+    "/evolution/demo",
   ];
   const settings = {
     studyIds: ["01-02"],

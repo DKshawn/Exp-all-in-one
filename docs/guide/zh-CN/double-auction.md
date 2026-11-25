@@ -10,6 +10,8 @@
 
 在正式房间点击「参加リンクをコピー」即可复制已填好房间代码的学生入口。[入室说明](classroom.md)
 
+在本地教师端可安排 AI 学生入室，并查看订单和成交。[AI 实验台说明](classroom.md#安排-ai-学生入室)
+
 [Demo Model](https://exp-all-in-one.vercel.app/demo) · [演示操作](demo.md)
 
 屏幕尺寸演示可通过 `/demo/preview` 打开；窄屏使用下拉框切换尺寸，演示进度会保留。
