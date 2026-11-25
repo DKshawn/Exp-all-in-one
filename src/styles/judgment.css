@@ -336,15 +336,6 @@
 .judgment-create > .judgment-section-heading {
   margin-bottom: 0;
 }
-.judgment-language {
-  min-height: 40px;
-  max-width: 100%;
-  padding: 8px 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  color: var(--ink);
-  background: var(--paper);
-}
 .judgment-selection-panel {
   margin-top: 24px;
 }

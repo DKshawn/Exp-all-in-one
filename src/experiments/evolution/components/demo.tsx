@@ -23,7 +23,7 @@ import {
 } from "../views";
 import { continuous, HISTORY_ROUNDS, type Settings } from "../settings";
 import { label, type Lang } from "../locale";
-import { EvolutionLanguage, useLanguage } from "./language";
+import { useLanguage } from "./language";
 import { SetupForm, useSetupDraft } from "./setup";
 import { Panels } from "./panels";
 
@@ -78,9 +78,7 @@ export function EvolutionDemo() {
         demoLabel="DEMOモード"
         demoExitHref={DEMO_TEACHER_HREFS.evolution}
         leading={<DemoSelectionLink />}
-      >
-        <EvolutionLanguage />
-      </Header>
+      />
       {room ? (
         <DemoRoom demo={room} lang={lang} onSetup={() => setRoom(null)} />
       ) : (

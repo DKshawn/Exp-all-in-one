@@ -1,5 +1,7 @@
 # Stochastic Evolutionary Games
 
+The language selected using the globe icon at the top right carries over to other experiments in the same browser.
+
 [日本語](../ja/evolution.md) · [中文](../zh-CN/evolution.md) · [English](../en/evolution.md)
 
 If the browser blocks preference storage, language changes apply to the open page. On narrow screens, edit each payoff directly and scroll inside the input to inspect long values.

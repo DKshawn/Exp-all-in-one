@@ -25,11 +25,7 @@ import {
   makeDemo,
   PRACTICE_EXP2_OPTIONS,
 } from "../demo-model";
-import {
-  DEFAULT_SETTINGS,
-  settingsSchema,
-  type EmhSettings,
-} from "../settings";
+import { settingsSchema, type EmhSettings } from "../settings";
 import { Shell } from "./shell";
 import { RoomDashboard } from "./room-dashboard";
 import { EmhCreateForm } from "./create-form";
@@ -40,6 +36,8 @@ import { Header } from "@/components/shell";
 import { StudentWaitingCard } from "@/components/student-waiting-card";
 import { DemoSelectionLink } from "@/components/demo-selection-link";
 import { DEMO_TEACHER_HREFS } from "@/lib/demo-navigation";
+import { useExperimentLanguage } from "@/components/experiment-language";
+import { translator } from "@/lib/ui-language";
 
 function bot(room: Room, now: number) {
   if (room.status !== "trading" || room.pausedAt !== null) return;
@@ -97,13 +95,11 @@ type Setup = {
 };
 
 export function Demo() {
-  const [setup, setSetup] = useState<Setup>({
-    title: "資産市場実験 · デモ",
-    settings: structuredClone(DEFAULT_SETTINGS),
-    experiment: "exp1",
-  });
+  const language = useExperimentLanguage();
+  const t = translator(language);
+  const [setup, setSetup] = useState<Setup>();
   const [running, setRunning] = useState(false);
-  if (running)
+  if (running && setup)
     return (
       <DemoRoom
         initial={setup}
@@ -117,9 +113,10 @@ export function Demo() {
     <>
       <Header
         homeHref="/emh/demo"
-        demoLabel="DEMOモード"
+        demoLabel={t("DEMOモード", "演示模式", "Demo mode")}
+        demoExitLabel={t("DEMOモードを終了", "退出演示", "Exit demo")}
         demoExitHref={DEMO_TEACHER_HREFS.emh}
-        leading={<DemoSelectionLink />}
+        leading={<DemoSelectionLink label={t("戻る", "返回", "Back")} />}
       >
         <Link
           className="button secondary small-button"
@@ -127,16 +124,16 @@ export function Demo() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          画面サイズ別プレビュー
+          {t("画面サイズ別プレビュー", "屏幕尺寸预览", "Screen-size preview")}
         </Link>
       </Header>
-      <main className="narrow-main teacher-setup-main">
+      <main className="narrow-main teacher-setup-main" lang={language}>
         <div className="teacher-hub-main teacher-entry-content">
           <EmhCreateForm
             status={{ mode: "local", ready: true, keyRequired: false }}
-            initialTitle={setup.title}
-            initialSettings={setup.settings}
-            initialExperiment={setup.experiment}
+            initialTitle={setup?.title}
+            initialSettings={setup?.settings}
+            initialExperiment={setup?.experiment}
             exp2Defaults={PRACTICE_EXP2_OPTIONS}
             onCreateDemo={(title, settings, experiment) => {
               setSetup({ title, settings, experiment });

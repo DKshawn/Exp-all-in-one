@@ -1,11 +1,11 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { teacherText } from "./teacher-language";
+import { teacherText, useTeacherLanguage } from "./teacher-language";
 import { Header } from "@/components/shell";
 import { EndExperimentButton } from "@/components/end-experiment-button";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { DEMO_TEACHER_HREFS } from "@/lib/demo-navigation";
-import type { Language, PreviewProtocol } from "../types";
+import type { PreviewProtocol } from "../types";
 import {
   StudentApp,
   type AppHandle,
@@ -15,15 +15,15 @@ export function JudgmentPreview({
   protocols,
   onClose,
   demo = false,
-  language = "ja",
 }: {
   protocols: PreviewProtocol[];
   onClose: () => void;
   demo?: boolean;
-  language?: Language;
 }) {
+  const language = useTeacherLanguage();
   const t = (text: string) => teacherText(text, language);
   const [ending, setEnding] = useState(false);
+  const [languageDisabled, setLanguageDisabled] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null),
     handle = useRef<AppHandle | null>(null);
   const [progress, setProgress] = useState<PreviewProgress>({
@@ -47,14 +47,14 @@ export function JudgmentPreview({
         onClose();
       }}
     >
-      {demo && (
-        <Header
-          homeHref="/judgment/demo"
-          demoLabel={t("DEMOモード")}
-          demoExitLabel={t("DEMOモードを終了")}
-          demoExitHref={DEMO_TEACHER_HREFS.judgment}
-        />
-      )}
+      <Header
+        homeHref={demo ? "/judgment/demo" : "/teacher"}
+        onHome={onClose}
+        demoLabel={demo ? t("DEMOモード") : undefined}
+        demoExitLabel={t("DEMOモードを終了")}
+        demoExitHref={DEMO_TEACHER_HREFS.judgment}
+        languageDisabled={languageDisabled}
+      />
       <div className="judgment-preview-toolbar">
         {!demo && <strong>{t("プレビュー")}</strong>}
         <span>{t("回答は保存されません。制限時間は停止しています。")}</span>
@@ -86,10 +86,10 @@ export function JudgmentPreview({
         </div>
       </div>
       <StudentApp
-        initialLanguage={language}
         protocols={protocols}
         handle={handle}
         onProgress={setProgress}
+        onLanguageDisabled={setLanguageDisabled}
       />
       {ending && (
         <ConfirmDialog

@@ -211,3 +211,45 @@
     gap: 8px;
   }
 }
+.localized-room-setup.emh-create h1 {
+  font-size: clamp(1rem, 4.6vw, 1.5rem);
+  white-space: nowrap;
+}
+
+.localized-room-setup .emh-settings .form-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+}
+
+.localized-room-setup .emh-exp2-grid .emh-ratio-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 7rem), 1fr));
+}
+
+.localized-room-setup .study-program-columns {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+}
+
+.localized-room-setup .study-program-column .study-compact-field {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.localized-room-setup .study-condition-summary {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+}
+
+.localized-room-setup .study-setup-step-title b,
+.localized-room-setup .study-program-column label,
+.localized-room-setup .emh-settings label,
+.localized-room-setup .emh-settings legend {
+  white-space: nowrap;
+}
+
+@media (max-width: 460px) {
+  .localized-room-setup .study-setup-step-toggle {
+    gap: 6px;
+    padding-inline: 10px;
+  }
+
+  .localized-room-setup .study-setup-step-state {
+    display: none;
+  }
+}

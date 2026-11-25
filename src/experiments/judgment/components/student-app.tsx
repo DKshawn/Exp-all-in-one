@@ -1,9 +1,15 @@
 "use client";
 import { useEffect, useRef } from "react";
+import {
+  getExperimentLanguage,
+  setExperimentLanguage,
+} from "@/components/experiment-language";
 import type { Language, PreviewProtocol } from "../types";
+import { judgmentLanguage, useTeacherLanguage } from "./teacher-language";
 export type PreviewProgress = { index: number; total: number; status: string };
 export type AppHandle = {
   move: (direction: number, skip?: boolean) => void;
+  setLanguage: (language: Language) => void;
   dispose: () => void;
 };
 type Mount = (
@@ -14,6 +20,8 @@ type Mount = (
     initialLanguage?: Language;
     protocols?: PreviewProtocol[];
     onPreviewState?: (state: PreviewProgress) => void;
+    onLanguageChange?: (language: Language) => void;
+    onLanguageDisabled?: (disabled: boolean) => void;
   },
 ) => AppHandle;
 export function StudentApp({
@@ -21,15 +29,17 @@ export function StudentApp({
   protocols,
   onProgress,
   handle,
-  initialLanguage = "ja",
+  onLanguageDisabled,
 }: {
   code?: string;
   protocols?: PreviewProtocol[];
   onProgress?: (state: PreviewProgress) => void;
   handle?: React.RefObject<AppHandle | null>;
-  initialLanguage?: Language;
+  onLanguageDisabled?: (disabled: boolean) => void;
 }) {
   const host = useRef<HTMLDivElement>(null);
+  const instance = useRef<AppHandle | null>(null);
+  const language = useTeacherLanguage();
   useEffect(() => {
     let cancelled = false,
       app: AppHandle | undefined;
@@ -40,9 +50,13 @@ export function StudentApp({
           code,
           isPreview: Boolean(protocols),
           protocols,
-          initialLanguage,
+          initialLanguage: judgmentLanguage(getExperimentLanguage()),
           onPreviewState: onProgress,
+          onLanguageChange: (next) =>
+            setExperimentLanguage(next === "zh" ? "zh-CN" : next),
+          onLanguageDisabled,
         });
+        instance.current = app;
         if (handle) handle.current = app;
       })
       .catch(() => {
@@ -53,9 +67,13 @@ export function StudentApp({
     return () => {
       cancelled = true;
       app?.dispose();
+      instance.current = null;
       if (handle) handle.current = null;
     };
-  }, [code, protocols, onProgress, handle, initialLanguage]);
+  }, [code, protocols, onProgress, handle, onLanguageDisabled]);
+  useEffect(() => {
+    instance.current?.setLanguage(language);
+  }, [language]);
   return (
     <div ref={host} className="judgment-app" lang="ja">
       <p className="loading" role="status">

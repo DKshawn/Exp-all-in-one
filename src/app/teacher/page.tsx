@@ -1,7 +1,7 @@
 import { DemoEntryLink } from "@/components/demo-entry-link";
 import { TeacherHub } from "@/components/teacher-hub";
 import { EvolutionSetup } from "@/experiments/evolution/components/setup";
-import { EvolutionLanguage } from "@/experiments/evolution/components/language";
+import { ExperimentText } from "@/components/experiment-language";
 import { TeacherReentry } from "@/components/teacher-reentry";
 import { EmhCreateForm } from "@/experiments/emh/components/create-form";
 import { JudgmentCreateForm } from "@/experiments/judgment/components/create-form";
@@ -25,7 +25,15 @@ function TeacherSelectionNav({ returnRoom }: { returnRoom?: string }) {
         href={returnRoom ? teacherRoomHref(returnRoom) : "/teacher"}
       >
         <ArrowLeft size={15} />
-        {returnRoom ? `ルーム ${returnRoom} に戻る` : "戻る"}
+        {returnRoom ? (
+          <ExperimentText
+            ja={`ルーム ${returnRoom} に戻る`}
+            zh={`返回房间 ${returnRoom}`}
+            en={`Back to room ${returnRoom}`}
+          />
+        ) : (
+          <ExperimentText ja="戻る" zh="返回" en="Back" />
+        )}
       </Link>
     </nav>
   );
@@ -53,7 +61,11 @@ export default async function Teacher({
       <>
         <Header leading={<TeacherSelectionNav />}>
           <Link className="button secondary small-button" href="/">
-            学生の入室画面
+            <ExperimentText
+              ja="学生の入室画面"
+              zh="学生入室"
+              en="Student entry"
+            />
           </Link>
           {status.keyRequired && <TeacherLogout />}
         </Header>
@@ -82,11 +94,12 @@ export default async function Teacher({
           }
         >
           {!selectedExperiment && <DemoEntryLink />}
-          {selectedExperiment && experiment === "evolution" && (
-            <EvolutionLanguage />
-          )}
           <Link className="button secondary small-button" href="/">
-            学生の入室画面
+            <ExperimentText
+              ja="学生の入室画面"
+              zh="学生入室"
+              en="Student entry"
+            />
           </Link>
           {status.keyRequired && <TeacherLogout />}
         </Header>

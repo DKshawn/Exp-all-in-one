@@ -27,7 +27,7 @@
 .judgment-app button,
 .judgment-app input,
 .judgment-app textarea,
-.judgment-app select {
+.judgment-app select:not(.header-language-select) {
   font: inherit;
 }
 .judgment-app button {
@@ -50,7 +50,7 @@
 .judgment-app button:focus-visible,
 .judgment-app input:focus-visible,
 .judgment-app textarea:focus-visible,
-.judgment-app select:focus-visible {
+.judgment-app select:not(.header-language-select):focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 4px;
 }
@@ -101,18 +101,9 @@
   text-align: center;
   padding: 120px 20px;
 }
-.judgment-app .student-topbar {
-  height: 64px;
-  max-width: 1000px;
-  padding: 0 32px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.judgment-app > .student-topbar {
-  max-width: none;
-  padding-inline: var(--page-gutter);
+.judgment-app .preview-progress {
+  padding: 8px var(--page-gutter);
+  text-align: end;
 }
 .judgment-app .student-brand {
   display: flex;
@@ -156,37 +147,12 @@
   color: var(--muted);
   letter-spacing: 0.04em;
 }
-.judgment-app .header-tools {
-  display: flex;
-  align-items: center;
-  gap: 22px;
-}
 .judgment-app .multiplication-expression {
   font-size: clamp(18px, 4.5vw, 34px);
   font-variant-numeric: tabular-nums;
   text-align: center;
   white-space: nowrap;
   letter-spacing: 0;
-}
-.judgment-app .language-switch {
-  display: block;
-}
-.judgment-app .language-select {
-  appearance: none;
-  min-height: 44px;
-  min-width: 104px;
-  padding: 10px 14px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--paper);
-  color: var(--ink);
-  text-align: center;
-  cursor: pointer;
-  font-size: 13px;
-}
-.judgment-app .language-select:disabled {
-  opacity: 0.55;
-  cursor: default;
 }
 .judgment-app .sr-only {
   position: absolute;
@@ -202,11 +168,8 @@
 .judgment-app [aria-invalid="true"] {
   border-color: var(--red) !important;
 }
-.judgment-app .student-topbar > a {
-  font-size: 13px;
-}
 .judgment-app .student-entry {
-  min-height: calc(100svh - 64px);
+  min-height: calc(100svh - 80px);
   display: grid;
   place-items: center;
   padding: 30px 24px 112px;
@@ -1219,7 +1182,7 @@
   color: var(--muted);
 }
 .judgment-app .waiting-main {
-  min-height: calc(100svh - 64px);
+  min-height: calc(100svh - 80px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1625,12 +1588,10 @@
   }
 }
 @media (max-width: 700px) {
-  .judgment-app .student-topbar {
-    height: 60px;
-    padding: 0 22px;
+  .judgment-app :is(.student-entry, .waiting-main) {
+    min-height: calc(100svh - 69px);
   }
   .judgment-app .student-entry {
-    min-height: calc(100svh - 60px);
     padding: 25px 20px 90px;
   }
   .judgment-app .entry-card {
@@ -1755,26 +1716,15 @@
   }
 }
 @media (max-width: 480px) {
-  .judgment-app .student-topbar {
-    padding: 0 18px;
-  }
   .judgment-app .student-brand {
     font-size: 14px;
     gap: 8px;
     letter-spacing: 0.02em;
   }
-  .judgment-app .header-tools {
-    gap: 10px;
-  }
   .judgment-app .student-progress {
     font-size: 11px;
     letter-spacing: 0;
     white-space: nowrap;
-  }
-  .judgment-app .language-select {
-    min-width: 90px;
-    font-size: 12px;
-    padding: 10px;
   }
   .judgment-app .short-scales .scale-field {
     display: block;

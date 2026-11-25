@@ -1,9 +1,5 @@
 "use client";
-import {
-  TeacherLanguage,
-  useTeacherLanguage,
-  teacherText,
-} from "./teacher-language";
+import { useTeacherLanguage, teacherText } from "./teacher-language";
 
 import { useState, type FormEvent } from "react";
 import { Header } from "@/components/shell";
@@ -16,7 +12,7 @@ import { DemoSelectionLink } from "@/components/demo-selection-link";
 import { DEMO_TEACHER_HREFS } from "@/lib/demo-navigation";
 
 export function JudgmentDemoEntry({ studies }: { studies: Study[] }) {
-  const [language, setLanguage] = useTeacherLanguage();
+  const language = useTeacherLanguage();
   const t = (text: string, values: Record<string, string | number> = {}) =>
     teacherText(text, language, values);
   const [settings, setSettings] = useState<Settings>({
@@ -54,7 +50,7 @@ export function JudgmentDemoEntry({ studies }: { studies: Study[] }) {
         demoExitLabel={t("DEMOモードを終了")}
         demoExitHref={DEMO_TEACHER_HREFS.judgment}
         leading={<DemoSelectionLink />}
-      ></Header>
+      />
       <main
         className="judgment-entry-main"
         lang={language === "zh" ? "zh-CN" : language}
@@ -62,7 +58,6 @@ export function JudgmentDemoEntry({ studies }: { studies: Study[] }) {
         <form className="judgment-create" onSubmit={start}>
           <div className="judgment-section-heading">
             <h1>{JUDGMENT_NAME}</h1>
-            <TeacherLanguage language={language} onChange={setLanguage} />
           </div>
           <SettingsFields
             settings={settings}
@@ -87,7 +82,6 @@ export function JudgmentDemoEntry({ studies }: { studies: Study[] }) {
         {protocols && (
           <JudgmentPreview
             demo
-            language={language}
             protocols={protocols}
             onClose={() => setProtocols(null)}
           />

@@ -1,5 +1,7 @@
 # Demo Model
 
+Use the globe icon at the top right to choose the display language on demo selection, setup, and preview pages. Switching languages preserves demo progress and any settings you entered.
+
 The demo list and screens use a yellow theme, with the demo-mode label in plain gold text beside the site name. The label and current round use the same gold (`#F4CB51`) as the Resume button. The blue-purple **DEMOモードを終了** button returns to the corresponding teacher setup, or to teacher experiment selection from the demo list.
 
 [日本語](../ja/demo.md) · [中文](../zh-CN/demo.md) · [English](../en/demo.md)

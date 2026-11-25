@@ -47,6 +47,8 @@ EMH supports initial securities, target market size, type ratios and period dura
 
 Students need the student entry, room code, and their own entry details. Do not share the teacher key or room teacher password.
 
+Use the globe icon at the top right of the header to choose Japanese, Chinese, or English. The browser shares the preference across teacher home, room management, and supported settings. Switching languages preserves your entries.
+
 ## 2. Share the entry and let students join
 
 In Double Auction, EMH and Stochastic Evolutionary Games, click **参加リンクをコピー** in the teacher's room and share the copied address with the class. During admission it opens the student entry with the six-character code filled in. If the browser blocks clipboard access, select the address shown and copy it manually.

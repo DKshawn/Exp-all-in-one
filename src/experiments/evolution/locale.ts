@@ -1,5 +1,6 @@
 import { choices, type Settings } from "./settings";
-export type Lang = "ja" | "zh-CN" | "en";
+import type { UiLanguage } from "@/lib/ui-language";
+export type Lang = UiLanguage;
 const messages = {
   title: ["確率的進化ゲーム", "随机演化博弈", "Stochastic Evolutionary Games"],
   language: ["表示言語", "显示语言", "Language"],

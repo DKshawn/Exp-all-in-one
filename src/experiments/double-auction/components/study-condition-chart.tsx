@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { useSetupText } from "@/components/experiment-language";
 import { Minus, Plus } from "lucide-react";
 import { staircasePoints } from "@/experiments/double-auction/lib/study-generator";
 import {
@@ -15,6 +16,7 @@ export function StudyConditionChart({
   demand: number[];
   supply: number[];
 }) {
+  const t = useSetupText();
   const titleId = useId();
   const clipId = useId();
   const [zoom, setZoom] = useState(1);
@@ -34,57 +36,83 @@ export function StudyConditionChart({
   );
   const yTicks = studyChartTicks(Math.max(0, view.priceMin), view.priceMax);
   const format = (n: number) => Number(n.toFixed(1));
-  const equilibriumLabel = `${eq.quantityMax > eq.quantity ? "重なり" : "均衡"} ${eq.quantity === eq.quantityMax ? eq.quantity : `${eq.quantity}〜${eq.quantityMax}`} · ${eq.low === eq.high ? eq.low : `${eq.low}〜${eq.high}`}円`;
+  const range = (low: number, high: number) =>
+    low === high
+      ? low
+      : t(`${low}〜${high}`, `${low}–${high}`, `${low}–${high}`);
+  const price = range(eq.low, eq.high);
+  const equilibriumLabel = `${eq.quantityMax > eq.quantity ? t("重なり", "重叠", "Overlap") : t("均衡", "均衡", "Equilibrium")} ${range(eq.quantity, eq.quantityMax)} · ${t(`${price}円`, `${price} 日元`, `¥${price}`)}`;
+  const displayedMin = format(Math.max(0, view.quantityMin));
+  const displayedMax = format(Math.min(view.count, view.quantityMax));
 
   return (
     <figure className="study-condition-chart">
       <div
         className="study-condition-chart-controls"
         role="group"
-        aria-label="供需図の表示"
+        aria-label={t(
+          "供需図の表示",
+          "供需图视图",
+          "Supply and demand chart controls",
+        )}
       >
         <button
           type="button"
           className="button secondary"
-          aria-label="供需図を縮小"
+          aria-label={t(
+            "供需図を縮小",
+            "缩小供需图",
+            "Zoom out on the supply and demand chart",
+          )}
           disabled={view.zoom <= view.minZoom}
           onClick={() =>
             setZoom((current) => Math.max(view.minZoom, current / 1.5))
           }
         >
-          <Minus size={14} aria-hidden="true" /> 縮小
+          <Minus size={14} aria-hidden="true" /> {t("縮小", "缩小", "Zoom out")}
         </button>
         <button
           type="button"
           className="button secondary"
-          aria-label="供需図を拡大"
+          aria-label={t(
+            "供需図を拡大",
+            "放大供需图",
+            "Zoom in on the supply and demand chart",
+          )}
           disabled={view.zoom >= 8}
           onClick={() => setZoom((current) => Math.min(8, current * 1.5))}
         >
-          <Plus size={14} aria-hidden="true" /> 拡大
+          <Plus size={14} aria-hidden="true" /> {t("拡大", "放大", "Zoom in")}
         </button>
         <button
           type="button"
           className="button secondary"
           onClick={() => setZoom(view.minZoom)}
         >
-          全体
+          {t("全体", "全图", "Fit all")}
         </button>
         <button
           type="button"
           className="button secondary"
           onClick={() => setZoom(1)}
         >
-          初期表示
+          {t("初期表示", "重置", "Reset")}
         </button>
         <output className="study-chart-range" aria-live="polite">
-          表示数量 {format(Math.max(0, view.quantityMin))}〜
-          {format(Math.min(view.count, view.quantityMax))} / {view.count}単位
+          {t(
+            `表示数量 ${displayedMin}〜${displayedMax} / ${view.count}単位`,
+            `显示 ${displayedMin}–${displayedMax} / ${view.count} 单位`,
+            `Showing ${displayedMin}–${displayedMax} of ${view.count} units`,
+          )}
         </output>
       </div>
       <svg viewBox="0 0 760 310" role="img" aria-labelledby={titleId}>
         <title id={titleId}>
-          数量に対応する買い手の限界価値と売り手の限界費用の階段供需図
+          {t(
+            "数量に対応する買い手の限界価値と売り手の限界費用の階段供需図",
+            "买方边际价值与卖方边际成本随数量变化的阶梯供需图",
+            "Step chart of buyers’ marginal values and sellers’ marginal costs by quantity",
+          )}
         </title>
         <defs>
           <clipPath id={clipId}>
@@ -140,10 +168,14 @@ export function StudyConditionChart({
           </g>
         ))}
         <text x={60} y={23}>
-          限界価値・費用（円）
+          {t(
+            "限界価値・費用（円）",
+            "边际价值和成本（日元）",
+            "Marginal value and cost (¥)",
+          )}
         </text>
         <text x={710} y={301} textAnchor="end">
-          数量（単位）
+          {t("数量（単位）", "数量（单位）", "Quantity (units)")}
         </text>
         <g clipPath={`url(#${clipId})`}>
           <polyline points={points(demand)} className="study-demand-curve" />
@@ -172,12 +204,22 @@ export function StudyConditionChart({
         </text>
       </svg>
       <div className="study-curve-legend">
-        <span className="demand">買い手の価値 D(k)</span>
-        <span className="supply">売り手の費用 S(k)</span>
-        <span className="overlap">均衡範囲</span>
+        <span className="demand">
+          {t("買い手の価値 D(k)", "买方价值 D(k)", "Buyer value D(k)")}
+        </span>
+        <span className="supply">
+          {t("売り手の費用 S(k)", "卖方成本 S(k)", "Seller cost S(k)")}
+        </span>
+        <span className="overlap">
+          {t("均衡範囲", "均衡区间", "Equilibrium range")}
+        </span>
       </div>
       <figcaption>
-        均衡範囲の中心を表示します。第k単位は数量k−1〜kを覆います。参加者の実際の注文価格ではありません。
+        {t(
+          "均衡範囲の中心を表示します。第k単位は数量k−1〜kを覆います。参加者の実際の注文価格ではありません。",
+          "图中标出均衡区间中心。第 k 个单位对应数量 k−1 到 k，价格来自供需条件。",
+          "The dot marks the center of the equilibrium range. Unit k spans quantities k−1 to k. Prices come from the supply and demand schedules.",
+        )}
       </figcaption>
     </figure>
   );

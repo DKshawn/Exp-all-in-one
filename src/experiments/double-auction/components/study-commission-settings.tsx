@@ -1,6 +1,8 @@
 "use client";
 
 import { useId } from "react";
+import { useSetupText } from "@/components/experiment-language";
+import { studySetupError } from "@/experiments/double-auction/lib/study-setup-text";
 import {
   MAX_STUDY_COMMISSION,
   studyCommissionLimit,
@@ -23,6 +25,7 @@ export function StudyCommissionField({
   additionalSettings?: StudySettings[];
   disabled?: boolean;
 }) {
+  const t = useSetupText();
   const id = useId();
   const error =
     studyCommissionError(amount, settings, otherSettings) ||
@@ -41,7 +44,13 @@ export function StudyCommissionField({
   );
   return (
     <div className="field study-commission-field">
-      <label htmlFor={id}>Commission（円／1単位・1人）</label>
+      <label htmlFor={id}>
+        {t(
+          "Commission（円／1単位・1人）",
+          "每人每单位佣金（日元）",
+          "Commission (¥/unit/person)",
+        )}
+      </label>
       <input
         id={id}
         type="number"
@@ -60,11 +69,15 @@ export function StudyCommissionField({
       />
       {error && (
         <p id={`${id}-help`} className="error-message" role="alert">
-          {error}
+          {studySetupError(t, error)}
         </p>
       )}
       <p id={`${id}-bound`} className="field-help study-commission-bound">
-        入力範囲：0〜{maximum}円（整数）
+        {t(
+          `入力範囲：0〜${maximum}円（整数）`,
+          `请输入 0–${maximum} 日元之间的整数。`,
+          `Enter a whole number from ¥0 to ¥${maximum}.`,
+        )}
       </p>
     </div>
   );

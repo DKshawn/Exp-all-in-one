@@ -1,5 +1,7 @@
 "use client";
 
+import { useSetupText } from "@/components/experiment-language";
+
 import {
   DEFAULT_STUDY_INSTITUTIONS,
   MAX_INSTITUTION_PERIODS,
@@ -37,17 +39,31 @@ export function StudyProgramFields({
   marketSize?: number;
   postedBatch?: boolean;
 }) {
+  const t = useSetupText();
   const timingLabels = {
-    cdaSeconds: "1期の取引（秒）",
-    callSeconds: "1回の受付（秒）",
-    offerSeconds: "価格提示（秒）",
-    buyerSeconds: "1人の購入（秒）",
-    purchaseSeconds: "共通取引（秒）",
+    cdaSeconds: t(
+      "1期の取引（秒）",
+      "每期交易时长（秒）",
+      "Trading period (s)",
+    ),
+    callSeconds: t("1回の受付（秒）", "每次收单时长（秒）", "Order window (s)"),
+    offerSeconds: t("価格提示（秒）", "卖方报价时长（秒）", "Offer window (s)"),
+    buyerSeconds: t(
+      "1人の購入（秒）",
+      "每位买方时长（秒）",
+      "Per-buyer window (s)",
+    ),
+    purchaseSeconds: t(
+      "共通取引（秒）",
+      "统一交易时长（秒）",
+      "Shared trading window (s)",
+    ),
   };
   return (
     <div className="study-program-columns">
       {DEFAULT_STUDY_INSTITUTIONS.map((institution) => {
         const selected = institutions.includes(institution);
+        const name = INSTITUTIONS[institution].short;
         return (
           <fieldset className="study-program-column" key={institution}>
             <legend>
@@ -71,9 +87,13 @@ export function StudyProgramFields({
             </legend>
             {selected && (
               <label className="field study-compact-field">
-                期数
+                {t("期数", "期数", "Periods")}
                 <input
-                  aria-label={`${INSTITUTIONS[institution].short}の期数`}
+                  aria-label={t(
+                    `${name}の期数`,
+                    `${name} 期数`,
+                    `${name} periods`,
+                  )}
                   type="number"
                   min={1}
                   max={MAX_INSTITUTION_PERIODS}
@@ -104,7 +124,11 @@ export function StudyProgramFields({
                 <label className="field study-compact-field" key={key}>
                   {timingLabels[key]}
                   <input
-                    aria-label={label}
+                    aria-label={t(
+                      label,
+                      `${name} ${timingLabels[key]}`,
+                      `${name} ${timingLabels[key]}`,
+                    )}
                     type="number"
                     min={1}
                     max={MAX_STAGE_SECONDS}

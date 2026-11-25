@@ -189,18 +189,11 @@
   background: #e2e2fa;
 }
 .emh-app .site-header {
-  height: 83px;
   border-bottom: 1px solid var(--line);
   background: var(--surface);
 }
 .emh-app .header-inner {
-  height: 100%;
-  max-width: 1240px;
-  margin: auto;
-  padding: 0 40px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  min-height: 83px;
 }
 .emh-app .brand {
   display: flex;
@@ -1367,8 +1360,8 @@
   color: var(--muted);
   margin-bottom: 25px;
 }
-.emh-app .site-header.compact {
-  height: 58px;
+.emh-app .site-header.compact .header-inner {
+  min-height: 58px;
 }
 .emh-app .container.wide {
   padding-top: 22px;
@@ -1527,15 +1520,7 @@
 }
 @media (max-width: 760px) {
   .emh-app .header-inner {
-    height: auto;
     min-height: 69px;
-    padding: 14px 22px;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-  .emh-app .site-header,
-  .emh-app .site-header.compact {
-    height: auto;
   }
   .emh-app .site-header nav {
     gap: 8px;

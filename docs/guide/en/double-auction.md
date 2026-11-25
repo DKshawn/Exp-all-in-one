@@ -1,5 +1,7 @@
 # Double Auction
 
+Use the globe icon at the top right of room creation and demo setup to choose Japanese, Chinese, or English. The detailed setup uses the same language.
+
 [日本語](../ja/double-auction.md) · [中文](../zh-CN/double-auction.md) · [English](../en/double-auction.md)
 
 At widths of 760 CSS pixels or less, the student trading screen uses a single column at native size. Personal conditions and ordering come first, followed by the market and records. Long histories scroll within their panels.

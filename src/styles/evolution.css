@@ -23,15 +23,6 @@
   margin-top: 0;
   min-width: 0;
 }
-.ev-lang {
-  justify-self: start;
-  max-width: 100%;
-  border-radius: 8px;
-  border: 1px solid var(--line);
-  padding: 7px 10px;
-  background: var(--paper);
-  color: var(--ink);
-}
 .ev-heading,
 .ev-options,
 .ev-meta,

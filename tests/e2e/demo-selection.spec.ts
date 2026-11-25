@@ -238,9 +238,7 @@ test("demo mode labels and entry colors are consistent across experiments", asyn
   );
   await (await expectEndButton(page)).click();
   await page.getByRole("button", { name: "終了する", exact: true }).click();
-  await page
-    .getByRole("combobox", { name: "言語 / 语言 / Language" })
-    .selectOption("en");
+  await page.getByRole("banner").getByRole("combobox").selectOption("en");
   await assertBadge("header .demo-header-tag", "Demo mode");
   await page.getByRole("button", { name: "Start demo" }).click();
   await expect(page.getByRole("dialog", { name: "Demo mode" })).toBeVisible();
@@ -252,9 +250,7 @@ test("demo mode labels and entry colors are consistent across experiments", asyn
     .getByRole("button", { name: "End experiment", exact: true })
     .click();
   await page.getByRole("button", { name: "End run", exact: true }).click();
-  await page
-    .getByRole("combobox", { name: "言語 / 语言 / Language" })
-    .selectOption("zh");
+  await page.getByRole("banner").getByRole("combobox").selectOption("zh-CN");
   await assertBadge("header .demo-header-tag", "演示模式");
   await page.getByRole("button", { name: "开始 Demo" }).click();
   await expect(page.getByRole("dialog", { name: "演示模式" })).toBeVisible();

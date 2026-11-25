@@ -16,6 +16,8 @@ Teachers can edit the coordination game's payoff matrix directly when setting up
 
 New SEG rooms support up to 10,000 rounds. A coordination choice submits on click, and the controls and payoff matrix stay in place while the realized cell is highlighted. Nash demand uses a 0–1 slider with a configurable step (default 0.1), submitted on release or with Enter. Settled pairs see **Waiting for other pairs** while room-wide decisions remain open. **Next round in** counts down once feedback starts for the whole room. The countdown stays in place as the status changes.
 
+Use the globe icon at the top right of the header to choose Japanese, Chinese, or English on teacher and student pages, in formal experiments, and in demos. The browser shares the preference across teacher home, room management, and supported experiment settings.
+
 ## Get started
 
 ```mermaid

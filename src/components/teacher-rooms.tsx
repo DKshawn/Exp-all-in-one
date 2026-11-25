@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FlaskConical, RefreshCw, Search, Trash2 } from "lucide-react";
 import { api, ApiError, errorMessage } from "@/lib/client";
 import type { RoomSummary } from "@/lib/room-management";
@@ -12,39 +12,78 @@ import type { Phase } from "@/experiments/double-auction/lib/types";
 import { INSTITUTIONS } from "@/experiments/double-auction/lib/study-rules";
 import { EMH_EXPERIMENT_LABELS } from "@/experiments/emh/types";
 import { label } from "@/experiments/evolution/locale";
+import { translator, type UiLanguage } from "@/lib/ui-language";
+import { useExperimentLanguage } from "./experiment-language";
 import { Spinner } from "./shell";
 
-const PHASE_LABELS: Record<Phase, string> = {
-  waiting: "入室待ち",
-  running: "実験中",
-  paused: "一時停止",
-  review: "今期終了",
-  finished: "実験終了",
+const PHASE_LABELS: Record<Phase, [string, string, string]> = {
+  waiting: ["入室待ち", "等待入室", "Waiting"],
+  running: ["実験中", "实验进行中", "Running"],
+  paused: ["一時停止", "已暂停", "Paused"],
+  review: ["今期終了", "本期结束", "Period ended"],
+  finished: ["実験終了", "实验结束", "Finished"],
 };
-const EXPERIMENT_GROUPS: Partial<
+function experimentGroups(
+  language: UiLanguage,
+): Partial<
   Record<string, { name: string; variants: Readonly<Record<string, string>> }>
-> = {
-  emh: { name: "EMH", variants: EMH_EXPERIMENT_LABELS },
-  evolution: {
-    name: "SEG",
-    variants: {
-      coordination: label("ja", "coordination"),
-      demand: label("ja", "demand"),
+> {
+  const t = translator(language);
+  return {
+    emh: {
+      name: "EMH",
+      variants: {
+        exp1: t(
+          EMH_EXPERIMENT_LABELS.exp1,
+          "实验 1（固定股息）",
+          "Experiment 1 (Fixed dividends)",
+        ),
+        exp2: t(
+          EMH_EXPERIMENT_LABELS.exp2,
+          "实验 2（随机股息）",
+          "Experiment 2 (Random dividends)",
+        ),
+      },
     },
-  },
-};
-const dateFormat = new Intl.DateTimeFormat("ja-JP", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "Asia/Tokyo",
-});
-const monthFormat = new Intl.DateTimeFormat("ja-JP", {
+    evolution: {
+      name: "SEG",
+      variants: {
+        coordination: label(language, "coordination"),
+        demand: label(language, "demand"),
+      },
+    },
+  };
+}
+const monthKey = new Intl.DateTimeFormat("sv-SE", {
   year: "numeric",
-  month: "long",
+  month: "2-digit",
   timeZone: "Asia/Tokyo",
 });
 
 export function TeacherRooms({ status }: { status: ServerStatus }) {
+  const language = useExperimentLanguage();
+  const t = translator(language);
+  const groups = experimentGroups(language);
+  const { dateFormat, monthFormat } = useMemo(
+    () => ({
+      dateFormat: new Intl.DateTimeFormat(language, {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: "Asia/Tokyo",
+      }),
+      monthFormat: new Intl.DateTimeFormat(language, {
+        year: "numeric",
+        month: "short",
+        timeZone: "Asia/Tokyo",
+      }),
+    }),
+    [language],
+  );
+  const reenter = t(
+    "結果・ダウンロード / 再入室",
+    "结果下载 / 重新入室",
+    "Results / Re-enter",
+  );
   const [rooms, setRooms] = useState<RoomSummary[] | null>(null);
   const [pending, setPending] = useState(status.ready);
   const [error, setError] = useState("");
@@ -102,17 +141,17 @@ export function TeacherRooms({ status }: { status: ServerStatus }) {
         response.status,
       );
     setRooms((previous) => previous?.filter((r) => r.code !== room.code) ?? []);
-    setMessage(`ルーム ${room.code} を削除しました。`);
+    setMessage(room.code);
     setDeleting(null);
   }
 
   const entries = (rooms ?? []).map((room) => {
     const experimentName = EXPERIMENT_CATALOG[room.experiment].title;
-    const group = EXPERIMENT_GROUPS[room.experiment];
+    const group = groups[room.experiment];
     const variantName = room.variant && group?.variants[room.variant];
     return {
       room,
-      createdMonth: monthFormat.format(room.createdAt),
+      createdMonth: monthKey.format(room.createdAt),
       experimentName,
       experimentLabel:
         group && variantName
@@ -124,13 +163,13 @@ export function TeacherRooms({ status }: { status: ServerStatus }) {
     ...new Set([month, ...entries.map((entry) => entry.createdMonth)]),
   ]
     .filter(Boolean)
-    .sort((a, b) => b.localeCompare(a, "ja-JP", { numeric: true }));
-  const normalizedQuery = query.trim().toLocaleLowerCase("ja-JP");
+    .sort((a, b) => b.localeCompare(a));
+  const normalizedQuery = query.trim().toLocaleLowerCase(language);
   const filtered = entries.filter(
     ({ room, createdMonth, experimentName, experimentLabel }) =>
       (!normalizedQuery ||
         `${room.title} ${room.code} ${experimentName} ${experimentLabel}`
-          .toLocaleLowerCase("ja-JP")
+          .toLocaleLowerCase(language)
           .includes(normalizedQuery)) &&
       (!experiment ||
         room.experiment === experiment ||
@@ -140,48 +179,70 @@ export function TeacherRooms({ status }: { status: ServerStatus }) {
   );
 
   return (
-    <section className="teacher-rooms" aria-labelledby="teacher-rooms-title">
+    <section
+      className="teacher-rooms"
+      aria-labelledby="teacher-rooms-title"
+      lang={language}
+    >
       <div className="teacher-rooms-heading">
-        <h2 id="teacher-rooms-title">ルーム管理</h2>
+        <h2 id="teacher-rooms-title">
+          {t("ルーム管理", "房间管理", "Room management")}
+        </h2>
         <button
           className="button secondary small-button"
           disabled={pending || !status.ready}
           onClick={() => void load()}
         >
           <RefreshCw size={14} />
-          更新
+          {t("更新", "刷新", "Refresh")}
         </button>
       </div>
 
       {!status.ready && (
         <p className="error-message" role="alert">
-          アプリの接続設定が完了していません。管理者がデータベースと教員用キーを設定してください。
+          {t(
+            "アプリの接続設定が完了していません。管理者がデータベースと教員用キーを設定してください。",
+            "连接尚未配置。请管理员设置数据库和教师密钥。",
+            "Connection setup is incomplete. Ask the administrator to configure the database and teacher key.",
+          )}
         </p>
       )}
       {error && (
-        <p className="error-message" role="alert">
+        <p className="error-message" role="alert" lang="ja">
           {error}
         </p>
       )}
       {message && (
         <p className="teacher-rooms-message" role="status">
-          {message}
+          {t(
+            `ルーム ${message} を削除しました。`,
+            `已删除房间 ${message}。`,
+            `Room ${message} was deleted.`,
+          )}
         </p>
       )}
       {rooms !== null && (
         <>
           <search
             className="teacher-room-filters"
-            aria-label="ルームの絞り込み"
+            aria-label={t("ルームの絞り込み", "筛选房间", "Filter rooms")}
           >
             <label className="field teacher-room-search">
-              実験名・ルームコード
+              {t(
+                "実験名・ルームコード",
+                "实验名或房间代码",
+                "Experiment name or room code",
+              )}
               <span>
                 <Search size={15} aria-hidden="true" />
                 <input
                   type="search"
                   value={query}
-                  placeholder="名前またはコードで検索"
+                  placeholder={t(
+                    "名前またはコードで検索",
+                    "搜索名称或代码",
+                    "Search by name or code",
+                  )}
                   onChange={(event) => {
                     setQuery(event.target.value);
                     setLimit(20);
@@ -190,7 +251,7 @@ export function TeacherRooms({ status }: { status: ServerStatus }) {
               </span>
             </label>
             <label className="field teacher-room-experiment-filter">
-              実験
+              {t("実験", "实验", "Experiment")}
               <select
                 value={experiment}
                 onChange={(event) => {
@@ -198,13 +259,21 @@ export function TeacherRooms({ status }: { status: ServerStatus }) {
                   setLimit(20);
                 }}
               >
-                <option value="">すべての実験</option>
+                <option value="">
+                  {t("すべての実験", "所有实验", "All experiments")}
+                </option>
                 {Object.entries(EXPERIMENT_CATALOG).map(
                   ([value, { title }]) => {
-                    const group = EXPERIMENT_GROUPS[value];
+                    const group = groups[value];
                     return group ? (
                       <optgroup key={value} label={group.name}>
-                        <option value={value}>{group.name}（すべて）</option>
+                        <option value={value}>
+                          {t(
+                            `${group.name}（すべて）`,
+                            `${group.name}（全部）`,
+                            `All ${group.name}`,
+                          )}
+                        </option>
                         {Object.entries(group.variants).map(
                           ([variant, name]) => (
                             <option key={variant} value={`${value}:${variant}`}>
@@ -223,7 +292,7 @@ export function TeacherRooms({ status }: { status: ServerStatus }) {
               </select>
             </label>
             <label className="field">
-              作成月
+              {t("作成月", "创建月份", "Created month")}
               <select
                 value={month}
                 onChange={(event) => {
@@ -231,16 +300,18 @@ export function TeacherRooms({ status }: { status: ServerStatus }) {
                   setLimit(20);
                 }}
               >
-                <option value="">すべての月</option>
+                <option value="">
+                  {t("すべての月", "所有月份", "All months")}
+                </option>
                 {months.map((value) => (
                   <option key={value} value={value}>
-                    {value}
+                    {monthFormat.format(new Date(`${value}-01T12:00:00+09:00`))}
                   </option>
                 ))}
               </select>
             </label>
             <label className="field">
-              状態
+              {t("状態", "状态", "Status")}
               <select
                 value={phase}
                 onChange={(event) => {
@@ -248,23 +319,37 @@ export function TeacherRooms({ status }: { status: ServerStatus }) {
                   setLimit(20);
                 }}
               >
-                <option value="">すべての状態</option>
-                {Object.entries(PHASE_LABELS).map(([value, label]) => (
+                <option value="">
+                  {t("すべての状態", "所有状态", "All statuses")}
+                </option>
+                {Object.entries(PHASE_LABELS).map(([value, labels]) => (
                   <option key={value} value={value}>
-                    {label}
+                    {t(...labels)}
                   </option>
                 ))}
               </select>
             </label>
           </search>
           <p className="teacher-room-count" role="status">
-            {filtered.length}件 / 全{rooms.length}件 · 新しい順
+            {t(
+              `${filtered.length}件 / 全${rooms.length}件 · 新しい順`,
+              `${filtered.length} / ${rooms.length} 间 · 最新优先`,
+              `${filtered.length} of ${rooms.length} · Newest first`,
+            )}
           </p>
           {filtered.length === 0 ? (
             <p className="teacher-rooms-empty">
               {rooms.length
-                ? "条件に一致するルームはありません。"
-                : "保存済みのルームはありません。"}
+                ? t(
+                    "条件に一致するルームはありません。",
+                    "没有符合条件的房间。",
+                    "No rooms match these filters.",
+                  )
+                : t(
+                    "保存済みのルームはありません。",
+                    "没有已保存的房间。",
+                    "No saved rooms.",
+                  )}
             </p>
           ) : (
             <ul className="teacher-room-list">
@@ -275,29 +360,55 @@ export function TeacherRooms({ status }: { status: ServerStatus }) {
                       {experimentLabel}
                     </span>
                     <span className={`teacher-room-status is-${room.phase}`}>
-                      {PHASE_LABELS[room.phase]}
+                      {t(...PHASE_LABELS[room.phase])}
                     </span>
                   </div>
                   <h3>{room.title}</h3>
                   <div className="teacher-room-meta">
                     <span className="teacher-room-code">{room.code}</span>
-                    <span>作成 {dateFormat.format(room.createdAt)}</span>
+                    <span>
+                      {t("作成", "创建于", "Created")}{" "}
+                      {dateFormat.format(room.createdAt)}
+                    </span>
                     <span>
                       {room.experiment !== "judgment" &&
-                        `${room.marketCount}${room.experiment === "evolution" ? "グループ" : "市場"} · `}
-                      参加者 {room.participantCount}
-                      {!room.flexibleAdmission && `/${room.capacity}`}人
+                        (room.experiment === "evolution"
+                          ? t(
+                              `${room.marketCount}グループ`,
+                              `${room.marketCount} 组`,
+                              `Groups ${room.marketCount}`,
+                            )
+                          : t(
+                              `${room.marketCount}市場`,
+                              `${room.marketCount} 个市场`,
+                              `Markets ${room.marketCount}`,
+                            ))}
+                      {room.experiment !== "judgment" && " · "}
+                      {t("参加者", "参与者", "Participants")}{" "}
+                      {room.participantCount}
+                      {!room.flexibleAdmission && `/${room.capacity}`}
+                      {language === "ja" && "人"}
                     </span>
                     <span>
                       {room.experiment === "judgment" ? (
-                        `実施 ${room.round}回`
+                        t(
+                          `実施 ${room.round}回`,
+                          `已实施 ${room.round} 次`,
+                          `Sessions ${room.round}`,
+                        )
                       ) : (
                         <>
-                          第{room.round}/{room.totalRounds}
-                          {room.experiment === "emh" ||
-                          room.experiment === "evolution"
-                            ? "ラウンド"
-                            : "期"}
+                          {room.experiment === "institutions"
+                            ? t(
+                                `第${room.round}/${room.totalRounds}期`,
+                                `第 ${room.round}/${room.totalRounds} 期`,
+                                `Period ${room.round}/${room.totalRounds}`,
+                              )
+                            : t(
+                                `第${room.round}/${room.totalRounds}ラウンド`,
+                                `第 ${room.round}/${room.totalRounds} 轮`,
+                                `Round ${room.round}/${room.totalRounds}`,
+                              )}
                         </>
                       )}
                     </span>
@@ -307,11 +418,22 @@ export function TeacherRooms({ status }: { status: ServerStatus }) {
                       {room.institutions.length ? (
                         room.institutions.map(({ institution, periods }) => (
                           <span key={institution}>
-                            {INSTITUTIONS[institution].short} {periods}期
+                            {INSTITUTIONS[institution].short}{" "}
+                            {t(
+                              `${periods}期`,
+                              `${periods} 期`,
+                              `${periods} periods`,
+                            )}
                           </span>
                         ))
                       ) : (
-                        <span>旧版 CDA {room.totalRounds}期</span>
+                        <span>
+                          {t(
+                            `旧版 CDA ${room.totalRounds}期`,
+                            `旧版 CDA ${room.totalRounds} 期`,
+                            `Legacy CDA ${room.totalRounds} periods`,
+                          )}
+                        </span>
                       )}
                     </div>
                   )}
@@ -319,9 +441,9 @@ export function TeacherRooms({ status }: { status: ServerStatus }) {
                     <Link
                       className="button secondary small-button"
                       href={teacherReentryHref(room.code)}
-                      aria-label={`結果・ダウンロード / 再入室 (${room.code})`}
+                      aria-label={`${reenter} (${room.code})`}
                     >
-                      結果・ダウンロード / 再入室
+                      {reenter}
                     </Link>
                     <button
                       className="button secondary small-button danger-text"
@@ -329,9 +451,13 @@ export function TeacherRooms({ status }: { status: ServerStatus }) {
                         setMessage("");
                         setDeleting(room);
                       }}
-                      aria-label={`${room.code} を削除`}
+                      aria-label={t(
+                        `${room.code} を削除`,
+                        `删除 ${room.code}`,
+                        `Delete ${room.code}`,
+                      )}
                     >
-                      <Trash2 size={14} /> 削除
+                      <Trash2 size={14} /> {t("削除", "删除", "Delete")}
                     </button>
                   </div>
                 </li>
@@ -343,25 +469,31 @@ export function TeacherRooms({ status }: { status: ServerStatus }) {
               className="button secondary full"
               onClick={() => setLimit((previous) => previous + 20)}
             >
-              次の20件を表示
+              {t("次の20件を表示", "显示接下来 20 间", "Show the next 20")}
             </button>
           )}
         </>
       )}
       {pending && (
         <p className="teacher-rooms-loading" role="status">
-          <Spinner /> ルームを読み込み中…
+          <Spinner />{" "}
+          {t("ルームを読み込み中…", "正在读取房间…", "Loading rooms…")}
         </p>
       )}
       {status.mode === "local" && (
         <p className="local-note">
           <FlaskConical size={14} />
-          このコンピューターに保存されたルームを表示しています。
+          {t(
+            "このコンピューターに保存されたルームを表示しています。",
+            "显示保存在此电脑上的房间。",
+            "Showing rooms saved on this computer.",
+          )}
         </p>
       )}
       {deleting && (
         <DeleteRoomDialog
           room={deleting}
+          language={language}
           onCancel={() => setDeleting(null)}
           onDelete={() => remove(deleting)}
         />
@@ -372,13 +504,16 @@ export function TeacherRooms({ status }: { status: ServerStatus }) {
 
 function DeleteRoomDialog({
   room,
+  language,
   onCancel,
   onDelete,
 }: {
   room: RoomSummary;
+  language: UiLanguage;
   onCancel: () => void;
   onDelete: () => Promise<void>;
 }) {
+  const t = translator(language);
   const ref = useRef<HTMLDialogElement>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -393,18 +528,33 @@ function DeleteRoomDialog({
       className="confirm-dialog teacher-room-delete"
       aria-labelledby="room-delete-title"
       aria-describedby="room-delete-description"
+      lang={language}
       onCancel={(event) => {
         event.preventDefault();
         if (!pending) onCancel();
       }}
     >
-      <h2 id="room-delete-title">ルーム {room.code} を削除しますか？</h2>
+      <h2 id="room-delete-title">
+        {t(
+          `ルーム ${room.code} を削除しますか？`,
+          `删除房间 ${room.code}？`,
+          `Delete room ${room.code}?`,
+        )}
+      </h2>
       <p className="teacher-room-delete-name">{room.title}</p>
       <p id="room-delete-description">
         {room.phase !== "waiting" &&
           room.phase !== "finished" &&
-          "実験中の参加者は、このルームを利用できなくなります。"}
-        参加者情報・取引履歴・実験結果もすべて削除されます。この操作は取り消せません。必要な結果は再入室してダウンロードしてください。
+          t(
+            "実験中の参加者は、このルームを利用できなくなります。",
+            "正在实验的参与者将无法继续使用该房间。",
+            "Participants in the experiment will lose access to the room. ",
+          )}
+        {t(
+          "参加者情報・取引履歴・実験結果もすべて削除されます。この操作は取り消せません。必要な結果は再入室してダウンロードしてください。",
+          "参与者信息、交易记录和实验结果都会永久删除。请先重新入室下载所需结果。",
+          "Participant information, trade history, and results will be permanently deleted. Re-enter the room to download any results you need.",
+        )}
       </p>
       <form
         onSubmit={async (event) => {
@@ -421,7 +571,7 @@ function DeleteRoomDialog({
         }}
       >
         {error && (
-          <p className="error-message" role="alert">
+          <p className="error-message" role="alert" lang="ja">
             {error}
           </p>
         )}
@@ -432,13 +582,15 @@ function DeleteRoomDialog({
             disabled={pending}
             onClick={onCancel}
           >
-            戻る
+            {t("戻る", "返回", "Back")}
           </button>
           <button
             className="button teacher-room-delete-button"
             disabled={pending}
           >
-            {pending ? "削除中…" : "このルームを削除"}
+            {pending
+              ? t("削除中…", "正在删除…", "Deleting…")
+              : t("このルームを削除", "删除此房间", "Delete this room")}
           </button>
         </div>
       </form>

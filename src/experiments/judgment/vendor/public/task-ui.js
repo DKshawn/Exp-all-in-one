@@ -3,8 +3,9 @@ import { expandedText } from './expanded-messages.js';
 
 export const escape = value => String(value ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function languageHTML(language) {
-  return '<div class="language-switch"><label class="sr-only" for="language-select">'+escape(translate('言語',language))+'</label><select id="language-select" class="language-select">'+
-    [['ja','日本語'],['zh','中文'],['en','English']].map(([value,label])=>'<option value="'+value+'" lang="'+(value==='zh'?'zh-CN':value)+'"'+(value===language?' selected':'')+'>'+label+'</option>').join('')+'</select></div>';
+  const label=escape(translate('言語',language));
+  return '<span class="header-language"><select id="language-select" class="header-language-select" name="language" lang="'+(language==='zh'?'zh-CN':language)+'" aria-label="'+label+'" title="'+label+'">'+
+    [['ja','日本語'],['zh','中文'],['en','English']].map(([value,label])=>'<option value="'+value+'" lang="'+(value==='zh'?'zh-CN':value)+'"'+(value===language?' selected':'')+'>'+label+'</option>').join('')+'</select></span>';
 }
 export function fieldHTML(field,language='ja') {
   const id='field-'+field.id;

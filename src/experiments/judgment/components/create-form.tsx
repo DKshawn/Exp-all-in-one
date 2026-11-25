@@ -1,9 +1,5 @@
 "use client";
-import {
-  TeacherLanguage,
-  useTeacherLanguage,
-  teacherText,
-} from "./teacher-language";
+import { useTeacherLanguage, teacherText } from "./teacher-language";
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { ServerStatus } from "@/lib/server/config";
@@ -18,7 +14,7 @@ export function JudgmentCreateForm({
   status: ServerStatus;
   studies: Study[];
 }) {
-  const [language, setLanguage] = useTeacherLanguage();
+  const language = useTeacherLanguage();
   const t = (text: string, values: Record<string, string | number> = {}) =>
     teacherText(text, language, values);
   const router = useRouter();
@@ -57,7 +53,6 @@ export function JudgmentCreateForm({
       >
         <div className="judgment-section-heading">
           <h1>{JUDGMENT_NAME}</h1>
-          <TeacherLanguage language={language} onChange={setLanguage} />
         </div>
         <SettingsFields
           settings={settings}

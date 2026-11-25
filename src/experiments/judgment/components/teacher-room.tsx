@@ -1,9 +1,5 @@
 "use client";
-import {
-  TeacherLanguage,
-  useTeacherLanguage,
-  teacherText,
-} from "./teacher-language";
+import { useTeacherLanguage, teacherText } from "./teacher-language";
 import { JUDGMENT_NAME } from "../constants";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -28,7 +24,7 @@ export function JudgmentTeacherRoom({
   code: string;
   studies: Study[];
 }) {
-  const [language, setLanguage] = useTeacherLanguage();
+  const language = useTeacherLanguage();
   const t = (text: string, values: Record<string, string | number> = {}) =>
     teacherText(text, language, values);
   const [data, setData] = useState<TeacherView | null>(null),
@@ -145,7 +141,6 @@ export function JudgmentTeacherRoom({
           <h1>{data?.title ?? JUDGMENT_NAME}</h1>
           <div className="judgment-actions">
             <span className="judgment-room-code">{code}</span>
-            <TeacherLanguage language={language} onChange={setLanguage} />
           </div>
         </div>
         {connectionError && (
@@ -308,11 +303,7 @@ export function JudgmentTeacherRoom({
         )}
       </main>
       {preview && (
-        <JudgmentPreview
-          language={language}
-          protocols={preview}
-          onClose={() => setPreview(null)}
-        />
+        <JudgmentPreview protocols={preview} onClose={() => setPreview(null)} />
       )}
       {ending && (
         <EndDialog

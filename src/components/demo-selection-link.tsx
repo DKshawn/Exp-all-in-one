@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { DEMO_SELECTION_HREF } from "@/lib/demo-navigation";
 
-export function DemoSelectionLink() {
+export function DemoSelectionLink({ label = "戻る" }: { label?: string }) {
   return (
     <Link
       className="button secondary small-button"
@@ -10,7 +10,7 @@ export function DemoSelectionLink() {
       target="_top"
     >
       <ArrowLeft size={15} />
-      戻る
+      {label}
     </Link>
   );
 }

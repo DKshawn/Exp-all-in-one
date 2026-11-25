@@ -1,5 +1,7 @@
 # Double Auction
 
+在教师建房页和演示设置页，点击页眉右上角的地球图标选择日文、中文或英文。详细设置会使用同一语言。
+
 [日本語](../ja/double-auction.md) · [中文](../zh-CN/double-auction.md) · [English](../en/double-auction.md)
 
 学生交易页在宽度不超过 760 CSS 像素时使用原尺寸单列布局。个人条件和下单区在前，盘口和记录在后。长记录可在面板内滚动。

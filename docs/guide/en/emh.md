@@ -1,5 +1,7 @@
 # EMH asset market experiment
 
+Use the globe icon at the top right of room creation and demo setup to choose Japanese, Chinese, or English. The settings for Experiments 1 and 2 use the same language.
+
 [日本語](../ja/emh.md) · [中文](../zh-CN/emh.md) · [English](../en/emh.md)
 
 The displayed seconds follow the server deadlines. The clock stays still in the lobby and during pauses.

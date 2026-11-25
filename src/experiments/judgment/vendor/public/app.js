@@ -4,7 +4,7 @@ import { createTimedAttempt, captureTimedInput, finishTimedAttempt } from './tim
 import { rankingHTML, mountRanking, RANKING_CONTROL } from './ranking.js';
 import { createPreviewState, previewRun } from './preview-state.js';
 
-export function mountJudgment(app,{code='',isPreview=false,protocols=[],onPreviewState=()=>{},initialLanguage='ja'}={}) {
+export function mountJudgment(app,{code='',isPreview=false,protocols=[],onPreviewState=()=>{},initialLanguage,onLanguageChange=()=>{},onLanguageDisabled=()=>{}}={}) {
 let disposed=false;const controller=new AbortController();
 app.innerHTML='<p class="loading">読み込み中…</p>';
 const $=(selector,root=app)=>root.querySelector(selector);
@@ -16,21 +16,34 @@ const storage={
   set(key,value){if(isPreview)previewMemory.set(key,value);else localStorage.setItem(prefix+key,JSON.stringify(value));},
   remove(key){if(isPreview)previewMemory.delete(key);else localStorage.removeItem(prefix+key);}
 };
-let language=normalizeLanguage(storage.get('language',isPreview?initialLanguage:'ja'));
-let cleanup=()=>{};
+let language=normalizeLanguage(initialLanguage??storage.get('language','ja'));
+let cleanup=()=>{}, changeLanguage=null;
 let studentToken=code,studentId='',currentRun=null,view='entry',sending=false,polling=false;
 let preview=null;
 const t=text=>translate(text,language);
 const f=(text,values)=>format(text,language,values);
 const mark='<span class="brand-icon" aria-hidden="true"><i></i><i></i><i></i></span>';
-const header=progress=>'<header class="student-topbar"><span class="student-brand">'+mark+escape(t('実験'))+'</span><div class="header-tools">'+
-  (progress?'<span class="student-progress">'+progress+'</span>':'')+languageHTML(language)+'</div></header>';
+const header=progress=>{
+  const status=progress?'<span class="student-progress">'+progress+'</span>':'';
+  if(isPreview)return status?'<div class="preview-progress">'+status+'</div>':'';
+  return '<header class="site-header student-topbar"><div class="header-inner"><div class="header-content"><span class="header-left student-brand">'+mark+escape(t('実験'))+'</span>'+
+    (status?'<div class="header-right">'+status+'</div>':'')+'</div>'+languageHTML(language)+'</div></header>';
+};
 function setLanguage(next){
   language=normalizeLanguage(next);storage.set('language',language);
   app.lang=documentLanguage(language);
 }
 function languageListener(change){
-  $('#language-select').addEventListener('change',event=>change(event.target.value));
+  changeLanguage=change;
+  $('#language-select')?.addEventListener('change',event=>{
+    change(event.target.value);
+    onLanguageChange(language);
+  });
+}
+function setLanguageDisabled(disabled){
+  const select=$('#language-select');
+  if(select)select.disabled=disabled;
+  onLanguageDisabled(disabled);
 }
 function reportError(element,message=''){
   if(disposed||!element)return;
@@ -45,11 +58,12 @@ async function api(path,data){
   if(!response.ok)throw Object.assign(new Error(result.error||'送信できませんでした。もう一度お試しください。'),{status:response.status});
   return result;
 }
-function reset(){cleanup();cleanup=()=>{};}
+function reset(){cleanup();cleanup=()=>{};changeLanguage=null;}
 function showEntry(message=''){
   if(disposed)return;reset();view='entry';currentRun=null;
   app.innerHTML=header()+'<main class="student-entry"><section class="entry-card"><h1>'+escape(t('ログイン'))+'</h1><p class="form-error" role="alert">'+escape(message)+'</p><a class="button primary" href="/?code='+encodeURIComponent(code)+'">'+escape(t('ログイン'))+'</a><button class="text-button" id="retry">'+escape(t('もう一度送信する'))+'</button></section></main>';
-  languageListener(next=>{setLanguage(next);showEntry(message);});
+  setLanguageDisabled(false);
+  languageListener(next=>{setLanguage(next);showEntry(message);$('#language-select')?.focus();});
   $('#retry').onclick=()=>{app.innerHTML='<p class="loading">読み込み中…</p>';boot();};
 }
 async function boot(){
@@ -96,7 +110,8 @@ function showWaiting(message=''){
   reset();view='waiting';currentRun=null;
   app.innerHTML=header(escape(studentId))+'<main id="main" class="waiting-main"><section class="panel student-waiting-card"><div class="student-waiting-icon" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg></div><p class="student-waiting-eyebrow">'+escape(t('待機中'))+'</p><h1>'+escape(t('開始をお待ちください。'))+'</h1><p id="waiting-error" class="form-error" role="status"></p><button id="logout" class="button secondary">'+escape(t('ログアウト'))+'</button></section></main>';
   reportError($('#waiting-error'),message);
-  languageListener(next=>{setLanguage(next);showWaiting(message);$('#language-select').focus();});
+  setLanguageDisabled(false);
+  languageListener(next=>{setLanguage(next);showWaiting(message);$('#language-select')?.focus();});
   $('#logout').onclick=()=>{studentToken=null;storage.remove('studentToken');showEntry();};
 }
 function applyClassroom(state){
@@ -256,7 +271,7 @@ function render(state,resume={}){
       $('#sum-indicator').textContent=f('合計：{value}%',{value:sum});
       $('#sum-indicator').classList.toggle('valid',sum===100);
     }
-    $('#language-select').disabled=busy||Boolean(frozen);
+    setLanguageDisabled(busy||Boolean(frozen));
     ranking?.setDisabled(busy||Boolean(frozen));
   }
   form.addEventListener('input',event=>{
@@ -273,7 +288,7 @@ function render(state,resume={}){
     render(state,{runtime,draft,error:currentError,scrollY,rankingScroll});
   });
   if(resume.runtime){
-    $('#language-select').focus({preventScroll:true});scrollHost().scrollTo({top:resume.scrollY||0,behavior:'instant'});
+    $('#language-select')?.focus({preventScroll:true});scrollHost().scrollTo({top:resume.scrollY||0,behavior:'instant'});
   }else{
     (runtime.timed&&!reloadedTimed?$('#field-estimate'):$('#trial-title')).focus({preventScroll:true});scrollHost().scrollTo({top:0,behavior:'instant'});
   }
@@ -365,24 +380,29 @@ function render(state,resume={}){
   };
   if(runtime.timed&&(reloadedTimed||document.hidden))completeTimed('interrupted');else tick();
 }
-function finish(state){
+function finish(state,keepFocus=false){
   if(disposed)return;
   app.innerHTML=header()+'<main id="main" class="student-finish"><div class="completion-mark" aria-hidden="true">✓</div>'+
     '<h1 id="finish-title" tabindex="-1">'+escape(t(state.status==='completed'?'回答が完了しました。':'実験を終了しました。'))+'</h1><p class="thanks">'+escape(t('ありがとうございました。'))+'</p>'+
     (state.debrief?.length?'<div class="end-notes">'+state.debrief.map(note=>'<p>'+escape(t(note))+'</p>').join('')+'</div>':'')+
     '<button id="exit" class="button primary large">'+escape(t(isPreview?'最初に戻る':'待機に戻る'))+'</button></main>';
-  languageListener(next=>{setLanguage(next);finish(state);$('#language-select').focus({preventScroll:true});});
-  $('#finish-title').focus({preventScroll:true});
+  setLanguageDisabled(false);
+  languageListener(next=>{setLanguage(next);finish(state,true);$('#language-select')?.focus({preventScroll:true});});
+  if(!keepFocus)$('#finish-title').focus({preventScroll:true});
   $('#exit').onclick=()=>{
     if(isPreview){preview.index=0;render(previewRun(preview),{draft:preview.drafts[0]});return;}
     storage.set('dismissed.'+state.id,true);storage.remove('pending.'+state.id);
     Object.keys(localStorage).filter(key=>key.startsWith(prefix+'visits.'+state.id+'.')).forEach(key=>localStorage.removeItem(key));
     showWaiting();pollClassroom();
   };
-  scrollHost().scrollTo({top:0,behavior:'instant'});
+  if(!keepFocus)scrollHost().scrollTo({top:0,behavior:'instant'});
 }
 let pollTimer;
 if(isPreview)bootPreview();
 else {boot();pollTimer=setInterval(pollClassroom,1500);}
-return {move:(direction,skip=false)=>{if(!disposed)previewMove(direction,skip);},dispose:()=>{disposed=true;controller.abort();clearInterval(pollTimer);reset();app.replaceChildren();}};
+return {
+  move:(direction,skip=false)=>{if(!disposed)previewMove(direction,skip);},
+  setLanguage:next=>{if(!disposed&&next!==language)(changeLanguage??setLanguage)(next);},
+  dispose:()=>{disposed=true;controller.abort();clearInterval(pollTimer);reset();app.replaceChildren();}
+};
 }

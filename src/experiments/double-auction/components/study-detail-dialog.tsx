@@ -2,12 +2,13 @@
 
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { X } from "lucide-react";
+import { useSetupText } from "@/components/experiment-language";
 
 /** Keep supplementary tables from growing the live trading screen. */
 export function StudyDetailDialog({
   label,
   title = label,
-  closeLabel = "閉じる",
+  closeLabel,
   children,
   triggerClassName = "text-button study-detail-trigger",
   disabled = false,
@@ -25,6 +26,7 @@ export function StudyDetailDialog({
   onClose?: () => void;
   className?: string;
 }) {
+  const t = useSetupText();
   const dialog = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   useEffect(() => {
@@ -60,7 +62,7 @@ export function StudyDetailDialog({
             data-audit-button={`details.close:${title}`}
             onClick={() => dialog.current?.close()}
           >
-            <X size={16} /> {closeLabel}
+            <X size={16} /> {closeLabel ?? t("閉じる", "关闭", "Close")}
           </button>
         </div>
         <div className="study-detail-content">{children}</div>

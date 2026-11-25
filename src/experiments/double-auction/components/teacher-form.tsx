@@ -57,6 +57,12 @@ import { studyAllocationPlan } from "@/experiments/double-auction/lib/study-allo
 import { StudyUnitFields } from "./study-unit-settings";
 import { StudyAllocationPreview } from "./study-allocation-preview";
 import { teacherRoomHref } from "@/lib/room-navigation";
+import {
+  SetupLanguage,
+  useExperimentLanguage,
+} from "@/components/experiment-language";
+import { translator } from "@/lib/ui-language";
+import { studySetupError } from "@/experiments/double-auction/lib/study-setup-text";
 
 export function TeacherForm({
   status,
@@ -73,16 +79,26 @@ export function TeacherForm({
   conditionPreset?: { label: string; settings: StudySettings };
   onCreateDemo?: (config: RoomConfig, generator?: StudyGeneratorConfig) => void;
 }) {
+  const language = useExperimentLanguage();
+  const t = translator(language);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
-  const [title, setTitle] = useState(
-    initialConfig?.title ??
-      (onCreateDemo
-        ? "ひとりデモ"
-        : legacy
-          ? "ダブルオークション実験"
-          : "実験1：市場制度の比較"),
-  );
+  const [titleDraft, setTitle] = useState(initialConfig?.title);
+  const title =
+    titleDraft ??
+    (onCreateDemo
+      ? t("ひとりデモ", "单人演示", "Solo demo")
+      : legacy
+        ? t(
+            "ダブルオークション実験",
+            "双向拍卖实验",
+            "Double Auction experiment",
+          )
+        : t(
+            "実験1：市場制度の比較",
+            "实验 1：市场制度比较",
+            "Experiment 1: Comparing market institutions",
+          ));
   const [configureFirst, setConfigureFirst] = useState(false);
   const [detailsSaved, setDetailsSaved] = useState(
     initialConfig?.studySetupConfirmed === true,
@@ -241,6 +257,10 @@ export function TeacherForm({
   );
   const count = allocation.requestedMarkets;
   const size = allocation.templateSize;
+  const largestMarket = Math.max(
+    0,
+    ...allocation.layout.map((m) => m.buyers + m.sellers),
+  );
   const unitsByInstitution = Object.fromEntries(
     Object.entries(unitsDraft).map(([key, value]) => [key, Number(value)]),
   ) as StudyUnitCounts;
@@ -404,7 +424,9 @@ export function TeacherForm({
   }
   const studyCreation = !legacy;
   const conditionHeading = (
-    <h2 id="teacher-condition-heading">供需プリセット</h2>
+    <h2 id="teacher-condition-heading">
+      {t("供需プリセット", "供需预设", "Supply and demand preset")}
+    </h2>
   );
   const conditionSection = (
     <div className="teacher-condition-layout">
@@ -445,7 +467,11 @@ export function TeacherForm({
           heading: conditionHeading,
           labelledBy: "teacher-condition-heading",
         }}
-        actionLabel="設定を保存して閉じる"
+        actionLabel={t(
+          "設定を保存して閉じる",
+          "保存设置并关闭",
+          "Save and close",
+        )}
         renderAllocation={(preview, other) => (
           <StudyAllocationPreview
             plan={allocation}
@@ -478,12 +504,12 @@ export function TeacherForm({
           className="error-message"
           role="alert"
         >
-          {stepError}
+          {studySetupError(t, stepError)}
         </p>
       )}
       {error && error !== stepError && (
         <p className="error-message" role="alert">
-          {error}
+          {studySetupError(t, error)}
         </p>
       )}
       <div className="study-actions">
@@ -493,318 +519,414 @@ export function TeacherForm({
           disabled={pending || Boolean(stepError)}
           onClick={nextConfigurationStep}
         >
-          確定して次へ
+          {t("確定して次へ", "确认并继续", "Confirm and continue")}
         </button>
       </div>
     </div>
   );
   return (
-    <div className="panel teacher-form-card">
-      <form
-        method="post"
-        onSubmit={submit}
-        className={
-          studyCreation
-            ? "teacher-create-layout teacher-create-quick"
-            : undefined
-        }
+    <SetupLanguage.Provider value={language}>
+      <div
+        className="panel teacher-form-card localized-room-setup"
+        lang={language}
       >
-        <div className="teacher-primary-settings">
-          <section
-            className={
-              studyCreation ? "teacher-settings-section panel" : undefined
-            }
-          >
-            {studyCreation && <h2>ルームの設定</h2>}
-            <label className="field">
-              実験名
-              <input
-                name="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                disabled={pending}
-                maxLength={60}
-                required
-              />
-            </label>
-            {studyCreation && (
-              <button
-                type="button"
-                className="button secondary"
-                aria-haspopup="dialog"
-                onClick={openConfiguration}
-              >
-                作成前に詳細を設定
-              </button>
-            )}
-          </section>
-          {legacy ? (
-            <>
-              <div className="form-grid">
-                <label className="field">
-                  参加人数
-                  <select name="capacity" defaultValue="12">
-                    <option value="12">12人（買6・売6）</option>
-                    <option value="24">24人（買12・売12）</option>
-                    <option value="36">36人（買18・売18）</option>
-                  </select>
-                </label>
-                <label className="field">
-                  ラウンド数
-                  <input
-                    type="number"
-                    name="rounds"
-                    defaultValue={6}
-                    min={1}
-                    max={12}
-                    required
-                  />
-                </label>
-              </div>
-              <label className="field">
-                1ラウンドの取引時間
-                <select name="duration" defaultValue="180">
-                  <option value="60">1分</option>
-                  <option value="120">2分</option>
-                  <option value="180">3分</option>
-                  <option value="300">5分</option>
-                  <option value="600">10分</option>
-                </select>
-              </label>
-            </>
-          ) : null}
-          {!onCreateDemo && (
+        <form
+          method="post"
+          onSubmit={submit}
+          className={
+            studyCreation
+              ? "teacher-create-layout teacher-create-quick"
+              : undefined
+          }
+        >
+          <div className="teacher-primary-settings">
             <section
               className={
                 studyCreation ? "teacher-settings-section panel" : undefined
               }
             >
+              {studyCreation && (
+                <h2>{t("ルームの設定", "房间设置", "Room settings")}</h2>
+              )}
               <label className="field">
-                教員パスワード
+                {t("実験名", "实验名称", "Room title")}
                 <input
-                  type="password"
-                  name="password"
-                  placeholder="8文字以上で設定"
-                  minLength={8}
-                  maxLength={128}
+                  name="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  disabled={pending}
+                  maxLength={60}
                   required
-                  autoComplete="new-password"
                 />
-                <TeacherPasswordHelp />
               </label>
-            </section>
-          )}
-        </div>
-        <div className="teacher-form-actions">
-          {!onCreateDemo && !status.ready && (
-            <p className="error-message" role="alert">
-              アプリの接続設定が完了していません。管理者がデータベースと教員用キーを設定してください。
-            </p>
-          )}
-          {error && (
-            <p className="error-message" role="alert">
-              {error}
-            </p>
-          )}
-          <button
-            className="button primary full"
-            disabled={
-              pending ||
-              (!onCreateDemo && !status.ready) ||
-              (studyCreation &&
-                Boolean(
-                  layoutError ||
-                  unitsError ||
-                  institutionError ||
-                  periodsError ||
-                  timingError ||
-                  commissionError ||
-                  conditionsPending,
-                ))
-            }
-          >
-            {pending ? <Spinner /> : "ルーム作成"}
-          </button>
-          {legacy && !onCreateDemo && (
-            <div className="callout">
-              <Info size={17} />
-              <p>
-                ルーム作成後、教員用画面で各商品の価値と費用を変更できます。参加人数がそろうと開始でき、実験開始後は条件が固定されます。
-              </p>
-            </div>
-          )}
-          {(onCreateDemo || status.mode === "local") && (
-            <p className="local-note">
-              <FlaskConical size={14} />
-              {onCreateDemo
-                ? "デモの進行はこの画面内で保持されます。再読み込みすると実験設定からやり直せます。"
-                : "ローカル環境で実行中。データはこのコンピューターに保存されます。"}
-            </p>
-          )}
-        </div>
-      </form>
-      {studyCreation && configureFirst && (
-        <StudyDetailDialog
-          label="実験の詳細設定"
-          className="teacher-configuration-dialog study-compact-settings"
-          open
-          onClose={cancelConfiguration}
-        >
-          <div className="panel study-setup">
-            <header className="study-setup-heading">
-              <h2>実験の準備</h2>
-              <span>ステップ {configurationStep + 1} / 3</span>
-            </header>
-            <StudySetupStep
-              id={configurationId}
-              index={0}
-              label="制度と進行"
-              summary={institutions
-                .map((i) => `${INSTITUTIONS[i].short} ${periods[i]}期`)
-                .join(" · ")}
-              expanded={configurationStep === 0}
-              complete={configurationProgress > 0}
-              disabled={pending}
-              onOpen={() => setConfigurationStep(0)}
-            >
-              <StudyProgramFields
-                institutions={institutions}
-                periods={periods}
-                timing={timing}
-                onInstitutionsChange={setInstitutions}
-                onPeriodsChange={setPeriods}
-                onTimingChange={setTiming}
-                disabled={settingsDisabled}
-                marketSize={size}
-              />
-              {configurationStep === 0 && configurationActions}
-            </StudySetupStep>
-            <StudySetupStep
-              id={configurationId}
-              index={1}
-              label="市場・人数"
-              summary={`${attendance}人 · ${count}市場 · 供需テンプレート${size}人`}
-              expanded={configurationStep === 1}
-              complete={configurationProgress > 1}
-              disabled={pending || configurationProgress < 1}
-              onOpen={() => setConfigurationStep(1)}
-            >
-              <label className="field">
-                市場数・人数
-                <select
-                  name="marketPreset"
-                  value={preset}
-                  disabled={settingsDisabled}
-                  onChange={(event) => {
-                    setPreset(event.target.value);
-                    if (event.target.value !== "custom") {
-                      setMarketCount(event.target.value);
-                      setMarketSize(String(Number(event.target.value) * 16));
-                      setMarketMode(
-                        event.target.value === "1" ? "auto" : "manual",
-                      );
-                    }
-                  }}
-                >
-                  <option value="1">1市場・16人</option>
-                  <option value="6">6市場・96人</option>
-                  <option value="12">12市場・192人</option>
-                  <option value="custom">カスタム</option>
-                </select>
-              </label>
-              {preset === "custom" && (
-                <div className="form-grid">
-                  <label className="field">
-                    予定人数
-                    <input
-                      type="number"
-                      name="marketSize"
-                      min={2}
-                      max={MAX_STUDY_PARTICIPANTS}
-                      step={1}
-                      required
-                      value={marketSize}
-                      disabled={settingsDisabled}
-                      onChange={(e) => setMarketSize(e.target.value)}
-                      aria-describedby={
-                        layoutError ? "study-layout-help" : undefined
-                      }
-                    />
-                  </label>
-                  <label className="field">
-                    市場数
-                    <input
-                      type="number"
-                      name="markets"
-                      min={1}
-                      max={MAX_STUDY_MARKETS}
-                      step={1}
-                      required
-                      value={marketMode === "auto" ? count : marketCount}
-                      disabled={settingsDisabled}
-                      onChange={(e) => {
-                        setMarketMode("manual");
-                        setMarketCount(e.target.value);
-                      }}
-                      aria-describedby={
-                        layoutError ? "study-layout-help" : undefined
-                      }
-                    />
-                  </label>
-                </div>
-              )}
-              {preset === "custom" && (
-                <p className="field-help">
-                  {marketMode === "auto"
-                    ? "自動：1市場16人ずつ順に割り当てます。"
-                    : "手動で指定した市場数を優先します。"}
-                  実際の参加者は最大
-                  {MAX_STUDY_PARTICIPANTS}
-                  人まで受け付け、奇数でも全員を割り当てます。市場数は入室受付中も変更できます。
-                  {!layoutError &&
-                    `最大市場${Math.max(0, ...allocation.layout.map((m) => m.buyers + m.sellers))}人 → 供需テンプレート${size}人（買い手・売り手各${size / 2}人）。`}
-                  {size !== 16 &&
-                    "16人以外では、既定の価値・費用を全範囲から均等に抽出・複製します。"}
-                  {count > 1 &&
-                    orderCount > 1 &&
-                    count % orderCount !== 0 &&
-                    `市場数が${orderCount}の倍数以外では、制度順序の割当数に差が出ます。`}
-                </p>
-              )}
-              {preset === "custom" && marketMode === "manual" && (
+              {studyCreation && (
                 <button
                   type="button"
                   className="button secondary"
-                  onClick={() => setMarketMode("auto")}
-                  disabled={settingsDisabled}
+                  aria-haspopup="dialog"
+                  onClick={openConfiguration}
                 >
-                  自動（1市場16人）に戻す
+                  {t(
+                    "作成前に詳細を設定",
+                    "创建前设置详情",
+                    "Configure before creating",
+                  )}
                 </button>
               )}
-              {configurationStep === 1 && configurationActions}
-            </StudySetupStep>
-            <StudySetupStep
-              id={configurationId}
-              index={2}
-              label="供需条件"
-              summary={`${adoptedConditions?.generator ? "カスタム" : (conditionPreset?.label ?? "Default")} · ${institutions.map((i) => `${INSTITUTIONS[i].short} ${unitsByInstitution[i]}単位`).join(" · ")} · Commission ${commission}円`}
-              expanded={configurationStep === 2}
-              complete={
-                detailsSaved && !configurationError && !conditionsPending
-              }
-              disabled={pending || configurationProgress < 2}
-              onOpen={() => setConfigurationStep(2)}
-            >
-              {conditionSection}
-              {configurationStep === 2 && error && (
-                <p className="error-message" role="alert">
-                  {error}
-                </p>
-              )}
-            </StudySetupStep>
+            </section>
+            {legacy ? (
+              <>
+                <div className="form-grid">
+                  <label className="field">
+                    {t("参加人数", "参加人数", "Participants")}
+                    <select name="capacity" defaultValue="12">
+                      {[12, 24, 36].map((count) => (
+                        <option key={count} value={count}>
+                          {t(
+                            `${count}人（買${count / 2}・売${count / 2}）`,
+                            `${count} 人（买方 ${count / 2}、卖方 ${count / 2}）`,
+                            `${count} (${count / 2} buyers, ${count / 2} sellers)`,
+                          )}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field">
+                    {t("ラウンド数", "轮数", "Rounds")}
+                    <input
+                      type="number"
+                      name="rounds"
+                      defaultValue={6}
+                      min={1}
+                      max={12}
+                      required
+                    />
+                  </label>
+                </div>
+                <label className="field">
+                  {t(
+                    "1ラウンドの取引時間",
+                    "每轮交易时长",
+                    "Trading time per round",
+                  )}
+                  <select name="duration" defaultValue="180">
+                    {[1, 2, 3, 5, 10].map((minutes) => (
+                      <option key={minutes} value={minutes * 60}>
+                        {t(`${minutes}分`, `${minutes} 分钟`, `${minutes} min`)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </>
+            ) : null}
+            {!onCreateDemo && (
+              <section
+                className={
+                  studyCreation ? "teacher-settings-section panel" : undefined
+                }
+              >
+                <label className="field">
+                  {t("教員パスワード", "教师房间密码", "Room password")}
+                  <input
+                    type="password"
+                    name="password"
+                    placeholder={t(
+                      "8文字以上で設定",
+                      "至少 8 个字符",
+                      "At least 8 characters",
+                    )}
+                    minLength={8}
+                    maxLength={128}
+                    required
+                    autoComplete="new-password"
+                  />
+                  <TeacherPasswordHelp language={language} />
+                </label>
+              </section>
+            )}
           </div>
-        </StudyDetailDialog>
-      )}
-    </div>
+          <div className="teacher-form-actions">
+            {!onCreateDemo && !status.ready && (
+              <p className="error-message" role="alert">
+                {t(
+                  "アプリの接続設定が完了していません。管理者がデータベースと教員用キーを設定してください。",
+                  "连接尚未配置。请管理员设置数据库和教师密钥。",
+                  "Connection setup is incomplete. Ask the administrator to configure the database and teacher key.",
+                )}
+              </p>
+            )}
+            {error && (
+              <p className="error-message" role="alert">
+                {studySetupError(t, error)}
+              </p>
+            )}
+            <button
+              className="button primary full"
+              disabled={
+                pending ||
+                (!onCreateDemo && !status.ready) ||
+                (studyCreation &&
+                  Boolean(
+                    layoutError ||
+                    unitsError ||
+                    institutionError ||
+                    periodsError ||
+                    timingError ||
+                    commissionError ||
+                    conditionsPending,
+                  ))
+              }
+            >
+              {pending ? (
+                <Spinner />
+              ) : (
+                t("ルーム作成", "创建房间", "Create room")
+              )}
+            </button>
+            {legacy && !onCreateDemo && (
+              <div className="callout">
+                <Info size={17} />
+                <p>
+                  {t(
+                    "ルーム作成後、教員用画面で各商品の価値と費用を変更できます。参加人数がそろうと開始でき、実験開始後は条件が固定されます。",
+                    "创建后可在教师房间修改各商品的价值和成本。人数到齐后可以开始，开始后条件锁定。",
+                    "After creation, edit each good’s values and costs in the teacher room. Start when attendance is complete. Settings lock when the experiment starts.",
+                  )}
+                </p>
+              </div>
+            )}
+            {(onCreateDemo || status.mode === "local") && (
+              <p className="local-note">
+                <FlaskConical size={14} />
+                {onCreateDemo
+                  ? t(
+                      "デモの進行はこの画面内で保持されます。再読み込みすると実験設定からやり直せます。",
+                      "演示进度保留在此页面。刷新后会回到实验设置。",
+                      "Demo progress stays on this page. Reloading returns to experiment setup.",
+                    )
+                  : t(
+                      "ローカル環境で実行中。データはこのコンピューターに保存されます。",
+                      "正在本地运行，数据保存在此电脑上。",
+                      "Running locally. Data is saved on this computer.",
+                    )}
+              </p>
+            )}
+          </div>
+        </form>
+        {studyCreation && configureFirst && (
+          <StudyDetailDialog
+            label={t("実験の詳細設定", "实验详细设置", "Experiment settings")}
+            className="teacher-configuration-dialog study-compact-settings"
+            open
+            onClose={cancelConfiguration}
+          >
+            <div className="panel study-setup">
+              <header className="study-setup-heading">
+                <h2>{t("実験の準備", "实验准备", "Experiment setup")}</h2>
+                <span>
+                  {t("ステップ", "步骤", "Step")} {configurationStep + 1} / 3
+                </span>
+              </header>
+              <StudySetupStep
+                id={configurationId}
+                index={0}
+                label={t(
+                  "制度と進行",
+                  "交易制度与流程",
+                  "Institutions and timing",
+                )}
+                summary={institutions
+                  .map(
+                    (i) =>
+                      `${INSTITUTIONS[i].short} ${t(`${periods[i]}期`, `${periods[i]} 期`, `${periods[i]} periods`)}`,
+                  )
+                  .join(" · ")}
+                expanded={configurationStep === 0}
+                complete={configurationProgress > 0}
+                disabled={pending}
+                onOpen={() => setConfigurationStep(0)}
+              >
+                <StudyProgramFields
+                  institutions={institutions}
+                  periods={periods}
+                  timing={timing}
+                  onInstitutionsChange={setInstitutions}
+                  onPeriodsChange={setPeriods}
+                  onTimingChange={setTiming}
+                  disabled={settingsDisabled}
+                  marketSize={size}
+                />
+                {configurationStep === 0 && configurationActions}
+              </StudySetupStep>
+              <StudySetupStep
+                id={configurationId}
+                index={1}
+                label={t(
+                  "市場・人数",
+                  "市场与人数",
+                  "Markets and participants",
+                )}
+                summary={t(
+                  `${attendance}人 · ${count}市場 · 供需テンプレート${size}人`,
+                  `${attendance} 人 · ${count} 个市场 · ${size} 人供需模板`,
+                  `${attendance} participants · ${count} market(s) · ${size}-person template`,
+                )}
+                expanded={configurationStep === 1}
+                complete={configurationProgress > 1}
+                disabled={pending || configurationProgress < 1}
+                onOpen={() => setConfigurationStep(1)}
+              >
+                <label className="field">
+                  {t("市場数・人数", "市场数与人数", "Market layout")}
+                  <select
+                    name="marketPreset"
+                    value={preset}
+                    disabled={settingsDisabled}
+                    onChange={(event) => {
+                      setPreset(event.target.value);
+                      if (event.target.value !== "custom") {
+                        setMarketCount(event.target.value);
+                        setMarketSize(String(Number(event.target.value) * 16));
+                        setMarketMode(
+                          event.target.value === "1" ? "auto" : "manual",
+                        );
+                      }
+                    }}
+                  >
+                    {[1, 6, 12].map((markets) => (
+                      <option key={markets} value={markets}>
+                        {t(
+                          `${markets}市場・${markets * 16}人`,
+                          `${markets} 个市场 · ${markets * 16} 人`,
+                          `${markets} market(s) · ${markets * 16} participants`,
+                        )}
+                      </option>
+                    ))}
+                    <option value="custom">
+                      {t("カスタム", "自定义", "Custom")}
+                    </option>
+                  </select>
+                </label>
+                {preset === "custom" && (
+                  <div className="form-grid">
+                    <label className="field">
+                      {t("予定人数", "预计人数", "Expected participants")}
+                      <input
+                        type="number"
+                        name="marketSize"
+                        min={2}
+                        max={MAX_STUDY_PARTICIPANTS}
+                        step={1}
+                        required
+                        value={marketSize}
+                        disabled={settingsDisabled}
+                        onChange={(e) => setMarketSize(e.target.value)}
+                        aria-describedby={
+                          layoutError ? "study-layout-help" : undefined
+                        }
+                      />
+                    </label>
+                    <label className="field">
+                      {t("市場数", "市场数", "Markets")}
+                      <input
+                        type="number"
+                        name="markets"
+                        min={1}
+                        max={MAX_STUDY_MARKETS}
+                        step={1}
+                        required
+                        value={marketMode === "auto" ? count : marketCount}
+                        disabled={settingsDisabled}
+                        onChange={(e) => {
+                          setMarketMode("manual");
+                          setMarketCount(e.target.value);
+                        }}
+                        aria-describedby={
+                          layoutError ? "study-layout-help" : undefined
+                        }
+                      />
+                    </label>
+                  </div>
+                )}
+                {preset === "custom" && (
+                  <p className="field-help">
+                    {marketMode === "auto"
+                      ? t(
+                          "自動：1市場16人ずつ順に割り当てます。",
+                          "自动模式按每个市场 16 人分配。",
+                          "Auto assignment uses 16 participants per market. ",
+                        )
+                      : t(
+                          "手動で指定した市場数を優先します。",
+                          "手动模式优先使用指定的市场数。",
+                          "Manual assignment uses the specified market count. ",
+                        )}
+                    {t(
+                      `実際の参加者は最大${MAX_STUDY_PARTICIPANTS}人まで受け付け、奇数でも全員を割り当てます。市場数は入室受付中も変更できます。`,
+                      `最多允许 ${MAX_STUDY_PARTICIPANTS} 人，人数为奇数也能全部分配。入室期间仍可调整市场数。`,
+                      `Up to ${MAX_STUDY_PARTICIPANTS} participants can join. Everyone is assigned, including with odd attendance. The market count can change while admission is open. `,
+                    )}
+                    {!layoutError &&
+                      t(
+                        `最大市場${largestMarket}人 → 供需テンプレート${size}人（買い手・売り手各${size / 2}人）。`,
+                        `最大市场 ${largestMarket} 人，采用 ${size} 人供需模板，买卖双方各 ${size / 2} 人。`,
+                        `Largest market: ${largestMarket}. The template uses ${size} participants, ${size / 2} on each side. `,
+                      )}
+                    {size !== 16 &&
+                      t(
+                        "16人以外では、既定の価値・費用を全範囲から均等に抽出・複製します。",
+                        "人数不为 16 时，从默认价值和成本的完整范围均匀抽取或复制。",
+                        "For sizes other than 16, default values and costs are sampled or replicated across the entire range. ",
+                      )}
+                    {count > 1 &&
+                      orderCount > 1 &&
+                      count % orderCount !== 0 &&
+                      t(
+                        `市場数が${orderCount}の倍数以外では、制度順序の割当数に差が出ます。`,
+                        `市场数不是 ${orderCount} 的倍数时，各制度顺序的分配数会不同。`,
+                        `The institution orders are assigned unevenly when the market count is not a multiple of ${orderCount}.`,
+                      )}
+                  </p>
+                )}
+                {preset === "custom" && marketMode === "manual" && (
+                  <button
+                    type="button"
+                    className="button secondary"
+                    onClick={() => setMarketMode("auto")}
+                    disabled={settingsDisabled}
+                  >
+                    {t(
+                      "自動（1市場16人）に戻す",
+                      "恢复自动分配（每市场 16 人）",
+                      "Restore auto (16 per market)",
+                    )}
+                  </button>
+                )}
+                {configurationStep === 1 && configurationActions}
+              </StudySetupStep>
+              <StudySetupStep
+                id={configurationId}
+                index={2}
+                label={t("供需条件", "供需条件", "Supply and demand")}
+                summary={`${adoptedConditions?.generator ? t("カスタム", "自定义", "Custom") : conditionPreset?.label === "Default" || !conditionPreset ? t("Default", "默认", "Default") : conditionPreset.label} · ${institutions.map((i) => `${INSTITUTIONS[i].short} ${t(`${unitsByInstitution[i]}単位`, `${unitsByInstitution[i]} 单位`, `${unitsByInstitution[i]} units`)}`).join(" · ")} · ${t(`Commission ${commission}円`, `佣金 ${commission} 日元`, `Commission ¥${commission}`)}`}
+                expanded={configurationStep === 2}
+                complete={
+                  detailsSaved && !configurationError && !conditionsPending
+                }
+                disabled={pending || configurationProgress < 2}
+                onOpen={() => setConfigurationStep(2)}
+              >
+                {conditionSection}
+                {configurationStep === 2 && error && (
+                  <p className="error-message" role="alert">
+                    {studySetupError(t, error)}
+                  </p>
+                )}
+              </StudySetupStep>
+            </div>
+          </StudyDetailDialog>
+        )}
+      </div>
+    </SetupLanguage.Provider>
   );
 }
