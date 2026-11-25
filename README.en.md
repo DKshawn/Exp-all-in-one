@@ -55,7 +55,7 @@ After the teacher starts EMH, a five-second countdown appears directly above the
 
 EMH room creation and Demo Model offer **実験1（固定配当）** (fixed dividends) and **実験2（抽選配当）** (dividends determined by a draw). Experiment 2 defaults to a 12-person market and uses separate practice dividends and states. Students see their state-contingent dividends and probabilities. In both experiments, students see buy and sell controls in separate columns, market prices, and personal records together; teachers can expand or collapse conditions during play. Open `/emh/demo/preview` to view the demo at different screen sizes.
 
-The standalone [EMH Experiment 2 AI student program](ai-emh/README.en.md) joins through student interfaces with a configurable participant count, accepts room links and hidden token input, adds `/v1` to local model server roots, and uses a local model or OpenAI for decisions. It does not substitute rule-based robots when a model does not respond. The AI action log also records model request duration and reasons for skipped actions. The default output limit is 2048 tokens per model request. When an AI waits, the program monitors its student market view and requests a new decision after a market change.
+The [AI experiment console](docs/guide/en/classroom.md#admit-ai-students) opens from the local teacher page. Use it to admit students powered by a local model or OpenAI into a Double Auction, EMH, or SEG room. View live decision reasons, response times, and submission outcomes, and export a CSV. The [command-line runner](ai-emh/README.en.md) is also available.
 
 An optional LM Studio fast mode disables extended reasoning; complete fenced JSON blocks are also supported.
 

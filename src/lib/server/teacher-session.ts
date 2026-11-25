@@ -81,6 +81,7 @@ export function teacherReturnPath(input?: string) {
     if (
       demoPages.has(url.pathname) ||
       url.pathname === "/teacher" ||
+      url.pathname === "/teacher/ai" ||
       (/^\/room\/[A-Z2-9]{6}$/.test(url.pathname) &&
         url.searchParams.get("entry") === "teacher")
     )

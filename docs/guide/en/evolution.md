@@ -4,6 +4,8 @@
 
 If the browser blocks preference storage, language changes apply to the open page. On narrow screens, edit each payoff directly and scroll inside the input to inspect long values.
 
+From the local teacher page, you can admit AI students to coordination and Nash demand games and review their choices. [AI experiment console instructions](classroom.md#admit-ai-students)
+
 ## Run a classroom session
 
 1. At `/teacher`, select **Stochastic Evolutionary Games**. Choose the game, name the room, set the payoffs and enter a room password. Game, payoff and round settings lock on creation. Teachers and students each choose Japanese, Chinese or English in the page header. This preference is saved in their own browser.

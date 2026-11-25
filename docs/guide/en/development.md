@@ -34,6 +34,10 @@ To check the development build from another device on the same LAN, start it wit
 
 Screen-size previews allow same-origin embedding only for `/demo` and `/emh/demo`; teacher and formal-room pages remain protected against embedding.
 
+### Local AI experiment console
+
+Set `AI_EXPERIMENTS_ENABLED=1` and run `npm run dev -- --hostname 127.0.0.1`. Open **AI 実験台** from the teacher page to see admission and decision records. See the [classroom guide](classroom.md#admit-ai-students) for model connection variables. Run logs and student recovery files are saved under `ai-emh/.local/console/`, which Git ignores.
+
 ## Vercel + Neon
 
 | Environment variable | Purpose                                                                                                          |

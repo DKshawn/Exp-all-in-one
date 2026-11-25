@@ -9,8 +9,9 @@ export class RequestError extends Error {
 
 async function request(
   url,
-  { body, cookie, timeoutMs = 10000, headers = {} } = {},
+  { body, cookie, timeoutMs = 10000, headers = {}, signal } = {},
 ) {
+  const timeout = AbortSignal.timeout(timeoutMs);
   const response = await fetch(url, {
     method: body === undefined ? "GET" : "POST",
     headers: {
@@ -19,12 +20,14 @@ async function request(
       ...headers,
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-    signal: AbortSignal.timeout(timeoutMs),
+    signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
+    redirect: "error",
   });
   let data;
   try {
     data = await response.json();
   } catch {
+    signal?.throwIfAborted();
     throw new RequestError(
       `服务器返回了无法解析的内容（HTTP ${response.status}）`,
       response.status,
@@ -39,10 +42,11 @@ async function request(
 }
 
 export class StudentClient {
-  constructor(baseUrl, code, identity) {
+  constructor(baseUrl, code, identity, experiment = "emh") {
     this.baseUrl = baseUrl.replace(/\/$/, "");
     this.code = code;
     this.identity = identity;
+    this.experiment = experiment;
     this.cookie = null;
     this.path = `${this.baseUrl}/api/rooms/${code}`;
   }
@@ -58,17 +62,39 @@ export class StudentClient {
     this.cookie = found.split(";", 1)[0];
   }
 
-  async state() {
-    const { data } = await request(`${this.path}/emh?session=student`, {
+  async state(signal = undefined) {
+    const endpoint =
+      this.experiment === "institutions" ? "" : `/${this.experiment}`;
+    const { data } = await request(`${this.path}${endpoint}?session=student`, {
       cookie: this.cookie,
+      signal,
     });
-    return data.state;
+    return this.experiment === "emh" ? data.state : data;
   }
 
-  async act(marketId, action) {
+  async act(target, action) {
+    if (this.experiment === "institutions") {
+      const { data } = await request(`${this.path}/commands?session=student`, {
+        cookie: this.cookie,
+        body: { requestId: randomUUID(), ...target, command: action },
+      });
+      return data;
+    }
+    if (this.experiment === "evolution") {
+      const { data } = await request(`${this.path}/evolution?session=student`, {
+        cookie: this.cookie,
+        body: action,
+      });
+      return data;
+    }
     const { data } = await request(`${this.path}/emh?session=student`, {
       cookie: this.cookie,
-      body: { requestId: randomUUID(), scope: "market", marketId, action },
+      body: {
+        requestId: randomUUID(),
+        scope: "market",
+        marketId: target,
+        action,
+      },
     });
     return data.state;
   }
@@ -78,8 +104,9 @@ export async function checkRoom(baseUrl, code) {
   const { data } = await request(
     `${baseUrl.replace(/\/$/, "")}/api/rooms/${code}/entry`,
   );
-  if (data.experiment !== "emh")
-    throw new Error("这个房间不是 EMH 实验，请检查房间代码");
+  if (!["emh", "institutions", "evolution"].includes(data.experiment))
+    throw new Error("AI 学生支持 Double Auction、EMH 和 SEG 房间");
+  return data.experiment;
 }
 
 export function parseModelDecision(content) {
@@ -89,6 +116,20 @@ export function parseModelDecision(content) {
 }
 
 export const DEFAULT_MAX_OUTPUT_TOKENS = 2048;
+
+function responseDetails(data) {
+  return {
+    usage: data.usage ?? null,
+    responseModel: typeof data.model === "string" ? data.model : null,
+  };
+}
+
+class ModelResponseError extends Error {
+  constructor(message, details) {
+    super(message);
+    Object.assign(this, details);
+  }
+}
 
 export async function requestModel({
   baseUrl,
@@ -100,10 +141,12 @@ export async function requestModel({
   provider = "local",
   maxOutputTokens = DEFAULT_MAX_OUTPUT_TOKENS,
   lmstudioFast = false,
+  signal = undefined,
 }) {
   if (lmstudioFast) {
     const { data } = await request(`${baseUrl.replace(/\/$/, "")}/responses`, {
       timeoutMs,
+      signal,
       headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {},
       body: {
         model,
@@ -117,27 +160,33 @@ export async function requestModel({
         store: false,
       },
     });
+    const details = responseDetails(data);
     const content = data.output
       ?.filter((item) => item.type === "message")
       .flatMap((item) => item.content ?? [])
       .find((item) => item.type === "output_text")?.text;
     if (!content)
-      throw new Error(
+      throw new ModelResponseError(
         "LM Studio 没有返回最终交易决定；请检查模型服务和输出上限",
+        details,
       );
     try {
       return {
         decision: parseModelDecision(content),
-        usage: data.usage ?? null,
+        ...details,
       };
     } catch {
-      throw new Error("LM Studio 返回的决定不是有效 JSON");
+      throw new ModelResponseError(
+        "LM Studio 返回的决定不是有效 JSON",
+        details,
+      );
     }
   }
   const { data } = await request(
     `${baseUrl.replace(/\/$/, "")}/chat/completions`,
     {
       timeoutMs,
+      signal,
       headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {},
       body: {
         model,
@@ -152,28 +201,38 @@ export async function requestModel({
       },
     },
   );
+  const details = responseDetails(data);
   const choice = data.choices?.[0];
   const content = choice?.message?.content;
-  if (typeof content !== "string" || !content.trim()) {
-    if (choice?.finish_reason === "length")
-      throw new Error(
-        `模型达到 ${maxOutputTokens} tokens 的输出上限，未返回交易决定；可增大 --max-output-tokens`,
-      );
-    if (choice?.message?.reasoning || choice?.message?.reasoning_content)
-      throw new Error(
-        "模型返回了推理内容，但没有返回最终交易决定；可检查思考模式与输出上限",
-      );
-    if (!choice)
-      throw new Error(
-        "模型接口未返回 Chat Completions 格式；请检查本地模型地址和模型服务",
-      );
-    throw new Error("模型返回空内容，没有交易决定；请检查模型服务日志");
+  const reachedOutputLimit = choice?.finish_reason === "length";
+  if (typeof content === "string" && content.trim()) {
+    try {
+      return {
+        decision: parseModelDecision(content),
+        ...details,
+      };
+    } catch {
+      if (!reachedOutputLimit)
+        throw new ModelResponseError("模型返回的决定不是有效 JSON", details);
+    }
   }
-  let decision;
-  try {
-    decision = parseModelDecision(content);
-  } catch {
-    throw new Error("模型返回的决定不是有效 JSON");
-  }
-  return { decision, usage: data.usage ?? null };
+  if (reachedOutputLimit)
+    throw new ModelResponseError(
+      `模型达到 ${maxOutputTokens} tokens 的输出上限，未返回完整决定；可增大 --max-output-tokens`,
+      details,
+    );
+  if (choice?.message?.reasoning || choice?.message?.reasoning_content)
+    throw new ModelResponseError(
+      "模型返回了推理内容，但没有返回最终交易决定；可检查思考模式与输出上限",
+      details,
+    );
+  if (!choice)
+    throw new ModelResponseError(
+      "模型接口未返回 Chat Completions 格式；请检查本地模型地址和模型服务",
+      details,
+    );
+  throw new ModelResponseError(
+    "模型返回空内容，没有交易决定；请检查模型服务日志",
+    details,
+  );
 }
