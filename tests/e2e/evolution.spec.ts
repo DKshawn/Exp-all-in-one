@@ -7,9 +7,12 @@ import type { View } from "../../src/experiments/evolution/views";
 
 async function setDemand(page: Page, value: number) {
   const slider = page.getByRole("slider");
+  await expect(slider).toBeFocused();
+  await page.keyboard.press("ArrowRight");
+  await expect(slider).toHaveValue("0.501");
   await slider.fill(String(value));
   await expect(slider).toBeVisible(); // Editing alone must not submit.
-  await slider.press("Enter");
+  await page.keyboard.press("Enter");
 }
 
 async function clockPosition(page: Page, name?: string) {
@@ -169,7 +172,7 @@ test("a settled SEG pair waits for room-wide feedback and the next round", async
   }
 });
 
-test("1000-round Nash demo submits a demand on phone tap", async ({
+test("1000-round Nash demo supports keyboard focus and phone tap", async ({
   browser,
   baseURL,
 }, info) => {
@@ -202,8 +205,18 @@ test("1000-round Nash demo submits a demand on phone tap", async ({
     const slider = page.getByRole("slider", { name: "Demand" });
     await expect(slider).toBeVisible();
     await expect(slider).toHaveAttribute("step", "0.1");
-    await slider.press("ArrowRight");
+    await expect(slider).toBeFocused({ timeout: 3_000 });
+    await page.keyboard.press("ArrowRight");
     await expect(slider).toHaveValue("0.6");
+    await expect(slider).toHaveCSS("outline-style", "solid");
+    await page.keyboard.press("ArrowLeft");
+    await expect(slider).toHaveValue("0.5");
+    await page.keyboard.press("Tab");
+    await expect(slider).not.toBeFocused();
+    await page.getByRole("button", { name: "Pause", exact: true }).click();
+    await expect(slider).toBeDisabled();
+    await page.getByRole("button", { name: "Resume", exact: true }).click();
+    await expect(slider).toBeFocused();
     await page.setViewportSize({ width: 320, height: 844 });
     expect(
       await page
@@ -661,12 +674,10 @@ for (const mode of ["coordination", "demand"] as const)
       expect(await clockPosition(page, "剩余")).toEqual(teacherClock);
       const time = await page.getByRole("timer").innerText();
       await student.click();
-      const resumeColor = await resume.evaluate(
-        (button) => getComputedStyle(button).backgroundColor,
-      );
-      await expect(
-        page.locator('.round-strip [aria-current="step"] > span'),
-      ).toHaveCSS("background-color", resumeColor);
+      const roundColor = await page
+        .locator('.round-strip [aria-current="step"] > span')
+        .evaluate((step) => getComputedStyle(step).backgroundColor);
+      await expect(resume).toHaveCSS("background-color", roundColor);
       await page.clock.fastForward(60_000);
       await expect(page.getByRole("timer")).toHaveText(time);
       const decision =

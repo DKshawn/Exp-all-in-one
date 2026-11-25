@@ -1,5 +1,5 @@
 "use client";
-import { useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { CopyJoinLinkButton } from "@/components/copy-join-link-button";
 import { StudentWaitingCard } from "@/components/student-waiting-card";
 import { StudyDetailDialog } from "@/experiments/double-auction/components/study-detail-dialog";
@@ -40,7 +40,11 @@ function Decision({
   selected: number | null;
 }) {
   const [value, setValue] = useState(DEMAND_STEPS / 2);
+  const slider = useRef<HTMLInputElement>(null);
   const id = useId();
+  useEffect(() => {
+    if (!busy) slider.current?.focus({ preventScroll: true });
+  }, [busy]);
   const options = displayChoices(lang, view.settings);
   const commit = (choice: number) => {
     if (!busy) void act({ kind: "choose", round: view.round, choice });
@@ -56,6 +60,7 @@ function Decision({
           </output>
         </div>
         <input
+          ref={slider}
           id={id}
           type="range"
           min={0}
