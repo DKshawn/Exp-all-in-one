@@ -83,12 +83,12 @@ Judgement の教員画面と Demo は課題カード・選択一覧・操作欄�
 
 ## 実験
 
-| 実験                        | 内容                                                                                           | ガイド                                          | デモ                                                          |
-| --------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------- |
-| Double Auction              | CDA・Call Market・Posted Offer の制度比較。実人数に応じた市場・役割の割り当て                  | [実施とルール](docs/guide/ja/double-auction.md) | [Demo Model](https://exp-all-in-one.vercel.app/demo)          |
-| EMH                         | 両実験でラウンド数・各ラウンド、1取引と休憩の時間を設定可能。実験2は人数・情報・配当も設定可能 | [実施とルール](docs/guide/ja/emh.md)            | [Demo Model](https://exp-all-in-one.vercel.app/emh/demo)      |
-| Judgement under Uncertainty | 判断・認知バイアスの14課題。条件割り当て、課題順・選択肢順、計時、日中英表示                   | [実施と記録](docs/guide/ja/judgment.md)         | [Demo Model](https://exp-all-in-one.vercel.app/judgment/demo) |
-| 確率的進化ゲーム            | 協調・ナッシュ要求ゲーム、非公開のランダムマッチング、グループ別推移と生データ出力             | [ルールとデータ](docs/guide/ja/evolution.md)    | `/evolution/demo`                                             |
+| 実験                          | 内容                                                                                           | ガイド                                          | デモ                                                           |
+| ----------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------- |
+| Double Auction                | CDA・Call Market・Posted Offer の制度比較。実人数に応じた市場・役割の割り当て                  | [実施とルール](docs/guide/ja/double-auction.md) | [Demo Model](https://exp-all-in-one.vercel.app/demo)           |
+| EMH                           | 両実験でラウンド数・各ラウンド、1取引と休憩の時間を設定可能。実験2は人数・情報・配当も設定可能 | [実施とルール](docs/guide/ja/emh.md)            | [Demo Model](https://exp-all-in-one.vercel.app/emh/demo)       |
+| Judgement under Uncertainty   | 判断・認知バイアスの14課題。条件割り当て、課題順・選択肢順、計時、日中英表示                   | [実施と記録](docs/guide/ja/judgment.md)         | [Demo Model](https://exp-all-in-one.vercel.app/judgment/demo)  |
+| Stochastic Evolutionary Games | 協調・ナッシュ要求ゲーム、非公開のランダムマッチング、グループ別推移と生データ出力             | [ルールとデータ](docs/guide/ja/evolution.md)    | [Demo Model](https://exp-all-in-one.vercel.app/evolution/demo) |
 
 ## 開発と資料
 
