@@ -8,7 +8,9 @@ import {
   defaults,
   demandStep,
   DEMAND_STEP_OPTIONS,
+  MAX_FEEDBACK_SECONDS,
   MAX_ROUNDS,
+  MIN_FEEDBACK_SECONDS,
   settingsSchema,
   type DemandStep,
   type Settings,
@@ -121,12 +123,14 @@ export function SetupForm({
         {(["groups", "rounds", "seconds", "feedbackSeconds"] as const).map(
           (key, i) => (
             <label className="field" key={key}>
-              {t(key)}
+              {key === "feedbackSeconds"
+                ? `${t(key)} · ${MIN_FEEDBACK_SECONDS}–${MAX_FEEDBACK_SECONDS}`
+                : t(key)}
               <input
                 type="number"
                 required
-                min={[1, 1, 5, 3][i]}
-                max={[32, MAX_ROUNDS, 600, 120][i]}
+                min={[1, 1, 5, MIN_FEEDBACK_SECONDS][i]}
+                max={[32, MAX_ROUNDS, 600, MAX_FEEDBACK_SECONDS][i]}
                 value={s[key] || ""}
                 onChange={(e) => set({ ...s, [key]: Number(e.target.value) })}
               />

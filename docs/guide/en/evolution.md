@@ -23,6 +23,8 @@ On the teacher home page, **ルーム管理** labels SEG rooms as **協調ゲー
 
 ## Parameters and payoff rules
 
+Formal and demo setup show the allowed range of 3–120 next to **Feedback time (s)**.
+
 | Setting                | Default    | Range    |
 | ---------------------- | ---------- | -------- |
 | Independent groups     | 1          | 1–32     |

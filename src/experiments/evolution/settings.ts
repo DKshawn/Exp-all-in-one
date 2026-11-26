@@ -10,11 +10,13 @@ export const DEMAND_STEPS = 1000;
 export const DEMAND_STEP_OPTIONS = ["0.1", "0.01", "0.005", "0.001"] as const;
 export const DEFAULT_DEMAND_STEP = DEMAND_STEP_OPTIONS[0];
 export const HISTORY_ROUNDS = 20;
+export const MIN_FEEDBACK_SECONDS = 3;
+export const MAX_FEEDBACK_SECONDS = 120;
 const common = {
   groups: z.int().min(1).max(32),
   rounds: z.int().min(1).max(MAX_ROUNDS),
   seconds: z.int().min(5).max(600),
-  feedbackSeconds: z.int().min(3).max(120),
+  feedbackSeconds: z.int().min(MIN_FEEDBACK_SECONDS).max(MAX_FEEDBACK_SECONDS),
 };
 export const settingsSchema = z
   .discriminatedUnion("mode", [
