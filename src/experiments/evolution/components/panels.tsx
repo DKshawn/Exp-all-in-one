@@ -290,6 +290,14 @@ export function Panels({
   const coordination = v.settings.mode === "coordination";
   const memo = isMemo(v.settings);
   const memoStudent = memo && v.role === "student" && !waiting;
+  const canChooseMemo = Boolean(
+    mine?.memo?.eligible &&
+    mine.status === "choosing" &&
+    !busy &&
+    v.phase === "playing" &&
+    v.pausedAt === null &&
+    now < (v.deadline ?? Infinity),
+  );
   const name = (c: number | null) =>
     c === null ? null : continuous(v.settings) ? demandLabel(c) : names[c];
   const [page, setPage] = useState<View | null>(null);
@@ -453,21 +461,23 @@ export function Panels({
               {t("sec")}
             </strong>
           ) : null}
-          <StudyDetailDialog
-            label={t("rules")}
-            closeLabel={t("dismiss")}
-            className="ev-rules-dialog"
-            triggerClassName="button secondary small-button"
-          >
-            {memo ? (
-              <>
-                <p>{t("memoRule")}</p>
-                <p>{t("memoRevisionRule")}</p>
-              </>
-            ) : (
-              <Rules lang={lang} s={v.settings} />
-            )}
-          </StudyDetailDialog>
+          {(!memo || v.code === "DEMO") && (
+            <StudyDetailDialog
+              label={t("rules")}
+              closeLabel={t("dismiss")}
+              className="ev-rules-dialog"
+              triggerClassName="button secondary small-button"
+            >
+              {memo ? (
+                <>
+                  <p>{t("memoRule")}</p>
+                  <p>{t("memoRevisionRule")}</p>
+                </>
+              ) : (
+                <Rules lang={lang} s={v.settings} />
+              )}
+            </StudyDetailDialog>
+          )}
         </StudentWaitingCard>
       ) : memoStudent && mine?.memo ? (
         <MemoStudent
@@ -476,19 +486,13 @@ export function Panels({
           lang={lang}
           mine={mine}
           now={now}
+          canChoose={canChooseMemo}
           renderDecision={(statusId) => (
             <Decision
               key={v.round}
               view={v}
               lang={lang}
-              busy={
-                !mine.memo?.eligible ||
-                mine.status !== "choosing" ||
-                busy ||
-                v.phase !== "playing" ||
-                v.pausedAt !== null ||
-                now >= (v.deadline ?? Infinity)
-              }
+              busy={!canChooseMemo}
               selected={mine.choice}
               draftChoice={null}
               act={act}

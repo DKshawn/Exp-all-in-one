@@ -1,7 +1,9 @@
 "use client";
+import { LockKeyhole } from "lucide-react";
 import { useId, type ReactNode } from "react";
 import { displayChoices, label, type Key, type Lang } from "../locale";
 import { MEMO_LOCK_ROUNDS, MEMO_MATRIX } from "../settings";
+import type { FeedbackPoint } from "../memo-v3";
 import type { Personal, View } from "../views";
 
 export function MemoStudent({
@@ -10,6 +12,7 @@ export function MemoStudent({
   mine,
   lang,
   now,
+  canChoose,
   renderDecision,
 }: {
   view: Extract<View, { role: "student" }>;
@@ -17,6 +20,7 @@ export function MemoStudent({
   mine: Personal;
   lang: Lang;
   now: number;
+  canChoose: boolean;
   renderDecision: (statusId: string) => ReactNode;
 }) {
   const statusId = useId();
@@ -28,20 +32,6 @@ export function MemoStudent({
     style: "percent",
     maximumFractionDigits: 1,
   });
-  const pointLabel = (point: (typeof points)[number]) =>
-    `${t("round")} ${point.round}: ${format.format(point.hare / point.size)}`;
-  const left = 42,
-    right = 262,
-    top = 12,
-    bottom = 82;
-  const x = (i: number) =>
-    left + (i * (right - left)) / Math.max(1, points.length - 1);
-  const y = (share: number) => bottom - share * (bottom - top);
-  const ticks = new Set(
-    Array.from({ length: 5 }, (_, i) =>
-      Math.round((i * (points.length - 1)) / 4),
-    ),
-  );
   let status: string;
   if (mine.status === "interrupted") status = t("interrupted");
   else if (memo.blockRound <= MEMO_LOCK_ROUNDS)
@@ -51,12 +41,27 @@ export function MemoStudent({
   else if (mine.status !== "choosing") status = t("memoSubmitted");
   else if (view.pausedAt !== null) status = t("paused");
   else if (now >= (view.deadline ?? Infinity)) status = t("memoChoiceClosed");
-  else status = t("memoEligible");
+  else status = t(canChoose ? "memoEligible" : "processing");
 
   return (
     <>
-      <section className="panel ev-panel ev-memo-choice">
-        <h2>{t("mine")}</h2>
+      <section
+        className="panel ev-panel ev-memo-choice"
+        data-can-choose={canChoose}
+      >
+        <div className="ev-memo-choice-heading">
+          <h2>{t("mine")}</h2>
+          {!canChoose && (
+            <LockKeyhole
+              className="ev-memo-choice-lock"
+              size={18}
+              aria-hidden="true"
+            />
+          )}
+        </div>
+        <p className="ev-memo-choice-status" id={statusId} role="status">
+          {status}
+        </p>
         {renderDecision(statusId)}
         <table>
           <caption>{t("memoPayoffTable")}</caption>
@@ -112,98 +117,17 @@ export function MemoStudent({
             <dd>{memo.priorPay ?? "—"}</dd>
           </div>
         </dl>
-        <figure>
-          <figcaption>{t(prior ? "memoTrend" : "memoNoFeedback")}</figcaption>
-          <svg
-            role={prior ? "img" : undefined}
-            aria-label={prior ? points.map(pointLabel).join("; ") : undefined}
-            aria-hidden={prior ? undefined : true}
-            viewBox="0 0 280 124"
-            width="280"
-            height="124"
-          >
-            {[1, 0.5, 0].map((share) => (
-              <g key={share}>
-                <line
-                  className="ev-memo-gridline"
-                  x1={left}
-                  x2={right}
-                  y1={y(share)}
-                  y2={y(share)}
-                />
-                <text
-                  x={left - 6}
-                  y={y(share)}
-                  textAnchor="end"
-                  dominantBaseline="middle"
-                >
-                  {format.format(share)}
-                </text>
-              </g>
-            ))}
-            <path
-              className="ev-memo-axis"
-              d={`M ${left} ${top} V ${bottom} H ${right}`}
-            />
-            {points.map(
-              (point, i) =>
-                ticks.has(i) && (
-                  <g key={point.round}>
-                    <line
-                      className="ev-memo-axis"
-                      x1={x(i)}
-                      x2={x(i)}
-                      y1={bottom}
-                      y2={bottom + 5}
-                    />
-                    <text x={x(i)} y={bottom + 19} textAnchor="middle">
-                      {point.round}
-                    </text>
-                  </g>
-                ),
-            )}
-            <text x={(left + right) / 2} y="119" textAnchor="middle">
-              {t("round")}
-            </text>
-            {points.length > 1 && (
-              <polyline
-                points={points
-                  .map((point, i) => `${x(i)},${y(point.hare / point.size)}`)
-                  .join(" ")}
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              />
-            )}
-            {points.map((point, i) => (
-              <circle
-                key={point.round}
-                cx={x(i)}
-                cy={y(point.hare / point.size)}
-                r="2.5"
-                fill="currentColor"
-              >
-                <title>{pointLabel(point)}</title>
-              </circle>
-            ))}
-          </svg>
-        </figure>
+        <MemoTrend points={points} lang={lang} format={format} />
       </section>
 
-      <section className="panel ev-panel ev-memo-revision">
-        <h2>{t("memoRevision")}</h2>
-        <p className="ev-memo-revision-status" id={statusId} role="status">
-          {status}
-        </p>
-        <div className="ev-memo-revision-details">
-          {memo.blockRound === 1 && <p>{t("memoNew")}</p>}
-          {mine.pay !== null && (
-            <p className="ev-memo-current-pay">
-              {t("pay")} <strong>{mine.pay}</strong>
-            </p>
-          )}
-        </div>
-      </section>
+      <div className="ev-memo-round-details">
+        {memo.blockRound === 1 && <p>{t("memoNew")}</p>}
+        {mine.pay !== null && (
+          <p className="ev-memo-current-pay">
+            {t("pay")} <strong>{mine.pay}</strong>
+          </p>
+        )}
+      </div>
 
       <div className="ev-account">
         <div>
@@ -219,11 +143,117 @@ export function MemoStudent({
           <strong>{view.total}</strong>
         </div>
       </div>
-      <section className="panel ev-panel">
-        <h2>{t("rules")}</h2>
-        <p>{t("memoRule")}</p>
-        <p>{t("memoRevisionRule")}</p>
-      </section>
+      {view.code === "DEMO" && (
+        <section className="panel ev-panel">
+          <h2>{t("rules")}</h2>
+          <p>{t("memoRule")}</p>
+          <p>{t("memoRevisionRule")}</p>
+        </section>
+      )}
     </>
+  );
+}
+
+function MemoTrend({
+  points,
+  lang,
+  format,
+}: {
+  points: FeedbackPoint[];
+  lang: Lang;
+  format: Intl.NumberFormat;
+}) {
+  const hasFeedback = points.length > 0;
+  const roundLabel = label(lang, "round");
+  const pointLabel = (point: FeedbackPoint) =>
+    `${roundLabel} ${point.round}: ${format.format(point.hare / point.size)}`;
+  const x = (index: number) =>
+    `${points.length === 1 ? 50 : (index * 100) / (points.length - 1)}%`;
+  const y = (share: number) => `${(1 - share) * 100}%`;
+  const levels = [1, 0.5, 0];
+  const ticks = new Set(
+    Array.from({ length: 5 }, (_, i) =>
+      Math.round((i * (points.length - 1)) / 4),
+    ),
+  );
+
+  return (
+    <figure>
+      <figcaption>
+        {label(lang, hasFeedback ? "memoTrend" : "memoNoFeedback")}
+      </figcaption>
+      <div
+        className="ev-memo-chart"
+        role={hasFeedback ? "img" : undefined}
+        aria-label={hasFeedback ? points.map(pointLabel).join("; ") : undefined}
+        aria-hidden={hasFeedback ? undefined : true}
+      >
+        <div className="ev-memo-chart-scale">
+          {levels.map((share) => (
+            <span key={share} style={{ insetBlockStart: y(share) }}>
+              {format.format(share)}
+            </span>
+          ))}
+        </div>
+        <div className="ev-memo-chart-plot">
+          <svg aria-hidden="true">
+            {levels.map((share) => (
+              <line
+                key={share}
+                className="ev-memo-gridline"
+                x1="0"
+                x2="100%"
+                y1={y(share)}
+                y2={y(share)}
+              />
+            ))}
+            <line
+              className="ev-memo-axis"
+              x1="0"
+              x2="100%"
+              y1="100%"
+              y2="100%"
+            />
+            <line className="ev-memo-axis" x1="0" x2="0" y1="0" y2="100%" />
+            {points.map((point, i) => {
+              const previous = points[i - 1];
+              return (
+                <g key={point.round}>
+                  {previous && (
+                    <line
+                      x1={x(i - 1)}
+                      y1={y(previous.hare / previous.size)}
+                      x2={x(i)}
+                      y2={y(point.hare / point.size)}
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    />
+                  )}
+                  <circle
+                    cx={x(i)}
+                    cy={y(point.hare / point.size)}
+                    r="2.5"
+                    fill="currentColor"
+                  >
+                    <title>{pointLabel(point)}</title>
+                  </circle>
+                </g>
+              );
+            })}
+          </svg>
+          <div className="ev-memo-chart-rounds">
+            {points.map(
+              (point, i) =>
+                ticks.has(i) && (
+                  <span key={point.round} style={{ insetInlineStart: x(i) }}>
+                    {point.round}
+                  </span>
+                ),
+            )}
+          </div>
+          <div className="ev-memo-chart-round-label">{roundLabel}</div>
+        </div>
+      </div>
+    </figure>
   );
 }

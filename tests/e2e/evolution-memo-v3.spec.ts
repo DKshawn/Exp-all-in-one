@@ -8,7 +8,7 @@ const labels = {
     payoff: "Points against one opponent",
     share: "Group hare share",
     prior: "Previous round",
-    revision: "This round’s revision",
+    choice: "My choice",
     round: "Round",
   },
   ja: {
@@ -17,7 +17,7 @@ const labels = {
     payoff: "相手1人あたりの点数",
     share: "グループ内の兎の割合",
     prior: "前回の結果",
-    revision: "今回の見直し",
+    choice: "自分の選択",
     round: "ラウンド",
   },
   "zh-CN": {
@@ -26,7 +26,7 @@ const labels = {
     payoff: "对单个对手的得分",
     share: "组选兔比例",
     prior: "上轮结果",
-    revision: "本轮改选",
+    choice: "我的选择",
     round: "轮次",
   },
 } as const;
@@ -46,13 +46,17 @@ async function checkStudentViewport(
     const stag = page.getByRole("button", { name: names.stag, exact: true });
     const hare = page.getByRole("button", { name: names.hare, exact: true });
     const headings = page.locator(".ev-memo-student .ev-panel h2");
-    await expect(headings).toContainText([names.prior, names.revision]);
+    await expect(headings).toContainText([names.choice, names.prior]);
     await expect(payoff.locator("td")).toHaveText(["4", "0", "3", "3"]);
     await expect(share).toBeVisible();
-    const axisLabels = page.locator(".ev-memo-feedback svg text");
-    const text = await axisLabels.allTextContents();
-    expect(text.slice(0, 3)).toEqual(["100%", "50%", "0%"]);
-    expect(text.at(-1)).toBe(names.round);
+    await expect(page.locator(".ev-memo-chart-scale span")).toHaveText([
+      "100%",
+      "50%",
+      "0%",
+    ]);
+    await expect(page.locator(".ev-memo-chart-round-label")).toHaveText(
+      names.round,
+    );
 
     for (const width of [320, 390, 1440]) {
       const height = width === 1440 ? 900 : 740;
@@ -71,6 +75,16 @@ async function checkStudentViewport(
       expect(bottoms[0]).toBeLessThan(bounds[2].y);
       expect(bottoms[2]).toBeLessThan(bounds[3].y);
       expect(Math.max(...bottoms)).toBeLessThanOrEqual(height);
+      const chartWidth = (await page.locator(".ev-memo-chart").boundingBox())!
+        .width;
+      const plotWidth = (await page
+        .locator(".ev-memo-chart-plot")
+        .boundingBox())!.width;
+      const figureWidth = (await page
+        .locator(".ev-memo-feedback figure")
+        .boundingBox())!.width;
+      expect(chartWidth).toBe(figureWidth);
+      expect(plotWidth).toBeGreaterThan(figureWidth * 0.8);
       if (entry === "demo") {
         const toolbar = page.locator(".ev-demo-bar");
         await expect(toolbar).toBeInViewport({ ratio: 1 });
@@ -128,7 +142,7 @@ async function studentLayout(page: Page) {
       await page.locator(".ev-memo-student").evaluate((main) =>
         [
           ...main.querySelectorAll(
-            ".ev-memo-choice, .ev-memo-feedback, .ev-memo-revision, .ev-account",
+            ".ev-memo-choice, .ev-memo-feedback, .ev-memo-chart, .ev-memo-round-details, .ev-account",
           ),
         ].map((panel) => {
           const { y, height } = panel.getBoundingClientRect();
@@ -220,15 +234,40 @@ test("memo v3 demo shows the payoff table, fixed start, and one-click revision",
   await page.getByLabel("Block order").selectOption("large-first");
   await page.getByLabel("Starting condition allocation").selectOption("hare");
   await page.getByRole("button", { name: "Create demo" }).click();
+  await page.getByRole("button", { name: "View student screen" }).click();
+  await expect(
+    page.getByRole("button", { name: "Rules", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "View teacher screen" }).click();
   await page.getByRole("button", { name: "Close admission" }).click();
   await page.getByRole("button", { name: "Confirm and start" }).click();
   await page.getByRole("button", { name: "View student screen" }).click();
   await expect(page.getByText(/Block 1\/3.*Round 1\/120/)).toBeVisible();
+  const choice = page.locator(".ev-memo-choice");
+  const lock = choice.locator(".ev-memo-choice-lock");
+  const stag = choice.getByRole("button", { name: "Stag", exact: true });
+  const hare = choice.getByRole("button", { name: "Hare", exact: true });
+  await expect(choice.getByRole("status")).toHaveText(
+    "Your whole group plays Hare in rounds 1–10.",
+  );
+  await expect(lock).toBeVisible();
   await expect(
-    page.getByText(
-      "Everyone in your group plays Hare for the first 10 rounds.",
-    ),
+    page.getByRole("heading", { name: "Rules", exact: true }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "This round’s revision" }),
+  ).toHaveCount(0);
+  const mutedBorder = await stag.evaluate(
+    (element) => getComputedStyle(element).borderTopColor,
+  );
+  const mutedColor = await stag.evaluate(
+    (element) => getComputedStyle(element).color,
+  );
+  await expect(hare).toHaveCSS("color", mutedColor);
+  const emptyPlotWidth = (await page
+    .locator(".ev-memo-chart-plot")
+    .boundingBox())!.width;
+  expect(emptyPlotWidth).toBeGreaterThan(500);
   await expect(page.getByText("Decisions open", { exact: true })).toHaveCount(
     0,
   );
@@ -241,8 +280,17 @@ test("memo v3 demo shows the payoff table, fixed start, and one-click revision",
   await expect(
     page.getByText("No previous result in this block yet."),
   ).toBeVisible();
+  await page.clock.fastForward(6000);
+  const firstResult = page.getByRole("img", {
+    name: "Round 1: 100%",
+    exact: true,
+  });
+  await expect(firstResult.locator("circle")).toHaveAttribute("cx", "50%");
+  expect(
+    (await firstResult.locator(".ev-memo-chart-plot").boundingBox())!.width,
+  ).toBe(emptyPlotWidth);
   const initialLayout = await studentLayout(page);
-  await page.getByRole("button", { name: "Advance 30 s" }).click();
+  await page.clock.fastForward(24000);
   await page.getByRole("button", { name: "Pause", exact: true }).click();
   await expect(page.locator(".ev-memo-proportion strong")).toHaveText("100%");
   expect(await studentLayout(page)).toEqual(initialLayout);
@@ -252,12 +300,22 @@ test("memo v3 demo shows the payoff table, fixed start, and one-click revision",
   await page.getByRole("button", { name: "Resume", exact: true }).click();
   await page.getByRole("button", { name: "Advance 30 s" }).click();
   await expect(page.getByText(/Round 11\/120/)).toBeVisible();
-  await expect(
-    page.getByText("You can revise your choice this round."),
-  ).toBeVisible();
+  await expect(choice.getByRole("status")).toHaveText(
+    "You can revise your choice this round.",
+  );
+  await expect(stag).toBeEnabled();
+  await expect(stag).not.toHaveCSS("border-top-color", mutedBorder);
+  await expect(stag).not.toHaveCSS("color", mutedColor);
+  await expect(hare).not.toHaveCSS("color", mutedColor);
+  await expect(lock).toHaveCount(0);
   expect(await studentLayout(page)).toEqual(initialLayout);
+  await choice.screenshot({
+    path: testInfo.outputPath("demo-eligible-390.png"),
+    animations: "disabled",
+  });
   await page.getByRole("button", { name: "Hare", exact: true }).click();
-  await expect(page.getByText("Choice received.")).toBeVisible();
+  await expect(choice.getByRole("status")).toHaveText("Choice received.");
+  await expect(lock).toBeVisible();
   expect(await studentLayout(page)).toEqual(initialLayout);
   await expect(
     page.getByRole("button", { name: "Stag", exact: true }),
@@ -268,7 +326,7 @@ test("memo v3 demo shows the payoff table, fixed start, and one-click revision",
   await page.clock.fastForward(6000);
   await expect(page.getByText(/Round 12\/120/)).toBeVisible();
   await expect(
-    page.getByText("You weren’t selected. Your previous choice carries over."),
+    choice.getByText("Not selected. Previous choice carries over."),
   ).toBeVisible();
   expect(await studentLayout(page)).toEqual(initialLayout);
   await expect(
@@ -298,17 +356,15 @@ test("memo v3 demo shows the payoff table, fixed start, and one-click revision",
   await expect(page.getByText(/Block 2\/3.*Round 26\/120/)).toBeVisible();
   const trend = page.getByRole("img", { name: /Round 6: .*Round 25: / });
   await expect(trend.locator("circle")).toHaveCount(20);
-  await expect(trend.locator("text")).toHaveText([
-    "100%",
-    "50%",
-    "0%",
+  await expect(trend.locator(".ev-memo-chart-rounds span")).toHaveText([
     "6",
     "11",
     "16",
     "20",
     "25",
-    "Round",
   ]);
+  await expect(trend.locator("circle").first()).toHaveAttribute("cx", "0%");
+  await expect(trend.locator("circle").last()).toHaveAttribute("cx", "100%");
   await page.setViewportSize({ width: 320, height: 740 });
   await page.locator(".ev-memo-feedback").screenshot({
     path: testInfo.outputPath("demo-round-chart-320.png"),
@@ -343,7 +399,7 @@ test("memo v3 formal teacher and student use normal entries with a 150-seat synt
   await mode.selectOption("memo");
   await expect(
     page.getByText("Your score for the round is the average of those points."),
-  ).toBeVisible();
+  ).toHaveCount(0);
   await page.getByLabel("Room title").fill("Synthetic Memo v3");
   await page.getByLabel("Room password").fill("review-password");
   await page.getByRole("button", { name: "Create room" }).click();
@@ -370,6 +426,12 @@ test("memo v3 formal teacher and student use normal entries with a 150-seat synt
     await student.getByRole("button", { name: "入室する" }).click();
     await expect(student).toHaveURL(/\/room\//);
     await student.getByRole("banner").getByRole("combobox").selectOption("en");
+    await expect(
+      student.getByRole("heading", { name: "Admission open" }).first(),
+    ).toBeVisible();
+    await expect(
+      student.getByRole("button", { name: "Rules", exact: true }),
+    ).toHaveCount(0);
 
     for (let i = 1; i < 150; i++) {
       const joined = await synthetic.post(`/api/rooms/${code}/join`, {
@@ -386,9 +448,7 @@ test("memo v3 formal teacher and student use normal entries with a 150-seat synt
     await expect(student.getByText(/Round 1\/120/)).toBeVisible();
     const initialLayout = await studentLayout(student);
     await expect(
-      student.getByText(
-        /Everyone in your group plays (Hare|Stag) for the first 10 rounds\./,
-      ),
+      student.getByText(/Your whole group plays (Hare|Stag) in rounds 1–10\./),
     ).toBeVisible();
     await expect(
       student.getByText("Decisions open", { exact: true }),
@@ -402,6 +462,12 @@ test("memo v3 formal teacher and student use normal entries with a 150-seat synt
     await page.getByRole("button", { name: "Pause", exact: true }).click();
     expect(await studentLayout(student)).toEqual(initialLayout);
     await checkStudentViewport(student, testInfo, "formal");
+    await expect(
+      student.getByRole("heading", { name: "Rules", exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      student.getByText("Only those selected can change their choice"),
+    ).toHaveCount(0);
     const settled = await expectTeacherStats(page, 1, [
       "0/10",
       "0",

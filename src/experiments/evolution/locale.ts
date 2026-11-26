@@ -29,11 +29,10 @@ const messages = {
   ],
   memoLocked: ["選択固定中", "选择锁定中", "Choices locked"],
   memoForced: [
-    "最初の10ラウンドは、このグループ全員が「{choice}」に固定されます。",
-    "前 10 轮，本组所有人固定选{choice}。",
-    "Everyone in your group plays {choice} for the first 10 rounds.",
+    "最初の10回はグループ全員が「{choice}」に固定。",
+    "前 10 轮，本组全员固定选{choice}。",
+    "Your whole group plays {choice} in rounds 1–10.",
   ],
-  memoRevision: ["今回の見直し", "本轮改选", "This round’s revision"],
   memoChoiceClosed: ["回答終了", "本轮作答已截止", "Decisions closed"],
   memoPayoffTable: [
     "相手1人あたりの点数",
@@ -60,14 +59,14 @@ const messages = {
     "You can revise your choice this round.",
   ],
   memoCarry: [
-    "今回は見直し対象外のため、前回の選択を引き継ぎます。",
+    "対象外のため、前回の選択を維持します。",
     "本轮未获改选资格，沿用上轮选择。",
-    "You weren’t selected. Your previous choice carries over.",
+    "Not selected. Previous choice carries over.",
   ],
   memoTimeout: [
     "時間切れ。前回の選択を維持しました。",
     "超时，已沿用上轮选择。",
-    "Time expired; your previous choice carried over.",
+    "Timed out. Previous choice carried over.",
   ],
   memoSubmitted: [
     "選択を受け付けました。",

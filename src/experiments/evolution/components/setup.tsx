@@ -252,8 +252,12 @@ export function SetupForm({
               </select>
             </label>
           </div>
-          <p>{t("memoRule")}</p>
-          <p>{t("memoRevisionRule")}</p>
+          {onDemo && (
+            <>
+              <p>{t("memoRule")}</p>
+              <p>{t("memoRevisionRule")}</p>
+            </>
+          )}
         </>
       ) : (
         <>
