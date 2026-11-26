@@ -10,7 +10,8 @@ import type { View, Personal } from "../views";
 import { Admission, SessionOverview } from "./session-controls";
 import { PayoffMatrix, PayoffRules, Rules } from "./rules";
 import { continuous, DEMAND_STEPS, demandLabel, isMemo } from "../settings";
-import { MemoFeedback } from "./memo-feedback";
+import { MemoStudent } from "./memo-student";
+import { MemoResults } from "./memo-results";
 import { DemandDecision } from "./demand-decision";
 
 type Props = {
@@ -20,7 +21,8 @@ type Props = {
   now: number;
   act: (action: Action) => void | Promise<void>;
   loadHistory?: (before: number) => Promise<View>;
-  downloads?: React.ReactNode;
+  downloads?: ReactNode;
+  studentTools?: ReactNode;
 };
 function Decision({
   view,
@@ -29,6 +31,7 @@ function Decision({
   act,
   selected,
   draftChoice,
+  describedBy,
 }: {
   view: Extract<View, { role: "student" }>;
   lang: Lang;
@@ -36,6 +39,7 @@ function Decision({
   act: Props["act"];
   selected: number | null;
   draftChoice: number | null;
+  describedBy?: string;
 }) {
   const commit = (choice: number) => {
     if (!busy) void act({ kind: "choose", round: view.round, choice });
@@ -57,6 +61,7 @@ function Decision({
   return (
     <div className="ev-decision">
       <fieldset
+        aria-describedby={describedBy}
         aria-label={
           view.settings.mode === "coordination"
             ? label(lang, "choose")
@@ -276,6 +281,7 @@ export function Panels({
   now,
   act,
   downloads,
+  studentTools,
   loadHistory,
 }: Props) {
   const t = (k: Key) => label(lang, k),
@@ -285,6 +291,7 @@ export function Panels({
     names = displayChoices(lang, v.settings);
   const coordination = v.settings.mode === "coordination";
   const memo = isMemo(v.settings);
+  const memoStudent = memo && v.role === "student" && !waiting;
   const name = (c: number | null) =>
     c === null ? null : continuous(v.settings) ? demandLabel(c) : names[c];
   const [page, setPage] = useState<View | null>(null);
@@ -335,7 +342,10 @@ export function Panels({
     </div>
   );
   return (
-    <main className="ev ev-room" lang={lang}>
+    <main
+      className={memoStudent ? "ev ev-room ev-memo-student" : "ev ev-room"}
+      lang={lang}
+    >
       <div className="ev-heading">
         <h1>{v.title}</h1>
         <span className="ev-code">
@@ -380,7 +390,7 @@ export function Panels({
                           <th>B</th>
                         </>
                       )}
-                      <th>{t("byes")}</th>
+                      {!memo && <th>{t("byes")}</th>}
                       {v.phase === "ready" && <th>{t("student")}</th>}
                     </tr>
                   </thead>
@@ -395,7 +405,7 @@ export function Panels({
                             <td>{v.phase === "open" ? "—" : n - v.sides[i]}</td>
                           </>
                         )}
-                        <td>{memo ? "—" : n % 2}</td>
+                        {!memo && <td>{n % 2}</td>}
                         {v.phase === "ready" && (
                           <td className="ev-roster-seats">
                             {v.seats
@@ -413,6 +423,8 @@ export function Panels({
                 </table>
               </div>
             </section>
+          ) : memo ? (
+            <MemoResults key={v.memoBlock} view={v} lang={lang} />
           ) : (
             <Analysis
               view={page?.role === "teacher" ? page : v}
@@ -459,6 +471,34 @@ export function Panels({
             )}
           </StudyDetailDialog>
         </StudentWaitingCard>
+      ) : memoStudent && mine?.memo ? (
+        <MemoStudent
+          view={v}
+          memo={mine.memo}
+          lang={lang}
+          mine={mine}
+          now={now}
+          tools={studentTools}
+          renderDecision={(statusId) => (
+            <Decision
+              key={v.round}
+              view={v}
+              lang={lang}
+              busy={
+                !mine.memo?.eligible ||
+                mine.status !== "choosing" ||
+                busy ||
+                v.phase !== "playing" ||
+                v.pausedAt !== null ||
+                now >= (v.deadline ?? Infinity)
+              }
+              selected={mine.choice}
+              draftChoice={null}
+              act={act}
+              describedBy={statusId}
+            />
+          )}
+        />
       ) : (
         mine && (
           <>
@@ -482,34 +522,12 @@ export function Panels({
               className={
                 "ev-workbench" +
                 (v.history.length ? " has-history" : "") +
-                (coordination ? " ev-workbench-coordination" : "") +
-                (memo ? " ev-workbench-memo" : "")
+                (coordination ? " ev-workbench-coordination" : "")
               }
             >
               <div className="ev-play-column">
                 <section className="panel ev-panel ev-task">
-                  {mine.memo ? (
-                    <>
-                      {mine.memo.blockRound === 1 && (
-                        <p role="status">{t("memoNew")}</p>
-                      )}
-                      <h2>
-                        {mine.status === "interrupted"
-                          ? t("interrupted")
-                          : mine.memo.blockRound <= 10
-                            ? `${t("memoForced")}: ${names[mine.memo.initialChoice]}`
-                            : mine.memo.timedOut
-                              ? t("memoTimeout")
-                              : !mine.memo.eligible
-                                ? t("memoCarry")
-                                : mine.status === "choosing"
-                                  ? t("memoEligible")
-                                  : t("memoSubmitted")}
-                      </h2>
-                    </>
-                  ) : (
-                    <h2>{t(mine.status)}</h2>
-                  )}
+                  <h2>{t(mine.status)}</h2>
                   {(coordination || mine.status === "choosing") && (
                     <Decision
                       key={v.round}
@@ -526,7 +544,7 @@ export function Panels({
                       act={act}
                     />
                   )}
-                  {!memo && (coordination || mine.status !== "choosing") && (
+                  {(coordination || mine.status !== "choosing") && (
                     <dl className="ev-payoffs">
                       {(
                         [
@@ -548,17 +566,7 @@ export function Panels({
                     </dl>
                   )}
                 </section>
-                {memo ? (
-                  <section className="panel ev-panel ev-reference">
-                    <p>{t("memoRule")}</p>
-                    <p>{t("memoRevisionRule")}</p>
-                    {mine.pay !== null && (
-                      <p>
-                        {t("pay")}: <strong>{mine.pay}</strong>
-                      </p>
-                    )}
-                  </section>
-                ) : v.settings.mode === "coordination" ? (
+                {v.settings.mode === "coordination" ? (
                   <section className="panel ev-panel ev-reference">
                     <PayoffMatrix s={v.settings} lang={lang} player={mine} />
                   </section>
@@ -570,25 +578,21 @@ export function Panels({
                   )
                 )}
               </div>
-              {mine.memo ? (
-                <MemoFeedback view={v} mine={mine} lang={lang} />
-              ) : (
-                <section className="panel ev-panel ev-history">
-                  <History
-                    view={v}
-                    lang={lang}
-                    rows={
-                      page?.role === "student"
-                        ? page.history
-                        : mine.status === "choosing" ||
-                            mine.status === "submitted"
-                          ? v.history
-                          : [...v.history, mine]
-                    }
-                  />
-                  {controls}
-                </section>
-              )}
+              <section className="panel ev-panel ev-history">
+                <History
+                  view={v}
+                  lang={lang}
+                  rows={
+                    page?.role === "student"
+                      ? page.history
+                      : mine.status === "choosing" ||
+                          mine.status === "submitted"
+                        ? v.history
+                        : [...v.history, mine]
+                  }
+                />
+                {controls}
+              </section>
             </div>
           </>
         )

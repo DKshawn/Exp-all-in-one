@@ -468,9 +468,28 @@ export class EvolutionService {
       }
       const base = baseView(g, code, r.title, now);
       if (role === "teacher") {
+        const bounds = [
+          code,
+          Math.min(base.round, before),
+          HISTORY_ROUNDS,
+          after,
+        ];
+        if (g.round?.memo) {
+          // Archived summaries use the research export schema. Read the actual
+          // entries for the teacher's player counts, including older v3 rooms.
+          const history = await tx.query<{ data: Round }>(
+            "SELECT data FROM evolution_rounds WHERE room=$1 AND number<$2 AND number>=greatest($2-$3,$4+1) ORDER BY number",
+            bounds,
+          );
+          return teacherView(
+            g,
+            base,
+            history.rows.flatMap(({ data }) => summaries(g, data, true)),
+          );
+        }
         const history = await tx.query<{ summary: Summary[] }>(
           "SELECT summary FROM evolution_rounds WHERE room=$1 AND number<$2 AND number>=greatest($2-$3,$4+1) ORDER BY number",
-          [code, Math.min(base.round, before), HISTORY_ROUNDS, after],
+          bounds,
         );
         return teacherView(
           g,

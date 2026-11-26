@@ -16,7 +16,11 @@ Each block has 120 rounds, with a nominal 5 seconds to decide and 1 second of fe
 
 Each player has one choice per round. The system scores that choice against each other member of your group. If you chose Hare, you get 3 points against either choice. If you chose Stag, you get 4 against Stag and 0 against Hare. Your score for the round is the average of those points.
 
-Students see their group's previous hare share and its rolling 20-round trend, plus their own previous result. JSON and CSV include block and group, initial choice, revision eligibility, timeout, carried choice, prior feedback data and the timestamp at which the server prepared the response. This timestamp is not evidence that the participant actually saw the screen. Demo mode simulates the remaining 149 seats. The 2-second ARUE condition, concurrent field load with 150 devices, and real-participant validation are outside this change.
+In both formal rooms and demos, the student screen shows the Stag and Hare buttons, a one-opponent payoff table, the previous round and the current revision status. If selected, press either choice once to submit, including to keep the same choice. The buttons are disabled during the first 10 rounds and when you are ineligible. The screen identifies the group's fixed starting choice during those 10 rounds. The previous round shows your group's hare share as a percentage and a bar, your own choice and score, and the trend for up to 20 rounds in this block.
+
+The teacher's results show eligible players out of the selected group, actual submissions, timeouts, settled players, strategy shares and total payoffs. Strategy shares appear after settlement.
+
+JSON and CSV include block and group, initial choice, revision eligibility, timeout, carried choice, prior feedback data and the timestamp at which the server prepared the response. This timestamp is not evidence that the participant actually saw the screen. Demo mode simulates the remaining 149 seats. The 2-second ARUE condition, concurrent field load with 150 devices, and real-participant validation are outside this change.
 
 ## Run a classroom session
 

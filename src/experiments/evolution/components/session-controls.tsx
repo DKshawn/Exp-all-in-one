@@ -8,7 +8,12 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { label, type Key, type Lang } from "../locale";
 import type { Action, RunControl } from "../engine";
 import type { View } from "../views";
-import { isMemo, MEMO_PARTICIPANTS, MEMO_ROUNDS } from "../settings";
+import {
+  isMemo,
+  MEMO_LOCK_ROUNDS,
+  MEMO_PARTICIPANTS,
+  MEMO_ROUNDS,
+} from "../settings";
 type Teacher = Extract<View, { role: "teacher" }>;
 type Act = (action: Action) => void | Promise<void>;
 
@@ -30,6 +35,11 @@ export function SessionOverview({
   const timerLabelId = useId();
   const paused = v.pausedAt !== null;
   const memo = isMemo(v.settings);
+  const memoStudent = memo && v.role === "student";
+  const locked =
+    memo &&
+    v.phase === "playing" &&
+    (v.memoRound ?? Infinity) <= MEMO_LOCK_ROUNDS;
   const waitingForPairs =
     !memo &&
     v.phase === "playing" &&
@@ -39,7 +49,9 @@ export function SessionOverview({
     ? "paused"
     : waitingForPairs
       ? "waitingForPairs"
-      : v.phase;
+      : locked
+        ? "memoLocked"
+        : v.phase;
   const timerLabel =
     v.phase === "feedback"
       ? "next"
@@ -50,6 +62,9 @@ export function SessionOverview({
     0,
     Math.ceil(((v.deadline ?? now) - (v.pausedAt ?? now)) / 1000),
   );
+  const urgent =
+    remaining <= 5 &&
+    (!memoStudent || (!paused && v.current?.status === "choosing"));
   function control(kind: RunControl["kind"]) {
     if (
       v.role !== "teacher" ||
@@ -71,7 +86,13 @@ export function SessionOverview({
         ? "fast"
         : "skip";
   return (
-    <div className="emh-app ev-overview">
+    <div
+      className={
+        memoStudent
+          ? "emh-app ev-overview ev-memo-overview"
+          : "emh-app ev-overview"
+      }
+    >
       <div className="wide">
         <div className="session-overview">
           {v.settings.rounds <= 32 ? (
@@ -101,13 +122,15 @@ export function SessionOverview({
                 {t("round")} {v.memoRound ?? v.round}/
                 {memo ? MEMO_ROUNDS : v.settings.rounds}
               </strong>
-              <h2 aria-live={v.role === "student" ? "polite" : undefined}>
-                {t(phaseLabel)}
-              </h2>
+              {(!memoStudent || phaseLabel !== "playing") && (
+                <h2 aria-live={v.role === "student" ? "polite" : undefined}>
+                  {t(phaseLabel)}
+                </h2>
+              )}
             </div>
             {v.deadline !== null && (
               <div className="timers">
-                <div className={remaining <= 5 ? "urgent" : ""}>
+                <div className={urgent ? "urgent" : ""}>
                   <span id={timerLabelId}>{t(timerLabel)}</span>
                   <strong
                     className="timer"

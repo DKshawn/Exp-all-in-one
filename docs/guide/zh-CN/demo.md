@@ -73,4 +73,4 @@ EMH 允许所有人报价；接受对方价格或提交跨价报价会立即成�
 
 ---
 
-[首页](../../../README.zh-CN.md) · [课堂使用流程](classroom.md) · [Double Auction](double-auction.md) · [EMH 资产市场实验](emh.md) · [Judgement under Uncertainty](judgment.md) · [开发、部署与验证](development.md)
+[首页](../../../README.zh-CN.md) · [课堂使用流程](classroom.md) · [Double Auction](double-auction.md) · [EMH 资产市场实验](emh.md) · [Judgement under Uncertainty](judgment.md) · [开发、部署与验证](development.md) 运行中的学生预览把演示工具栏放在本轮改选状态下方。

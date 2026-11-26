@@ -21,7 +21,13 @@ import {
   summaries,
   teacherView,
 } from "../views";
-import { continuous, HISTORY_ROUNDS, isMemo, type Settings } from "../settings";
+import {
+  continuous,
+  HISTORY_ROUNDS,
+  isMemo,
+  MEMO_PARTICIPANTS,
+  type Settings,
+} from "../settings";
 import { label, type Lang } from "../locale";
 import { useLanguage } from "./language";
 import { SetupForm, useSetupDraft } from "./setup";
@@ -177,12 +183,12 @@ function DemoRoom({
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   const base = baseView(demo.game, "DEMO", demo.title, now);
+  const groupSize = demo.game.round?.memo?.groupSize;
+  const groups = groupSize
+    ? MEMO_PARTICIPANTS / groupSize
+    : demo.game.settings.groups;
   const view = teacher
-    ? teacherView(
-        demo.game,
-        base,
-        demo.history.slice(-HISTORY_ROUNDS * demo.game.settings.groups),
-      )
+    ? teacherView(demo.game, base, demo.history.slice(-HISTORY_ROUNDS * groups))
     : studentView(
         demo.game,
         base,
@@ -190,38 +196,42 @@ function DemoRoom({
         demo.archive.slice(-HISTORY_ROUNDS).map((r) => personal(r, demo.human)),
       );
   const active = view.phase === "playing" || view.phase === "feedback";
+  const studentTools = !teacher && isMemo(view.settings) && view.round > 0;
+  const toolbar = (
+    <DemoToolbar
+      lang={lang}
+      teacher={teacher}
+      onSwitch={() => setTeacher(!teacher)}
+      bots={demo.game.seats.length - 1}
+    >
+      <button
+        className="button primary"
+        disabled={!active}
+        onClick={() => act({ kind: "playback", paused: !paused })}
+      >
+        {paused ? <Play size={16} /> : <Pause size={16} />}
+        {label(lang, paused ? "resume" : "pause")}
+      </button>
+      <button
+        className="button secondary"
+        disabled={!active || paused}
+        onClick={() => {
+          demo.fastForward(Date.now());
+          refresh();
+        }}
+      >
+        <SkipForward size={16} />
+        {label(lang, "fast")}
+      </button>
+      <button className="button secondary" onClick={onSetup}>
+        <RotateCcw size={16} />
+        {label(lang, "reset")}
+      </button>
+    </DemoToolbar>
+  );
   return (
     <>
-      <DemoToolbar
-        lang={lang}
-        teacher={teacher}
-        onSwitch={() => setTeacher(!teacher)}
-        bots={demo.game.seats.length - 1}
-      >
-        <button
-          className="button primary"
-          disabled={!active}
-          onClick={() => act({ kind: "playback", paused: !paused })}
-        >
-          {paused ? <Play size={16} /> : <Pause size={16} />}
-          {label(lang, paused ? "resume" : "pause")}
-        </button>
-        <button
-          className="button secondary"
-          disabled={!active || paused}
-          onClick={() => {
-            demo.fastForward(Date.now());
-            refresh();
-          }}
-        >
-          <SkipForward size={16} />
-          {label(lang, "fast")}
-        </button>
-        <button className="button secondary" onClick={onSetup}>
-          <RotateCcw size={16} />
-          {label(lang, "reset")}
-        </button>
-      </DemoToolbar>
+      {!studentTools && toolbar}
       {err && (
         <p role="alert" className="error-message">
           {err}
@@ -234,6 +244,7 @@ function DemoRoom({
         busy={false}
         now={now}
         act={act}
+        studentTools={studentTools ? toolbar : undefined}
         loadHistory={async (before) =>
           teacher
             ? teacherView(

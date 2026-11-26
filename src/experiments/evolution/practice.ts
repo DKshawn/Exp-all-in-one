@@ -23,7 +23,7 @@ export class EvolutionPractice {
   private keepRound(round: Round | null) {
     if (round && round !== this.game.round) {
       this.archive.push(round);
-      this.history.push(...summaries(this.game, round));
+      this.history.push(...summaries(this.game, round, true));
     }
   }
   private plannedRound = 0;

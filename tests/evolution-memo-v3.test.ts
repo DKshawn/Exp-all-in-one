@@ -3,6 +3,7 @@ import { test } from "node:test";
 import { randomUUID } from "node:crypto";
 import { PGlite } from "@electric-sql/pglite";
 import { localDatabase, migrate } from "../src/lib/server/database";
+import { digest } from "../src/lib/server/auth";
 import { EvolutionService } from "../src/experiments/evolution/server/service";
 import {
   defaults,
@@ -25,6 +26,7 @@ import {
   baseView,
   rawRows,
   studentView,
+  teacherView,
   personal,
   summaries,
 } from "../src/experiments/evolution/views";
@@ -128,15 +130,34 @@ for (const [order, initial, expected] of [
               : Number(initial === "deer"),
         );
       } else {
-        for (const trend of Object.values(m.feedback)) {
-          assert.equal(trend.length, Math.min(20, m.blockRound - 1));
-          assert.equal(trend.at(-1)?.round, m.blockRound - 1);
+        for (const [group, trend] of Object.entries(m.feedback)) {
+          const window = archive.slice(-Math.min(20, m.blockRound - 1));
+          assert.deepEqual(
+            trend,
+            window.map((previous) => ({
+              round: previous.memo!.blockRound,
+              hare: Object.values(previous.entries).filter(
+                (e) => e.memo!.group === Number(group) && e.choice === 1,
+              ).length,
+              size,
+            })),
+          );
         }
       }
       const eligible = Object.entries(r.entries).filter(
         ([, e]) => e.memo!.eligible,
       );
-      const [sample, miss] = eligible;
+      const [sample, miss, keep] = eligible;
+      if (keep) {
+        const [id, e] = keep;
+        choose(g, id, n, e.memo!.carriedChoice, r.openedAt + 3000);
+      }
+      if (m.blockRound > 10) {
+        const ineligible = Object.entries(r.entries).find(
+          ([, e]) => !e.memo!.eligible,
+        )!;
+        assert.throws(() => choose(g, ineligible[0], n, 1, r.openedAt + 2000));
+      }
       if (sample) {
         const [id, e] = sample;
         choose(g, id, n, 1 - e.memo!.carriedChoice, r.openedAt + 2000);
@@ -154,9 +175,35 @@ for (const [order, initial, expected] of [
         assert.equal(miss[1].choice, miss[1].memo!.carriedChoice);
         assert.equal(miss[1].submittedAt, null);
       }
-      for (const seats of Object.values(perGroup)) {
+      if (keep) {
+        const [, e] = keep;
+        assert.equal(e.choice, e.memo!.carriedChoice);
+        assert.equal(e.memo!.timedOut, false);
+        assert.equal(e.submittedAt, r.openedAt + 3000);
+      }
+      const live = teacherView(g, baseView(g, "TEST", "Test", r.deadline), []);
+      for (const [group, seats] of Object.entries(perGroup)) {
+        const report = live.history.find((row) => row.group === Number(group))!;
+        assert.deepEqual(report.memoStats, {
+          eligible: m.blockRound <= 10 ? 0 : size / 5,
+          settledPlayers: size,
+        });
+        assert.equal(
+          report.submitted,
+          seats!.filter(([id]) => id === sample?.[0] || id === keep?.[0])
+            .length,
+        );
+        assert.equal(
+          report.timeouts,
+          report.memoStats.eligible - report.submitted,
+        );
         const deer = seats!.filter(([, e]) => e.choice === 0).length;
+        assert.deepEqual(report.counts, [deer, size - deer]);
         for (const [, e] of seats!) {
+          if (!e.memo!.eligible || e.memo!.timedOut) {
+            assert.equal(e.choice, e.memo!.carriedChoice);
+            assert.equal(e.submittedAt, null);
+          }
           const [p, q = "1"] = e.pay!.split("/");
           assert.equal(
             Number(p) * (size - 1),
@@ -179,6 +226,23 @@ for (const [order, initial, expected] of [
       ),
     );
     assert.equal(summaries(g, archive[0]).length, 150 / expected[0]);
+    assert.equal(summaries(g, archive[0])[0].memoStats, undefined);
+    const rows = archive.flatMap((r) => rawRows(g, r, "TEST"));
+    assert.equal(rows.length, 54_000);
+    assert.equal(rows.filter((row) => row.eligible).length, 9900);
+    assert.equal(rows.filter((row) => row.submittedAt !== null).length, 660);
+    assert.equal(rows.filter((row) => row.timedOut).length, 9240);
+    const csv = responsesCsv(
+      rows.map((row) => ({ ...row, heartbeatGap: null })),
+      true,
+      false,
+      true,
+    );
+    assert.equal(csv.split("\r\n").length, 54_001);
+    assert.match(
+      csv.split("\r\n")[0],
+      /"eligible","timedOut","carriedChoice","feedbackServedAt"/,
+    );
     assert.match(responsesCsv([], true, false, true), /feedbackServedAt/);
     assert.doesNotMatch(
       responsesCsv([], true, false, false),
@@ -213,12 +277,15 @@ test("memo v3 service stores server feedback delivery and restricts eligibility 
       [code],
     );
     const game = roster.rows[0].game;
+    const tokens = new Map([[game.seats[0].id, player.token]]);
     for (let n = 1; n < 150; n++) {
       const id = randomUUID();
       game.seats.push(newSeat(id));
+      const studentToken = randomUUID();
+      tokens.set(id, studentToken);
       await db.query(
-        "INSERT INTO evolution_players(room,id,nickname,pin_hash,token_hash,joined_at,last_seen) VALUES ($1,$2,$3,'unused',$2::uuid::text,$4,$4)",
-        [code, id, "Synthetic" + n, now],
+        "INSERT INTO evolution_players(room,id,nickname,pin_hash,token_hash,joined_at,last_seen) VALUES ($1,$2,$3,'unused',$4,$5,$5)",
+        [code, id, "Synthetic" + n, digest(studentToken), now],
       );
     }
     await db.query("UPDATE evolution_rooms SET game=$2::jsonb WHERE code=$1", [
@@ -264,6 +331,16 @@ test("memo v3 service stores server feedback delivery and restricts eligibility 
     assert.match(csv, /feedbackServedAt/);
     const active = await control();
     assert.equal(active.role, "teacher");
+    const archived = active.history.find(
+      (row) => row.round === 1 && row.group === second.group,
+    );
+    assert.deepEqual(archived?.memoStats, { eligible: 0, settledPlayers: 10 });
+    assert.equal(archived?.submitted, 0);
+    assert.equal(
+      archived?.counts.reduce((a, b) => a + b),
+      10,
+    );
+    assert.equal(data.rounds[0].memoStats, undefined);
     await assert.rejects(
       control({
         kind: "advance",
@@ -272,6 +349,85 @@ test("memo v3 service stores server feedback delivery and restricts eligibility 
         revision: active.revision,
       }),
     );
+
+    let next = active;
+    while (next.round < 11) {
+      now = next.deadline!;
+      const advanced = await control();
+      assert.equal(advanced.role, "teacher");
+      next = advanced;
+    }
+    const live = await db.query<{ game: ReturnType<typeof newGame> }>(
+      "SELECT game FROM evolution_rooms WHERE code=$1",
+      [code],
+    );
+    const group = Object.entries(live.rows[0].game.round!.entries).filter(
+      ([, entry]) => entry.memo?.group === 1,
+    );
+    const [[submitId, submitEntry], [timeoutId]] = group.filter(
+      ([, entry]) => entry.memo!.eligible,
+    );
+    const [carryId] = group.find(([, entry]) => !entry.memo!.eligible)!;
+    const open = next.history.find(
+      (row) => row.round === 11 && row.group === 1,
+    )!;
+    assert.deepEqual(open.memoStats, { eligible: 2, settledPlayers: 0 });
+    assert.deepEqual(open.counts, [0, 0]);
+    assert.equal(open.timeouts, 0);
+    const action = {
+      kind: "choose" as const,
+      round: 11,
+      choice: submitEntry.memo!.carriedChoice,
+    };
+    await assert.rejects(
+      svc.view(code, tokens.get(carryId), "student", action),
+    );
+    const submitted = await svc.view(
+      code,
+      tokens.get(submitId),
+      "student",
+      action,
+    );
+    assert.equal(submitted.role, "student");
+    assert.equal(submitted.current?.status, "submitted");
+    assert.equal(submitted.current?.memo?.feedback.length, 10);
+
+    now = next.deadline!;
+    const finishedRound = await control();
+    assert.equal(finishedRound.role, "teacher");
+    const settled = finishedRound.history.find(
+      (row) => row.round === 11 && row.group === 1,
+    )!;
+    assert.deepEqual(settled.memoStats, { eligible: 2, settledPlayers: 10 });
+    assert.equal(settled.submitted, 1);
+    assert.equal(settled.timeouts, 1);
+    assert.deepEqual(settled.counts, action.choice === 0 ? [10, 0] : [0, 10]);
+    assert.equal(settled.total, action.choice === 0 ? "40" : "30");
+
+    const revisionExport = JSON.parse(await svc.export(code, token, "json"));
+    assert.equal(revisionExport.rows.length, 1650);
+    const rowFor = (id: string) =>
+      revisionExport.rows.find(
+        (row: ReturnType<typeof rawRows>[number]) =>
+          row.round === 11 && row.id === id,
+      );
+    const [kept, missed, carried] = [submitId, timeoutId, carryId].map(rowFor);
+    assert.equal(kept.choice, kept.carriedChoice);
+    assert.equal(kept.eligible, true);
+    assert.equal(kept.timedOut, false);
+    assert.equal(kept.submittedAt, kept.feedbackServedAt);
+    assert.deepEqual(kept.feedbackHistory, submitted.current?.memo?.feedback);
+    assert.equal(missed.eligible, true);
+    assert.equal(missed.timedOut, true);
+    assert.equal(missed.submittedAt, null);
+    assert.equal(carried.eligible, false);
+    assert.equal(carried.timedOut, false);
+    assert.equal(carried.submittedAt, null);
+    assert.equal(missed.choice, carried.choice);
+    const revisionCsv = await svc.export(code, token, "csv");
+    assert.equal(revisionCsv.split("\r\n").length, 1651);
+    for (const id of [submitId, timeoutId, carryId])
+      assert.ok(revisionCsv.includes(`"${code}","1","11","${id}"`));
   } finally {
     await pg.close();
   }
@@ -298,4 +454,7 @@ test("ending a live memo round records interruption and not timeout", () => {
       (e) => e.status === "interrupted" && !e.memo!.timedOut && e.pay === null,
     ),
   );
+  const summary = teacherView(g, baseView(g, "TEST", "Test", 0), []).history[0];
+  assert.deepEqual(summary.memoStats, { eligible: 2, settledPlayers: 0 });
+  assert.equal(summary.timeouts, 0);
 });

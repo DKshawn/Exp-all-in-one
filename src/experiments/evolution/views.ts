@@ -46,7 +46,7 @@ export function personal(r: Round, id: string) {
     otherPay: peer?.pay ?? null,
   };
 }
-export function summaries(g: Game, r: Round) {
+export function summaries(g: Game, r: Round, includeMemoStats = false) {
   const sizes = r.memo
     ? Object.values(r.memo.feedback).map(() => r.memo!.groupSize)
     : groupSizes(g);
@@ -70,7 +70,9 @@ export function summaries(g: Game, r: Round) {
       return counts;
     };
     const pairs: Record<string, number> = {};
-    let settled = 0,
+    let eligible = 0,
+      settledPlayers = 0,
+      settled = 0,
       agreements = 0,
       total = "0",
       byes = 0,
@@ -84,6 +86,10 @@ export function summaries(g: Game, r: Round) {
       if (e.status === "bye") byes++;
       if (e.status === "timeout" || e.memo?.timedOut) timeouts++;
       if (e.pay !== null) total = add(total, e.pay);
+      if (includeMemoStats && e.memo) {
+        if (e.memo.eligible) eligible++;
+        if (e.status === "settled") settledPlayers++;
+      }
       if (e.status !== "settled" || e.position !== "row") continue;
       const right = r.entries[e.opponent!].choice!;
       if (!slider) {
@@ -96,6 +102,9 @@ export function summaries(g: Game, r: Round) {
     return {
       round: r.number,
       ...(r.memo ? { block: r.memo.block, blockRound: r.memo.blockRound } : {}),
+      ...(includeMemoStats && r.memo
+        ? { memoStats: { eligible, settledPlayers } }
+        : {}),
       group: i + 1,
       assigned: seats.length,
       paired: r.memo ? 0 : seats.length - byes,
@@ -158,7 +167,7 @@ export function teacherView(
       ...(g.round?.memo
         ? history.filter((item) => item.block === g.round!.memo!.block)
         : history),
-      ...(g.round ? summaries(g, g.round) : []),
+      ...(g.round ? summaries(g, g.round, true) : []),
     ],
   };
 }

@@ -67,4 +67,4 @@ EMHでは全員が提示でき、相手の価格を受ける操作と跨ぐ提�
 
 ---
 
-[ホーム](../../../README.md) · [授業での使い方](classroom.md) · [Double Auction](double-auction.md) · [EMH 資産市場実験](emh.md) · [Judgement under Uncertainty](judgment.md) · [開発・デプロイ・検証](development.md)
+[ホーム](../../../README.md) · [授業での使い方](classroom.md) · [Double Auction](double-auction.md) · [EMH 資産市場実験](emh.md) · [Judgement under Uncertainty](judgment.md) · [開発・デプロイ・検証](development.md) 進行中の学生プレビューでは、デモ操作は見直し状況の下にあります。

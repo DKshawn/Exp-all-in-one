@@ -1,7 +1,13 @@
 import { shuffled } from "@/experiments/double-auction/lib/study-core";
 import { AuctionError } from "@/lib/server/errors";
 import { add, canonical } from "./numbers";
-import { MEMO_PARTICIPANTS, MEMO_ROUNDS, isMemo, memoSizes } from "./settings";
+import {
+  MEMO_LOCK_ROUNDS,
+  MEMO_PARTICIPANTS,
+  MEMO_ROUNDS,
+  isMemo,
+  memoSizes,
+} from "./settings";
 import type { Entry, Game } from "./engine";
 
 export type FeedbackPoint = { round: number; hare: number; size: number };
@@ -63,7 +69,7 @@ export function openMemoRound(g: Game, now: number) {
   for (let group = 1; group <= groupCount; group++) {
     const seats = g.seats.filter((s) => s.group === group);
     const eligible = new Set(
-      blockRound > 10
+      blockRound > MEMO_LOCK_ROUNDS
         ? shuffled(seats)
             .slice(0, groupSize / 5)
             .map((s) => s.id)

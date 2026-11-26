@@ -7,6 +7,7 @@ const pair = z.tuple([amount, amount]);
 const row = z.tuple([pair, pair]);
 export const MAX_ROUNDS = 10_000;
 export const MEMO_ROUNDS = 120;
+export const MEMO_LOCK_ROUNDS = 10;
 export const MEMO_PARTICIPANTS = 150;
 const MEMO_NAMES = ["鹿", "兎"] as const;
 export const MEMO_PROTOCOL = "stag-hunt-memo-v3";

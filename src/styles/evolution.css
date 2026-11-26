@@ -636,26 +636,110 @@
     justify-content: flex-start;
   }
 }
-.ev-memo-feedback {
-  min-width: 0;
-  color: var(--ink);
+.ev-memo-student {
+  max-width: 720px;
+}
+.ev-memo-student .ev-demo-bar.demo-panel {
+  margin: 0;
+}
+.ev-memo-student .ev-panel h2 {
+  white-space: nowrap;
+}
+.ev-memo-overview .wide .session-overview {
+  display: grid;
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr);
+}
+.ev-memo-overview .wide .session-overview .session-bar {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.ev-memo-overview .session-phase h2 {
+  font-size: 13px;
+}
+.ev-memo-overview .ev-round-progress {
+  width: 100%;
+  height: 6px;
+}
+.ev-memo-overview .session-overview .timers > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ev-memo-overview .timers progress {
+  display: none;
+}
+.ev-memo-choice .ev-decision fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.ev-memo-choice .ev-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.ev-memo-choice .button {
+  min-height: 44px;
+}
+.ev-memo-choice .button:disabled {
+  color: var(--muted);
+  opacity: 1;
+}
+.ev-memo-choice .button.primary:disabled {
+  border-color: var(--line);
+  background: var(--lavender);
+}
+.ev-memo-choice caption {
+  margin-bottom: 3px;
+}
+.ev-memo-choice :is(th, td) {
+  padding: 4px 8px;
+}
+.ev-memo-choice p {
+  font-size: 13px;
+}
+.ev-memo-proportion {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2px 8px;
+}
+.ev-memo-proportion span {
+  white-space: nowrap;
+}
+.ev-memo-proportion progress {
+  grid-column: 1 / -1;
+  width: 100%;
+  accent-color: var(--accent);
+}
+.ev-memo-payoffs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 16px;
+  margin: 0;
+}
+.ev-memo-payoffs div {
+  display: flex;
+  gap: 4px 8px;
+}
+.ev-memo-payoffs dd {
+  font-weight: 700;
+  margin: 0;
+}
+.ev-memo-feedback figure {
+  margin: 0;
+}
+.ev-memo-feedback figcaption {
+  color: var(--muted);
 }
 .ev-memo-feedback svg {
   display: block;
   color: var(--accent);
   max-width: 100%;
 }
-.ev-memo-feedback progress {
-  width: 100%;
-}
-.ev-workbench-memo .ev-memo-feedback {
-  grid-column: 2;
-  grid-row: 1;
-}
-@media (max-width: 760px) {
-  .ev-workbench-memo .ev-memo-feedback {
-    grid-column: 1;
-    grid-row: auto;
+@media (max-width: 420px) {
+  .ev-memo-student {
+    padding-inline: 10px;
   }
 }
 .ev-analysis .ev-scroll {
