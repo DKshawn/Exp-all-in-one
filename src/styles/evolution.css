@@ -839,6 +839,17 @@
   font-weight: 700;
   margin: 0;
 }
+.ev-memo-feedback-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ev-memo-feedback-title p {
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
 .ev-memo-feedback figure {
   margin: 0;
 }
@@ -895,10 +906,6 @@
 }
 .ev-memo-axis {
   stroke: var(--muted);
-}
-.ev-memo-round-details {
-  min-block-size: 1lh;
-  line-height: 1.55;
 }
 @media (max-width: 420px) {
   .ev-memo-student {

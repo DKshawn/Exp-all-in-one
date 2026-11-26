@@ -75,6 +75,16 @@ async function checkStudentViewport(
       expect(bottoms[0]).toBeLessThan(bounds[2].y);
       expect(bottoms[2]).toBeLessThan(bounds[3].y);
       expect(Math.max(...bottoms)).toBeLessThanOrEqual(height);
+      const choices = (await page.locator(".ev-memo-choice").boundingBox())!;
+      const feedback = (await page.locator(".ev-memo-feedback").boundingBox())!;
+      const account = (await page
+        .locator(".ev-memo-student > .ev-account")
+        .boundingBox())!;
+      const accountGap = account.y - (feedback.y + feedback.height);
+      expect(accountGap).toBeCloseTo(
+        feedback.y - (choices.y + choices.height),
+        1,
+      );
       const frame = page.locator(".ev-memo-options");
       const lock = page.locator(".ev-memo-choice-lock");
       const frameBox = (await frame.boundingBox())!;
@@ -133,6 +143,7 @@ async function checkStudentViewport(
         choices: Math.max(...bottoms.slice(0, 2)),
         payoff: bottoms[2],
         share: bottoms[3],
+        accountGap,
       });
       if (lang === "en")
         await page.screenshot({
@@ -156,7 +167,7 @@ async function studentLayout(page: Page) {
       await page.locator(".ev-memo-student").evaluate((main) =>
         [
           ...main.querySelectorAll(
-            ".ev-memo-choice, .ev-memo-feedback, .ev-memo-chart, .ev-memo-round-details, .ev-account",
+            ".ev-memo-choice, .ev-memo-feedback, .ev-memo-chart, .ev-account",
           ),
         ].map((panel) => {
           const { y, height } = panel.getBoundingClientRect();

@@ -91,7 +91,10 @@ export function MemoStudent({
       </section>
 
       <section className="panel ev-panel ev-memo-feedback">
-        <h2>{t("memoResult")}</h2>
+        <div className="ev-memo-feedback-title">
+          <h2>{t("memoResult")}</h2>
+          {memo.blockRound === 1 && <p>{t("memoNew")}</p>}
+        </div>
         <div className="ev-memo-proportion">
           <span>{t("memoFeedback")}</span>
           <strong>
@@ -122,10 +125,6 @@ export function MemoStudent({
         </dl>
         <MemoTrend points={points} lang={lang} format={format} />
       </section>
-
-      <div className="ev-memo-round-details">
-        {memo.blockRound === 1 && <p>{t("memoNew")}</p>}
-      </div>
 
       <div className="ev-account">
         <div>
