@@ -639,8 +639,39 @@
 .ev-memo-student {
   max-width: 720px;
 }
-.ev-memo-student .ev-demo-bar.demo-panel {
-  margin: 0;
+.ev-demo-bar .ev-demo-short-label {
+  display: none;
+}
+@media (max-width: 540px) {
+  .ev-memo-demo-bar.demo-panel {
+    padding: 4px 8px;
+  }
+  .ev-memo-demo-bar .demo-controls,
+  .ev-memo-demo-bar .demo-actions {
+    gap: 4px;
+    justify-content: flex-start;
+  }
+  .ev-memo-demo-bar .button {
+    min-block-size: 34px;
+    padding-inline: 6px;
+    font-size: 12px;
+  }
+  .ev-memo-demo-bar .ev-demo-meta,
+  .ev-memo-demo-bar .button svg,
+  .ev-memo-demo-bar .ev-demo-full-label {
+    display: none;
+  }
+  .ev-memo-demo-bar .ev-demo-short-label {
+    display: inline;
+  }
+  .ev-memo-demo-bar .ev-demo-fast {
+    gap: 4px;
+  }
+  .ev-memo-demo-bar .ev-demo-fast svg {
+    display: block;
+    inline-size: 12px;
+    block-size: 12px;
+  }
 }
 .ev-memo-student .ev-panel h2 {
   white-space: nowrap;
@@ -649,21 +680,38 @@
   display: grid;
   width: 100%;
   grid-template-columns: minmax(0, 1fr);
+  padding: 6px 10px;
 }
 .ev-memo-overview .wide .session-overview .session-bar {
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) 5.5rem;
+  column-gap: 6px;
 }
+.ev-memo-overview .session-overview .session-phase {
+  display: grid;
+  grid-template-rows: 1.4rem 1.15rem;
+  gap: 0;
+}
+.ev-memo-overview .session-phase > strong,
 .ev-memo-overview .session-phase h2 {
   font-size: 13px;
+}
+.ev-memo-overview .session-overview .timers {
+  justify-self: end;
+  align-self: center;
+  text-align: end;
+}
+.ev-memo-overview .wide .session-overview .timer {
+  font-size: 22px;
 }
 .ev-memo-overview .ev-round-progress {
   width: 100%;
   height: 6px;
 }
 .ev-memo-overview .session-overview .timers > div {
-  display: flex;
+  display: grid;
+  grid-template-rows: 1rem 1.55rem;
   align-items: center;
-  gap: 6px;
+  white-space: nowrap;
 }
 .ev-memo-overview .timers progress {
   display: none;
@@ -707,9 +755,11 @@
 .ev-memo-proportion span {
   white-space: nowrap;
 }
-.ev-memo-proportion progress {
+.ev-memo-progress {
+  display: block;
   grid-column: 1 / -1;
-  width: 100%;
+  inline-size: 100%;
+  block-size: 8px;
   accent-color: var(--accent);
 }
 .ev-memo-payoffs {
@@ -735,11 +785,43 @@
 .ev-memo-feedback svg {
   display: block;
   color: var(--accent);
-  max-width: 100%;
+  inline-size: min(100%, 22rem);
+  block-size: auto;
+}
+.ev-memo-feedback svg text {
+  fill: var(--ink);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.ev-memo-gridline {
+  stroke: var(--line);
+}
+.ev-memo-axis {
+  fill: none;
+  stroke: var(--muted);
+}
+.ev-memo-revision-status {
+  min-block-size: 2lh;
+}
+.ev-memo-revision-details {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 8px;
+  min-block-size: 1lh;
+  line-height: 1.55;
+}
+.ev-memo-current-pay {
+  grid-column: 2;
+  white-space: nowrap;
 }
 @media (max-width: 420px) {
   .ev-memo-student {
+    gap: 8px;
     padding-inline: 10px;
+  }
+  .ev-memo-student .ev-panel {
+    gap: 6px;
+    padding: 10px 12px;
   }
 }
 .ev-analysis .ev-scroll {

@@ -9,6 +9,7 @@ const labels = {
     share: "Group hare share",
     prior: "Previous round",
     revision: "This round’s revision",
+    round: "Round",
   },
   ja: {
     stag: "鹿",
@@ -17,6 +18,7 @@ const labels = {
     share: "グループ内の兎の割合",
     prior: "前回の結果",
     revision: "今回の見直し",
+    round: "ラウンド",
   },
   "zh-CN": {
     stag: "鹿",
@@ -25,6 +27,7 @@ const labels = {
     share: "组选兔比例",
     prior: "上轮结果",
     revision: "本轮改选",
+    round: "轮次",
   },
 } as const;
 
@@ -46,6 +49,10 @@ async function checkStudentViewport(
     await expect(headings).toContainText([names.prior, names.revision]);
     await expect(payoff.locator("td")).toHaveText(["4", "0", "3", "3"]);
     await expect(share).toBeVisible();
+    const axisLabels = page.locator(".ev-memo-feedback svg text");
+    const text = await axisLabels.allTextContents();
+    expect(text.slice(0, 3)).toEqual(["100%", "50%", "0%"]);
+    expect(text.at(-1)).toBe(names.round);
 
     for (const width of [320, 390, 1440]) {
       const height = width === 1440 ? 900 : 740;
@@ -64,6 +71,22 @@ async function checkStudentViewport(
       expect(bottoms[0]).toBeLessThan(bounds[2].y);
       expect(bottoms[2]).toBeLessThan(bounds[3].y);
       expect(Math.max(...bottoms)).toBeLessThanOrEqual(height);
+      if (entry === "demo") {
+        const toolbar = page.locator(".ev-demo-bar");
+        await expect(toolbar).toBeInViewport({ ratio: 1 });
+        const bar = (await toolbar.boundingBox())!;
+        const heading = (await page
+          .getByRole("main")
+          .getByRole("heading", { level: 1 })
+          .boundingBox())!;
+        expect(bar.y + bar.height).toBeLessThan(heading.y);
+        const rows = new Set();
+        for (const control of await toolbar.getByRole("button").all()) {
+          await expect(control).toBeInViewport({ ratio: 1 });
+          rows.add(Math.round((await control.boundingBox())!.y));
+        }
+        expect(rows.size).toBe(1);
+      }
       const overflow = await page.evaluate(() => ({
         page: document.documentElement.scrollWidth > innerWidth,
         labels: Array.from(
@@ -95,6 +118,26 @@ async function checkStudentViewport(
     contentType: "application/json",
   });
   console.log(entry, JSON.stringify(metrics));
+}
+
+async function studentLayout(page: Page) {
+  const sizes = [];
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 740 });
+    sizes.push(
+      await page.locator(".ev-memo-student").evaluate((main) =>
+        [
+          ...main.querySelectorAll(
+            ".ev-memo-choice, .ev-memo-feedback, .ev-memo-revision, .ev-account",
+          ),
+        ].map((panel) => {
+          const { y, height } = panel.getBoundingClientRect();
+          return [Math.round(y + scrollY), Math.round(height)];
+        }),
+      ),
+    );
+  }
+  return sizes;
 }
 
 async function expectTeacherStats(page: Page, round: number, counts: string[]) {
@@ -198,9 +241,11 @@ test("memo v3 demo shows the payoff table, fixed start, and one-click revision",
   await expect(
     page.getByText("No previous result in this block yet."),
   ).toBeVisible();
+  const initialLayout = await studentLayout(page);
   await page.getByRole("button", { name: "Advance 30 s" }).click();
   await page.getByRole("button", { name: "Pause", exact: true }).click();
-  await expect(page.getByText("100%", { exact: true })).toBeVisible();
+  await expect(page.locator(".ev-memo-proportion strong")).toHaveText("100%");
+  expect(await studentLayout(page)).toEqual(initialLayout);
   await expect(page.getByRole("img", { name: /Round 5: 100%/ })).toBeVisible();
   await expect(page.locator(".ev-memo-payoffs")).toContainText("My payoff3");
   await checkStudentViewport(page, testInfo, "demo");
@@ -210,8 +255,10 @@ test("memo v3 demo shows the payoff table, fixed start, and one-click revision",
   await expect(
     page.getByText("You can revise your choice this round."),
   ).toBeVisible();
+  expect(await studentLayout(page)).toEqual(initialLayout);
   await page.getByRole("button", { name: "Hare", exact: true }).click();
   await expect(page.getByText("Choice received.")).toBeVisible();
+  expect(await studentLayout(page)).toEqual(initialLayout);
   await expect(
     page.getByRole("button", { name: "Stag", exact: true }),
   ).toBeDisabled();
@@ -223,6 +270,7 @@ test("memo v3 demo shows the payoff table, fixed start, and one-click revision",
   await expect(
     page.getByText("You weren’t selected. Your previous choice carries over."),
   ).toBeVisible();
+  expect(await studentLayout(page)).toEqual(initialLayout);
   await expect(
     page.getByRole("button", { name: "Hare", exact: true }),
   ).toBeDisabled();
@@ -245,10 +293,27 @@ test("memo v3 demo shows the payoff table, fixed start, and one-click revision",
     page.getByText("No previous result in this block yet."),
   ).toBeVisible();
   await expect(page.getByRole("img", { name: /Round \d+: / })).toHaveCount(0);
+  expect(await studentLayout(page)).toEqual(initialLayout);
   await page.clock.fastForward(25 * 6000);
   await expect(page.getByText(/Block 2\/3.*Round 26\/120/)).toBeVisible();
   const trend = page.getByRole("img", { name: /Round 6: .*Round 25: / });
   await expect(trend.locator("circle")).toHaveCount(20);
+  await expect(trend.locator("text")).toHaveText([
+    "100%",
+    "50%",
+    "0%",
+    "6",
+    "11",
+    "16",
+    "20",
+    "25",
+    "Round",
+  ]);
+  await page.setViewportSize({ width: 320, height: 740 });
+  await page.locator(".ev-memo-feedback").screenshot({
+    path: testInfo.outputPath("demo-round-chart-320.png"),
+    animations: "disabled",
+  });
   await page.getByRole("button", { name: "View teacher screen" }).click();
   await page
     .getByRole("combobox", { name: "Group", exact: true })
@@ -319,6 +384,7 @@ test("memo v3 formal teacher and student use normal entries with a 150-seat synt
     await page.getByRole("button", { name: "Close admission" }).click();
     await page.getByRole("button", { name: "Confirm and start" }).click();
     await expect(student.getByText(/Round 1\/120/)).toBeVisible();
+    const initialLayout = await studentLayout(student);
     await expect(
       student.getByText(
         /Everyone in your group plays (Hare|Stag) for the first 10 rounds\./,
@@ -334,6 +400,7 @@ test("memo v3 formal teacher and student use normal entries with a 150-seat synt
       student.getByRole("progressbar", { name: "Group hare share" }),
     ).toBeVisible();
     await page.getByRole("button", { name: "Pause", exact: true }).click();
+    expect(await studentLayout(student)).toEqual(initialLayout);
     await checkStudentViewport(student, testInfo, "formal");
     const settled = await expectTeacherStats(page, 1, [
       "0/10",

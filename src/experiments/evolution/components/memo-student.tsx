@@ -10,7 +10,6 @@ export function MemoStudent({
   mine,
   lang,
   now,
-  tools,
   renderDecision,
 }: {
   view: Extract<View, { role: "student" }>;
@@ -18,7 +17,6 @@ export function MemoStudent({
   mine: Personal;
   lang: Lang;
   now: number;
-  tools?: ReactNode;
   renderDecision: (statusId: string) => ReactNode;
 }) {
   const statusId = useId();
@@ -32,10 +30,18 @@ export function MemoStudent({
   });
   const pointLabel = (point: (typeof points)[number]) =>
     `${t("round")} ${point.round}: ${format.format(point.hare / point.size)}`;
-  const coordinates = points.map((point, i) => ({
-    x: 10 + (i * 260) / 19,
-    y: 60 - (54 * point.hare) / point.size,
-  }));
+  const left = 42,
+    right = 262,
+    top = 12,
+    bottom = 82;
+  const x = (i: number) =>
+    left + (i * (right - left)) / Math.max(1, points.length - 1);
+  const y = (share: number) => bottom - share * (bottom - top);
+  const ticks = new Set(
+    Array.from({ length: 5 }, (_, i) =>
+      Math.round((i * (points.length - 1)) / 4),
+    ),
+  );
   let status: string;
   if (mine.status === "interrupted") status = t("interrupted");
   else if (memo.blockRound <= MEMO_LOCK_ROUNDS)
@@ -80,86 +86,125 @@ export function MemoStudent({
 
       <section className="panel ev-panel ev-memo-feedback">
         <h2>{t("memoResult")}</h2>
-        {prior ? (
-          <>
-            <div className="ev-memo-proportion">
-              <span>{t("memoFeedback")}</span>
-              <strong>{format.format(prior.hare / prior.size)}</strong>
-              <progress
-                aria-label={t("memoFeedback")}
-                max={prior.size}
-                value={prior.hare}
-              />
-            </div>
-            <dl className="ev-memo-payoffs">
-              <div>
-                <dt>{t("mine")}</dt>
-                <dd>{names[memo.carriedChoice]}</dd>
-              </div>
-              <div>
-                <dt>{t("pay")}</dt>
-                <dd>{memo.priorPay ?? "—"}</dd>
-              </div>
-            </dl>
-            <figure>
-              <figcaption>{t("memoTrend")}</figcaption>
-              <svg
-                role="img"
-                aria-label={points.map(pointLabel).join("; ")}
-                viewBox="0 0 280 66"
-                width="280"
-                height="66"
-              >
-                {[6, 33, 60].map((y) => (
-                  <line
-                    key={y}
-                    x1="10"
-                    y1={y}
-                    x2="270"
-                    y2={y}
-                    stroke="currentColor"
-                    opacity=".25"
-                  />
-                ))}
-                <polyline
-                  points={coordinates.map(({ x, y }) => `${x},${y}`).join(" ")}
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
+        <div className="ev-memo-proportion">
+          <span>{t("memoFeedback")}</span>
+          <strong>
+            {prior ? format.format(prior.hare / prior.size) : "—"}
+          </strong>
+          {prior ? (
+            <progress
+              className="ev-memo-progress"
+              aria-label={t("memoFeedback")}
+              max={prior.size}
+              value={prior.hare}
+            />
+          ) : (
+            <span className="ev-memo-progress" aria-hidden="true" />
+          )}
+        </div>
+        <dl className="ev-memo-payoffs">
+          <div>
+            <dt>{t("mine")}</dt>
+            <dd>{prior ? names[memo.carriedChoice] : "—"}</dd>
+          </div>
+          <div>
+            <dt>{t("pay")}</dt>
+            <dd>{memo.priorPay ?? "—"}</dd>
+          </div>
+        </dl>
+        <figure>
+          <figcaption>{t(prior ? "memoTrend" : "memoNoFeedback")}</figcaption>
+          <svg
+            role={prior ? "img" : undefined}
+            aria-label={prior ? points.map(pointLabel).join("; ") : undefined}
+            aria-hidden={prior ? undefined : true}
+            viewBox="0 0 280 124"
+            width="280"
+            height="124"
+          >
+            {[1, 0.5, 0].map((share) => (
+              <g key={share}>
+                <line
+                  className="ev-memo-gridline"
+                  x1={left}
+                  x2={right}
+                  y1={y(share)}
+                  y2={y(share)}
                 />
-                {coordinates.map(({ x, y }, i) => (
-                  <circle
-                    key={points[i].round}
-                    cx={x}
-                    cy={y}
-                    r="2.5"
-                    fill="currentColor"
-                  >
-                    <title>{pointLabel(points[i])}</title>
-                  </circle>
-                ))}
-              </svg>
-            </figure>
-          </>
-        ) : (
-          <p>{t("memoNoFeedback")}</p>
-        )}
+                <text
+                  x={left - 6}
+                  y={y(share)}
+                  textAnchor="end"
+                  dominantBaseline="middle"
+                >
+                  {format.format(share)}
+                </text>
+              </g>
+            ))}
+            <path
+              className="ev-memo-axis"
+              d={`M ${left} ${top} V ${bottom} H ${right}`}
+            />
+            {points.map(
+              (point, i) =>
+                ticks.has(i) && (
+                  <g key={point.round}>
+                    <line
+                      className="ev-memo-axis"
+                      x1={x(i)}
+                      x2={x(i)}
+                      y1={bottom}
+                      y2={bottom + 5}
+                    />
+                    <text x={x(i)} y={bottom + 19} textAnchor="middle">
+                      {point.round}
+                    </text>
+                  </g>
+                ),
+            )}
+            <text x={(left + right) / 2} y="119" textAnchor="middle">
+              {t("round")}
+            </text>
+            {points.length > 1 && (
+              <polyline
+                points={points
+                  .map((point, i) => `${x(i)},${y(point.hare / point.size)}`)
+                  .join(" ")}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              />
+            )}
+            {points.map((point, i) => (
+              <circle
+                key={point.round}
+                cx={x(i)}
+                cy={y(point.hare / point.size)}
+                r="2.5"
+                fill="currentColor"
+              >
+                <title>{pointLabel(point)}</title>
+              </circle>
+            ))}
+          </svg>
+        </figure>
       </section>
 
       <section className="panel ev-panel ev-memo-revision">
         <h2>{t("memoRevision")}</h2>
-        <p id={statusId} role="status">
+        <p className="ev-memo-revision-status" id={statusId} role="status">
           {status}
         </p>
-        {memo.blockRound === 1 && <p>{t("memoNew")}</p>}
-        {mine.pay !== null && (
-          <p>
-            {t("pay")} <strong>{mine.pay}</strong>
-          </p>
-        )}
+        <div className="ev-memo-revision-details">
+          {memo.blockRound === 1 && <p>{t("memoNew")}</p>}
+          {mine.pay !== null && (
+            <p className="ev-memo-current-pay">
+              {t("pay")} <strong>{mine.pay}</strong>
+            </p>
+          )}
+        </div>
       </section>
 
-      {tools}
       <div className="ev-account">
         <div>
           <span>{t("group")}</span>

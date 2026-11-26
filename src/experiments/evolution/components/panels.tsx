@@ -22,7 +22,6 @@ type Props = {
   act: (action: Action) => void | Promise<void>;
   loadHistory?: (before: number) => Promise<View>;
   downloads?: ReactNode;
-  studentTools?: ReactNode;
 };
 function Decision({
   view,
@@ -281,7 +280,6 @@ export function Panels({
   now,
   act,
   downloads,
-  studentTools,
   loadHistory,
 }: Props) {
   const t = (k: Key) => label(lang, k),
@@ -478,7 +476,6 @@ export function Panels({
           lang={lang}
           mine={mine}
           now={now}
-          tools={studentTools}
           renderDecision={(statusId) => (
             <Decision
               key={v.round}

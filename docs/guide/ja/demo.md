@@ -18,7 +18,7 @@ Double Auction の学生デモも、幅760 CSSピクセル以下では実験と�
 
 Double Auction、EMH、確率的進化ゲームのデモでは、操作する1席を含めて最大5,000席を設定できます。Judgement のデモはブラウザーごとの個人用プレビューで、参加者の割り当てはありません。
 
-「鹿兎・研究版 v3」は[確率進化ゲームガイド](evolution.md)を参照してください。150席のうち149席はシミュレーションです。
+「鹿兎・研究版 v3」は[確率進化ゲームガイド](evolution.md)を参照してください。150席のうち149席はシミュレーションです。 デモ操作は教員・学生どちらの画面でも上部に表示します。
 
 ## Double Auction
 
@@ -67,4 +67,4 @@ EMHでは全員が提示でき、相手の価格を受ける操作と跨ぐ提�
 
 ---
 
-[ホーム](../../../README.md) · [授業での使い方](classroom.md) · [Double Auction](double-auction.md) · [EMH 資産市場実験](emh.md) · [Judgement under Uncertainty](judgment.md) · [開発・デプロイ・検証](development.md) 進行中の学生プレビューでは、デモ操作は見直し状況の下にあります。
+[ホーム](../../../README.md) · [授業での使い方](classroom.md) · [Double Auction](double-auction.md) · [EMH 資産市場実験](emh.md) · [Judgement under Uncertainty](judgment.md) · [開発・デプロイ・検証](development.md)

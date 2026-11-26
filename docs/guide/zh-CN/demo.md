@@ -18,7 +18,7 @@ SEG 新房间最多可设 10,000 轮。协调博弈点选即提交，按钮和�
 
 Double Auction、EMH 和随机演化博弈的 Demo 最多可设置 5,000 个席位，包含自己操作的一个席位。Judgement 的 Demo 在各自浏览器中提供个人预览，无需分配席位。
 
-「鹿兔研究版 v3」见[随机演化博弈指南](evolution.md)。150 席中 149 席由演示程序模拟。
+「鹿兔研究版 v3」见[随机演化博弈指南](evolution.md)。150 席中 149 席由演示程序模拟。 教师和学生视角的演示工具栏均位于页面顶部。
 
 ## Double Auction
 
@@ -73,4 +73,4 @@ EMH 允许所有人报价；接受对方价格或提交跨价报价会立即成�
 
 ---
 
-[首页](../../../README.zh-CN.md) · [课堂使用流程](classroom.md) · [Double Auction](double-auction.md) · [EMH 资产市场实验](emh.md) · [Judgement under Uncertainty](judgment.md) · [开发、部署与验证](development.md) 运行中的学生预览把演示工具栏放在本轮改选状态下方。
+[首页](../../../README.zh-CN.md) · [课堂使用流程](classroom.md) · [Double Auction](double-auction.md) · [EMH 资产市场实验](emh.md) · [Judgement under Uncertainty](judgment.md) · [开发、部署与验证](development.md)

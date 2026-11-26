@@ -18,7 +18,7 @@ Select **市場実験室** or **戻る** in the demo header to return to the dem
 
 Double Auction, EMH, and Stochastic Evolutionary Games demos support up to 5,000 seats, including the seat you control. The Judgement demo previews individual tasks in each browser without seat allocation.
 
-For Stag Hunt v3, see the [evolution game guide](evolution.md). The demo simulates 149 of the 150 seats.
+For Stag Hunt v3, see the [evolution game guide](evolution.md). The demo simulates 149 of the 150 seats. The demo controls stay at the top in both teacher and student views.
 
 ## Double Auction
 
@@ -73,4 +73,4 @@ Everyone can quote in EMH. Accepting an opposing price or submitting a crossing 
 
 ---
 
-[Home](../../../README.en.md) · [Classroom guide](classroom.md) · [Double Auction](double-auction.md) · [EMH asset market experiment](emh.md) · [Judgement under Uncertainty](judgment.md) · [Development, deployment and verification](development.md) During play, the student preview places the demo controls below the revision status.
+[Home](../../../README.en.md) · [Classroom guide](classroom.md) · [Double Auction](double-auction.md) · [EMH asset market experiment](emh.md) · [Judgement under Uncertainty](judgment.md) · [Development, deployment and verification](development.md)
