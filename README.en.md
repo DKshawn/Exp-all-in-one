@@ -18,7 +18,7 @@ New SEG rooms support up to 10,000 rounds. A coordination choice submits on clic
 
 Use the globe icon at the top right of the header to choose Japanese, Chinese, or English on teacher and student pages, in formal experiments, and in demos. The browser shares the preference across teacher home, room management, and supported experiment settings.
 
-SEG formal and demo setup show hints such as **Input range: 3–120** below numeric fields. Out-of-range and non-integer values show a message under the affected field with its name and the required correction.
+SEG formal and demo setup show hints such as **Input range: 3–120** below fields that accept whole numbers. Out-of-range and non-integer values show a message under the affected field with its name and the required correction.
 
 Formal rooms accept up to 5,000 registrations each. The Double Auction, EMH, and Stochastic Evolutionary Games demos support up to 5,000 seats, including the seat you control. The Judgement demo previews individual tasks.
 

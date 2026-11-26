@@ -244,7 +244,6 @@ export function SetupForm({
             <label htmlFor={demandStepId}>{t("demandStep")}</label>
             <select
               id={demandStepId}
-              aria-describedby={`${demandStepId}-options`}
               value={demandStep(s)}
               onChange={(e) =>
                 set({ ...s, demandStep: e.target.value as DemandStep })
@@ -256,10 +255,6 @@ export function SetupForm({
                 </option>
               ))}
             </select>
-            <span id={`${demandStepId}-options`} className="field-help">
-              {t("inputOptions")}
-              {DEMAND_STEP_OPTIONS.join(" / ")}
-            </span>
           </div>
           <PayoffRules s={s} lang={lang} />
         </>

@@ -109,9 +109,17 @@ for (const demo of [true, false]) {
       form.getByText("Input format: integer, decimal, or fraction"),
     ).toBeVisible();
     await form.getByRole("combobox").first().selectOption("demand");
-    await expect(
-      form.getByRole("combobox", { name: "Demand step", exact: true }),
-    ).toHaveAccessibleDescription("Allowed values: 0.1 / 0.01 / 0.005 / 0.001");
+    const step = form.getByRole("combobox", {
+      name: "Demand step",
+      exact: true,
+    });
+    await expect(step).toHaveAccessibleDescription("");
+    await expect(step.locator("option")).toHaveText([
+      "0.1",
+      "0.01",
+      "0.005",
+      "0.001",
+    ]);
     await fit(page);
   });
 }

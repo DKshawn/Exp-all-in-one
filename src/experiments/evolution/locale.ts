@@ -13,7 +13,6 @@ const messages = {
   seconds: ["回答時間（秒）", "作答时限（秒）", "Decision time (s)"],
   feedbackSeconds: ["結果表示（秒）", "反馈时间（秒）", "Feedback time (s)"],
   inputRange: ["入力範囲：", "输入范围：", "Input range: "],
-  inputOptions: ["選択できる値：", "可选值：", "Allowed values: "],
   numberRequired: [
     "「{field}」を入力してください。",
     "请输入「{field}」。",
