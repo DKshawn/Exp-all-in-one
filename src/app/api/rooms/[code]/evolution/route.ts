@@ -53,7 +53,7 @@ const schema = z.discriminatedUnion("kind", [
     .strict(),
   z
     .object({
-      kind: z.literal("choose"),
+      kind: z.enum(["choose", "draft"]),
       round: z.int().positive(),
       choice: z.int().nonnegative(),
     })
@@ -66,12 +66,16 @@ async function handle(request: NextRequest, ctx: Context) {
       role = sessionFor(request) ?? "student";
     const action =
       request.method === "POST" ? await body(request, schema) : undefined;
+    const service = await evolutionService();
+    const token = tokenFor(request, code, role);
+    if (action?.kind === "draft") {
+      await service.saveDraft(code, token, role, { ...action, kind: "draft" });
+      return json({ saved: true });
+    }
     return json(
-      await (
-        await evolutionService()
-      ).view(
+      await service.view(
         code,
-        tokenFor(request, code, role),
+        token,
         role,
         action,
         z

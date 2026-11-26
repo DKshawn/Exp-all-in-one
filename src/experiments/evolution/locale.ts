@@ -53,10 +53,15 @@ const messages = {
   matrixResult: ["今回の結果", "本轮结果", "Round outcome"],
   demandUnselected: ["未選択", "未选择", "Not selected"],
   confirmDemand: ["回答を確定", "确认提交", "Submit demand"],
+  draftSaveFailed: [
+    "選択値を保存できませんでした。選び直すか、回答を確定してください。",
+    "所选值保存失败。请重新调整滑块或手动确认提交。",
+    "Couldn't save this value. Adjust the slider again or submit it now.",
+  ],
   sliderRule: [
-    "{step}刻み。スライダーをクリック・タップするか矢印キーで選び、Enterまたはボタンで確定します。",
-    "步长为 {step}。点击滑块轨道或按方向键选值，再按 Enter 或点「确认提交」。",
-    "Step size: {step}. Use the track or arrow keys to choose. Submit with Enter or the button.",
+    "{step}刻み。スライダーで選び、Enterまたはボタンで確定できます。時間切れになると保存済みの選択値が提出されます。",
+    "步长为 {step}。可用 Enter 或确认按钮提前提交。倒计时结束时，系统会提交最后保存的值。",
+    "Step size: {step}. Submit early with Enter or the button. When time runs out, your last saved value is submitted.",
   ],
   demandRule: [
     "要求額の合計が総額以下なら各自が要求額を得ます。超えた場合は双方の利得が0になります。",

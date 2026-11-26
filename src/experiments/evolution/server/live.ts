@@ -3,7 +3,8 @@ import type { Database, Sql } from "@/lib/server/database";
 import { AuctionError } from "@/lib/server/errors";
 import {
   choosePair,
-  type Action,
+  saveDemandDraft,
+  type ParticipantAction,
   type Entry,
   type Game,
   type Round,
@@ -89,14 +90,15 @@ type PairSnapshot = {
   peer: Entry | null;
 };
 
-export async function submitPair(
+export async function updatePair(
   db: Database,
   code: string,
   token: string,
-  action: Extract<Action, { kind: "choose" }>,
+  action: ParticipantAction,
   testTime: number | null,
 ) {
   const tokenHash = digest(token);
+  const submit = action.kind === "choose";
   for (let attempt = 0; attempt < 4; attempt++) {
     const snapshot = (
       await db.query<PairSnapshot>(
@@ -110,14 +112,14 @@ export async function submitPair(
       )
       SELECT live.state,${clock} AS now,(SELECT id FROM actor) AS id,
         (SELECT entry FROM mine) AS mine,
-        (SELECT entry FROM evolution_entries WHERE room=$1
+        CASE WHEN $4::boolean THEN (SELECT entry FROM evolution_entries WHERE room=$1
           AND id=(SELECT (entry->>'opponent')::uuid FROM mine)
-          AND number=live.number) AS peer
+          AND number=live.number) END AS peer
       FROM live`,
-        [code, tokenHash, testTime],
+        [code, tokenHash, testTime, submit],
       )
     ).rows[0];
-    if (!snapshot) return;
+    if (!snapshot) return false;
     if (!snapshot.id) throw unauthorized();
     const { state, id, mine, peer } = snapshot;
     const entries: Round["entries"] = {};
@@ -131,8 +133,9 @@ export async function submitPair(
       closedAt: null,
       entries,
     };
+    const update = submit ? choosePair : saveDemandDraft;
     if (
-      !choosePair(
+      !update(
         state,
         round,
         id,
@@ -141,12 +144,11 @@ export async function submitPair(
         Number(snapshot.now),
       )
     )
-      return;
+      return true;
     const changes = mine!.status === "settled" ? entries : { [id]: mine };
 
-    // Keep the database transaction inside one statement. Both players lock the
-    // same rows in id order. If a peer or a teacher changed the snapshot, retry
-    // against the new state. Only the committing statement determines receipt time.
+    // Lock entries in id order. A draft only locks its own seat. Retry if the
+    // snapshot changed, and use the committing statement's clock for cutoff.
     const result = await db.query(
       `WITH live AS MATERIALIZED (
         SELECT state FROM evolution_live WHERE room=$1 AND state=$4::jsonb FOR SHARE
@@ -157,10 +159,11 @@ export async function submitPair(
           AND EXISTS(SELECT 1 FROM live)
         ORDER BY e.id FOR UPDATE OF e
       ), stamp AS MATERIALIZED (
-        SELECT ${clock} AS now FROM pair HAVING count(*)=2 AND bool_and(unchanged)
+        SELECT ${clock} AS now FROM pair
+        HAVING count(*)=cardinality($9::uuid[]) AND bool_and(unchanged)
       )
       UPDATE evolution_entries e
-      SET entry=CASE WHEN e.id=$7::uuid THEN
+      SET entry=CASE WHEN e.id=$7::uuid AND $10::boolean THEN
         jsonb_set(changes.value,'{submittedAt}',to_jsonb(stamp.now))
         ELSE changes.value END,
         seen_at=CASE WHEN e.id=$7::uuid THEN COALESCE(e.seen_at,stamp.now) ELSE e.seen_at END
@@ -179,9 +182,10 @@ export async function submitPair(
         id,
         state.round,
         Object.keys(entries),
+        submit,
       ],
     );
-    if (result.rows.length) return;
+    if (result.rows.length) return true;
   }
   throw new AuctionError("回答を再送してください。", 409);
 }
@@ -249,7 +253,9 @@ export async function pollParticipant(
       )) AS complete
     FROM live LEFT JOIN actor ON true
     LEFT JOIN LATERAL (
-      SELECT ${personalJson} AS item, p.entry->>'status' AS status
+      SELECT ${personalJson} || CASE WHEN p.entry ? 'draftChoice'
+        THEN jsonb_build_object('draftChoice', p.entry->'draftChoice')
+        ELSE '{}'::jsonb END AS item, p.entry->>'status' AS status
       FROM mine p LEFT JOIN LATERAL (
         SELECT entry FROM evolution_entries WHERE room=$1 AND number=p.number
           AND id=(p.entry->>'opponent')::uuid AND p.entry->>'status'='settled'

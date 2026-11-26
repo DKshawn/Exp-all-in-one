@@ -261,6 +261,113 @@ test("a settled SEG pair waits for room-wide feedback and the next round", async
   }
 });
 
+test("Nash demo automatically submits the latest slider value at the cutoff", async ({
+  page,
+}) => {
+  await signInTeacher(page.request);
+  await page.clock.install();
+  await page.goto("/evolution/demo");
+  await page.getByRole("banner").getByLabel("表示言語").selectOption("en");
+  await page
+    .getByRole("combobox", { name: "Game", exact: true })
+    .selectOption("demand");
+  await page.getByLabel("Decision time (s)").fill("5");
+  await page.getByRole("button", { name: "Create demo" }).click();
+  await page.getByRole("button", { name: "Close admission" }).click();
+  await page.getByRole("button", { name: "Confirm and start" }).click();
+  await page.getByRole("button", { name: "View student screen" }).click();
+  const slider = page.getByRole("slider", { name: "Demand" });
+  await slider.press("Home");
+  await slider.press("ArrowRight");
+  await slider.press("ArrowRight");
+  await slider.press("ArrowRight");
+  await expect(slider).toHaveValue("0.3");
+  await expect(
+    page.getByRole("heading", { name: "Submitted · waiting" }),
+  ).toHaveCount(0);
+  await page.clock.fastForward(6_000);
+  await expect(page.locator(".ev-payoffs dd").first()).toHaveText("0.3");
+  await expect(page.getByRole("slider")).toHaveCount(0);
+});
+
+test("formal Nash saves each slider draft and submits it at the server cutoff", async ({
+  page,
+  browser,
+  baseURL,
+}) => {
+  await signInTeacher(page.request);
+  const created = await page.request.post("/api/evolution/rooms", {
+    data: {
+      title: "Nash deadline",
+      password: "review-password",
+      settings: { ...defaults("demand"), seconds: 7, rounds: 1 },
+    },
+  });
+  await expect(created).toBeOK();
+  const { code } = await created.json();
+  const route = `/api/rooms/${code}/evolution`;
+  const contexts = await Promise.all([
+    browser.newContext({ baseURL }),
+    browser.newContext({ baseURL }),
+  ]);
+  try {
+    const students = await Promise.all(
+      contexts.map(async (context, index) => {
+        await expect(
+          await context.request.post(`/api/rooms/${code}/join`, {
+            data: { nickname: `Nash ${index}`, pin: "1234" },
+          }),
+        ).toBeOK();
+        const screen = await context.newPage();
+        await screen.goto(`/room/${code}`);
+        await screen
+          .getByRole("banner")
+          .getByLabel("表示言語")
+          .selectOption("en");
+        return screen;
+      }),
+    );
+    for (const kind of ["close", "start"])
+      await expect(
+        await page.request.post(route + "?session=teacher", { data: { kind } }),
+      ).toBeOK();
+    await Promise.all(
+      students.map(async (screen, index) => {
+        const slider = screen.getByRole("slider", { name: "Demand" });
+        const saved = screen.waitForResponse(
+          (response) =>
+            response.url().includes(route) &&
+            response.request().method() === "POST",
+        );
+        await slider.fill(index === 0 ? "0.4" : "0.6");
+        expect(await (await saved).json()).toEqual({ saved: true });
+        await expect(
+          screen.getByRole("heading", { name: "Submitted · waiting" }),
+        ).toHaveCount(0);
+      }),
+    );
+    await students[0].reload();
+    await expect(
+      students[0].getByRole("slider", { name: "Demand" }),
+    ).toHaveValue("0.4");
+    await expect(students[0].locator(".ev-payoffs dd").first()).toHaveText(
+      "0.4",
+    );
+    await expect(students[1].locator(".ev-payoffs dd").first()).toHaveText(
+      "0.6",
+    );
+    const exported = await page.request.get(route + "/export?format=json");
+    await expect(exported).toBeOK();
+    expect(
+      (await exported.json()).rows.map(
+        (row: { submissionSource: string }) => row.submissionSource,
+      ),
+    ).toEqual(["deadline", "deadline"]);
+  } finally {
+    await Promise.all(contexts.map((context) => context.close()));
+  }
+});
+
 test("1000-round Nash demo starts blank and confirms a touch selection", async ({
   browser,
   baseURL,

@@ -2,7 +2,13 @@ import { shuffled } from "@/experiments/double-auction/lib/study-core";
 import { randomInt } from "@/experiments/double-auction/lib/random";
 import { AuctionError } from "@/lib/server/errors";
 import { add } from "./numbers";
-import { choiceCount, choiceStride, outcome, type Settings } from "./settings";
+import {
+  choiceCount,
+  choiceStride,
+  continuous,
+  outcome,
+  type Settings,
+} from "./settings";
 
 export type Phase = "open" | "ready" | "playing" | "feedback" | "finished";
 export type Seat = {
@@ -16,6 +22,8 @@ export type Entry = {
   opponent: string | null;
   position: "row" | "column" | null;
   choice: number | null;
+  draftChoice?: number;
+  submittedAutomatically?: true;
   seenAt: number | null;
   submittedAt: number | null;
   pay: string | null;
@@ -61,6 +69,9 @@ export type RunControl = {
   phase: "playing" | "feedback";
   revision: number;
 };
+export type ParticipantAction =
+  | { kind: "choose"; round: number; choice: number }
+  | { kind: "draft"; round: number; choice: number };
 export type Action =
   | { kind: "close" | "start"; revision?: number }
   | { kind: "timerStart"; seconds: number; revision: number }
@@ -70,7 +81,7 @@ export type Action =
       revision: number;
     }
   | RunControl
-  | { kind: "choose"; round: number; choice: number };
+  | ParticipantAction;
 export const newGame = (settings: Settings): Game => ({
   settings,
   phase: "open",
@@ -207,6 +218,16 @@ export function tick(g: Game, now: number) {
   const r = g.round;
   if (!r) return;
   if (g.phase === "playing" && now >= r.deadline) {
+    let submittedDraft = false;
+    for (const [id, entry] of Object.entries(r.entries)) {
+      if (entry.status !== "choosing" || entry.draftChoice === undefined)
+        continue;
+      recordChoice(g.settings, r, id, entry.draftChoice, r.deadline);
+      entry.submittedAutomatically = true;
+      submittedDraft = true;
+    }
+    if (submittedDraft)
+      for (const seat of g.seats) seat.total = r.entries[seat.id].total;
     for (const e of Object.values(r.entries)) {
       if (e.status === "choosing")
         e.status = r.shortened ? "interrupted" : "timeout";
@@ -248,12 +269,52 @@ export function choosePair(
   choice: number,
   now: number,
 ) {
-  const e = r?.entries[id];
-  if (!r || r.number !== round || !e || !e.opponent)
+  assertPaired(r, id, round);
+  const entry = r.entries[id];
+  if (entry.choice === choice) return false; // An acknowledged submission can be retried.
+  checkDecision(g, r, entry, choice, now);
+  recordChoice(g.settings, r, id, choice, now);
+  return true;
+}
+
+type DecisionState = Pick<Game, "settings" | "phase" | "pausedAt">;
+
+export function saveDemandDraft(
+  g: DecisionState,
+  r: Round | null,
+  id: string,
+  round: number,
+  choice: number,
+  now: number,
+) {
+  if (!continuous(g.settings)) reject("要求額の下書きは保存できません。");
+  assertPaired(r, id, round);
+  const entry = r.entries[id];
+  checkDecision(g, r, entry, choice, now);
+  if (entry.draftChoice === choice) return false;
+  entry.draftChoice = choice;
+  entry.seenAt ??= now;
+  return true;
+}
+
+function assertPaired(
+  r: Round | null,
+  id: string,
+  round: number,
+): asserts r is Round {
+  if (!r || r.number !== round || !r.entries[id]?.opponent)
     reject("現在の組合せを確認してください。");
-  if (e.choice === choice) return false; // An acknowledged submission can be retried.
+}
+
+function checkDecision(
+  g: DecisionState,
+  r: Round,
+  entry: Entry,
+  choice: number,
+  now: number,
+) {
   if (g.pausedAt != null) reject("一時停止中です。");
-  if (g.phase !== "playing" || now >= r.deadline || e.status !== "choosing")
+  if (g.phase !== "playing" || now >= r.deadline || entry.status !== "choosing")
     reject("このラウンドの回答は締め切られました。");
   const stride = choiceStride(g.settings);
   if (
@@ -263,26 +324,36 @@ export function choosePair(
     choice / stride >= choiceCount(g.settings)
   )
     reject("選択肢を確認してください。");
+}
+
+function recordChoice(
+  settings: Settings,
+  r: Round,
+  id: string,
+  choice: number,
+  now: number,
+) {
+  const e = r.entries[id];
+  delete e.draftChoice;
   e.choice = choice;
   e.submittedAt = now;
   e.seenAt ??= now;
   e.status = "submitted";
-  const other = r.entries[e.opponent];
-  if (other.choice === null) return true;
+  const other = r.entries[e.opponent!];
+  if (other.choice === null) return;
   const row = e.position === "row" ? e : other,
     column = e.position === "row" ? other : e;
-  const { pay } = outcome(g.settings, row.choice!, column.choice!);
+  const { pay } = outcome(settings, row.choice!, column.choice!);
   for (const [index, entry] of [row, column].entries()) {
     entry.status = "settled";
     entry.pay = pay[index];
     entry.total = add(entry.total, entry.pay);
   }
-  return true;
 }
 
 export function teacherAction(
   g: Game,
-  action: Exclude<Action, { kind: "choose" }>,
+  action: Exclude<Action, ParticipantAction>,
   now: number,
 ) {
   if (
@@ -323,9 +394,11 @@ export function teacherAction(
           g.round.shortened = true;
         } else g.feedbackDeadline = reducedDeadline;
       } else if (g.phase === "playing") {
-        for (const e of Object.values(g.round.entries))
+        for (const e of Object.values(g.round.entries)) {
+          delete e.draftChoice;
           if (e.status === "choosing" || e.status === "submitted")
             e.status = "interrupted";
+        }
         closeRound(g, now);
       } else if (action.kind !== "end") openRound(g, now);
       if (action.kind === "end") {

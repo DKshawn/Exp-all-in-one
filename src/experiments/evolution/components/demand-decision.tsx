@@ -11,17 +11,24 @@ export function DemandDecision({
   settings,
   lang,
   busy,
+  initialChoice,
+  saveDraft,
   commit,
 }: {
   settings: Extract<Settings, { mode: "demand" }>;
   lang: Lang;
   busy: boolean;
+  initialChoice: number | null;
+  saveDraft: (choice: number) => void | Promise<void>;
   commit: (choice: number) => void;
 }) {
   const id = useId();
   const slider = useRef<HTMLInputElement>(null);
   const initialPointer = useRef<number | null>(null);
-  const [choice, setChoice] = useState<number | null>(null);
+  const pending = useRef<number | null>(null);
+  const saving = useRef(false);
+  const [choice, setChoice] = useState(initialChoice);
+  const [saveFailed, setSaveFailed] = useState(false);
   const step = demandStep(settings);
   const value = choice === null ? null : demandLabel(choice);
 
@@ -29,6 +36,31 @@ export function DemandDecision({
     if (!busy && !window.matchMedia("(pointer: coarse)").matches)
       slider.current?.focus({ preventScroll: true });
   }, [busy]);
+  useEffect(
+    () => () => {
+      pending.current = null;
+    },
+    [],
+  );
+
+  async function select(next: number) {
+    setChoice(next);
+    pending.current = next;
+    if (saving.current) return;
+    saving.current = true;
+    // Send only the latest change queued while a draft is being saved.
+    while (pending.current !== null) {
+      const draft = pending.current;
+      pending.current = null;
+      try {
+        await saveDraft(draft);
+        setSaveFailed(false);
+      } catch {
+        setSaveFailed(true);
+      }
+    }
+    saving.current = false;
+  }
 
   return (
     <form
@@ -55,7 +87,7 @@ export function DemandDecision({
         aria-valuetext={value ?? label(lang, "demandUnselected")}
         aria-describedby={`${id}-help`}
         onChange={(event) =>
-          setChoice(
+          void select(
             Math.round(event.currentTarget.valueAsNumber * DEMAND_STEPS),
           )
         }
@@ -66,7 +98,7 @@ export function DemandDecision({
         onPointerUp={(event) => {
           // A tap at zero may emit no native input or click event.
           if (choice === null && initialPointer.current === event.pointerId)
-            setChoice(
+            void select(
               Math.round(event.currentTarget.valueAsNumber * DEMAND_STEPS),
             );
           initialPointer.current = null;
@@ -98,7 +130,7 @@ export function DemandDecision({
           ].includes(event.key);
           if (fromMin || fromMax) {
             event.preventDefault();
-            setChoice(fromMin ? 0 : DEMAND_STEPS);
+            void select(fromMin ? 0 : DEMAND_STEPS);
           }
         }}
       />
@@ -116,6 +148,11 @@ export function DemandDecision({
       <p id={`${id}-help`} className="field-help">
         {sliderInstructions(lang, step)}
       </p>
+      {saveFailed && (
+        <p className="error-message" role="alert">
+          {label(lang, "draftSaveFailed")}
+        </p>
+      )}
     </form>
   );
 }

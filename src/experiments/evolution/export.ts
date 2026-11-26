@@ -32,7 +32,7 @@ export function responsesCsv(
   slider = rows.some((row) => row.demand !== undefined),
 ) {
   const fields: (keyof RecordRow)[] = slider
-    ? [...standardFields, "demand", "opponentDemand"]
+    ? [...standardFields, "demand", "opponentDemand", "submissionSource"]
     : standardFields;
   const values = rows.map((row) => fields.map((field) => row[field]));
   return header ? csv([fields, ...values], true) : csv(values, true).slice(1);

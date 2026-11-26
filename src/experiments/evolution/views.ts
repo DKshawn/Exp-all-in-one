@@ -18,6 +18,7 @@ export function personal(r: Round, id: string) {
     position: e.position,
     status: e.status,
     choice: e.choice,
+    ...(e.draftChoice === undefined ? {} : { draftChoice: e.draftChoice }),
     pay: e.pay,
     total: e.total,
     otherChoice: peer?.choice ?? null,
@@ -160,6 +161,12 @@ export function rawRows(g: Game, r: Round, code: string) {
         ? {
             demand: e.choice === null ? null : e.choice / 1000,
             opponentDemand: p?.choice == null ? null : p.choice / 1000,
+            submissionSource:
+              e.choice === null
+                ? null
+                : e.submittedAutomatically
+                  ? "deadline"
+                  : "manual",
           }
         : {}),
       pay: e.pay,

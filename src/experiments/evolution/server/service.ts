@@ -23,9 +23,11 @@ import {
   teacherAction,
   phaseDeadline,
   choose,
+  saveDemandDraft,
   tick,
   closeRound,
   type Action,
+  type ParticipantAction,
   type Game,
   type Round,
 } from "../engine";
@@ -56,7 +58,7 @@ import {
   publish,
   readEntries,
   roundComplete,
-  submitPair,
+  updatePair,
   writeEntries,
 } from "./live";
 
@@ -333,6 +335,18 @@ export class EvolutionService {
     if (error) throw error;
     return { code, token };
   }
+  async saveDraft(
+    code: string,
+    token: string | undefined,
+    role: "teacher" | "student",
+    action: Extract<ParticipantAction, { kind: "draft" }>,
+  ) {
+    if (!token || role !== "student") throw unauthorized();
+    const now = this.time === databaseTime ? null : await this.time(this.db);
+    if (!(await updatePair(this.db, code, token, action, now)))
+      await this.view(code, token, role, action);
+  }
+
   async view(
     code: string,
     token: string | undefined,
@@ -342,15 +356,19 @@ export class EvolutionService {
     before = MAX_ROUNDS + 1,
   ) {
     if (!token) throw unauthorized();
-    if (action && (role === "student") !== (action.kind === "choose"))
+    if (
+      action &&
+      (role === "student") !==
+        (action.kind === "choose" || action.kind === "draft")
+    )
       throw unauthorized();
     if (role === "student") {
       const clock = () =>
         this.time === databaseTime ? null : this.time(this.db);
       const read = async () =>
         pollParticipant(this.db, code, token, await clock(), after, before);
-      if (action?.kind === "choose")
-        await submitPair(this.db, code, token, action, await clock());
+      if (action?.kind === "choose" || action?.kind === "draft")
+        await updatePair(this.db, code, token, action, await clock());
       const live = await read();
       if (live) {
         const v = live.view;
@@ -425,6 +443,8 @@ export class EvolutionService {
         const old = g.round;
         if (action.kind === "choose")
           choose(g, id, action.round, action.choice, now);
+        else if (action.kind === "draft")
+          saveDemandDraft(g, g.round, id, action.round, action.choice, now);
         else teacherAction(g, action, now);
         if (g.distributed) {
           if (old && old.closedAt === now) await writeEntries(tx, code, old);

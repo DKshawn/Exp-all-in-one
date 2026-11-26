@@ -110,6 +110,10 @@ export function EvolutionRoom({
     return () => clearTimeout(timer);
   }, [deadline, v?.now]);
   async function act(a: Action) {
+    if (a.kind === "draft") {
+      await api<{ saved: true }>(url, a);
+      return;
+    }
     if (inAction.current) return;
     inAction.current = true;
     setBusy(true);

@@ -4,6 +4,7 @@ import {
   newGame,
   newSeat,
   phaseDeadline,
+  saveDemandDraft,
   teacherAction,
   tick,
   type Action,
@@ -108,6 +109,8 @@ export class EvolutionPractice {
     }
     if (action.kind === "choose")
       choose(g, this.human, action.round, action.choice, now);
+    else if (action.kind === "draft")
+      saveDemandDraft(g, g.round, this.human, action.round, action.choice, now);
     else teacherAction(g, action, now);
     if (action.kind === "resume" && pausedAt != null)
       for (const bot of this.pending) bot.at += now - pausedAt;

@@ -27,12 +27,14 @@ function Decision({
   busy,
   act,
   selected,
+  draftChoice,
 }: {
   view: Extract<View, { role: "student" }>;
   lang: Lang;
   busy: boolean;
   act: Props["act"];
   selected: number | null;
+  draftChoice: number | null;
 }) {
   const commit = (choice: number) => {
     if (!busy) void act({ kind: "choose", round: view.round, choice });
@@ -43,6 +45,10 @@ function Decision({
         settings={view.settings}
         lang={lang}
         busy={busy}
+        initialChoice={draftChoice}
+        saveDraft={(choice) =>
+          act({ kind: "draft", round: view.round, choice })
+        }
         commit={commit}
       />
     );
@@ -479,6 +485,7 @@ export function Panels({
                       view={v}
                       lang={lang}
                       selected={mine.choice}
+                      draftChoice={mine.draftChoice ?? null}
                       busy={
                         mine.status !== "choosing" ||
                         busy ||
