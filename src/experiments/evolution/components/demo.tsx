@@ -21,7 +21,7 @@ import {
   summaries,
   teacherView,
 } from "../views";
-import { continuous, HISTORY_ROUNDS, type Settings } from "../settings";
+import { continuous, HISTORY_ROUNDS, isMemo, type Settings } from "../settings";
 import { label, type Lang } from "../locale";
 import { useLanguage } from "./language";
 import { SetupForm, useSetupDraft } from "./setup";
@@ -116,8 +116,10 @@ function DemoRoom({
         entry &&
         demo.game.phase === "playing" &&
         demo.game.pausedAt == null
-      )
+      ) {
         entry.seenAt ??= at;
+        if (entry.memo) entry.memo.feedbackServedAt ??= at;
+      }
       setClock({ now: at });
     }, 250);
     return () => clearInterval(timer);
@@ -161,6 +163,7 @@ function DemoRoom({
             rows.map((row) => ({ ...row, heartbeatGap: null })),
             true,
             continuous(g.settings),
+            isMemo(g.settings),
           );
     const url = URL.createObjectURL(
       new Blob([body], {

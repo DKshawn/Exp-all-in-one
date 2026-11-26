@@ -47,6 +47,8 @@ import {
   HISTORY_ROUNDS,
   MAX_ROUNDS,
   settingsSchema,
+  isMemo,
+  MEMO_PARTICIPANTS,
   type Settings,
 } from "../settings";
 import { responsesCsv } from "../export";
@@ -236,7 +238,10 @@ export class EvolutionService {
         ).join("");
         if (!(await claimCode(tx, code, "evolution"))) continue;
         const now = await this.time(tx);
-        const game: Game = { ...newGame(settings), distributed: true };
+        const game: Game = {
+          ...newGame(settings),
+          ...(isMemo(settings) ? {} : { distributed: true as const }),
+        };
         await tx.query(
           "INSERT INTO evolution_rooms VALUES($1,$2,$3,$4,$5,$6::jsonb)",
           [
@@ -248,7 +253,7 @@ export class EvolutionService {
             JSON.stringify(game),
           ],
         );
-        await publish(tx, game, code, title.trim());
+        if (game.distributed) await publish(tx, game, code, title.trim());
         return { code, token };
       }
       throw new AuctionError("もう一度作成してください。", 503);
@@ -307,7 +312,12 @@ export class EvolutionService {
             "SELECT count(*)::int AS count FROM evolution_players WHERE room=$1",
             [code],
           );
-          if (attendance.count >= MAX_ROOM_PARTICIPANTS)
+          if (
+            attendance.count >=
+            (isMemo(room.game.settings)
+              ? MEMO_PARTICIPANTS
+              : MAX_ROOM_PARTICIPANTS)
+          )
             return new AuctionError("このルームは満員です。", 409);
           const id = randomUUID();
           await tx.query(
@@ -436,6 +446,7 @@ export class EvolutionService {
         await heartbeat(tx, code, id, now);
         if (entry && entry.seenAt === null && g.phase === "playing") {
           entry.seenAt = now;
+          if (entry.memo) entry.memo.feedbackServedAt = now;
           await save(tx, r);
         }
       }
@@ -543,7 +554,8 @@ export class EvolutionService {
     const gapsById = new Map(participants.map((p) => [p.id, p.gaps]));
     async function* chunks() {
       const slider = continuous(g.settings);
-      if (format === "csv") yield responsesCsv([], true, slider);
+      if (format === "csv")
+        yield responsesCsv([], true, slider, isMemo(g.settings));
       else {
         const info = JSON.stringify({
           version: 1,
@@ -572,7 +584,8 @@ export class EvolutionService {
               ([a, b]) => a < (round.closedAt ?? now) && b > round.openedAt,
             ),
         }));
-        if (format === "csv") return "\r\n" + responsesCsv(rows, false, slider);
+        if (format === "csv")
+          return "\r\n" + responsesCsv(rows, false, slider, isMemo(g.settings));
         const body = (first ? "" : ",") + JSON.stringify(rows).slice(1, -1);
         first = false;
         return body;

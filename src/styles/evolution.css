@@ -636,6 +636,28 @@
     justify-content: flex-start;
   }
 }
+.ev-memo-feedback {
+  min-width: 0;
+  color: var(--ink);
+}
+.ev-memo-feedback svg {
+  display: block;
+  color: var(--accent);
+  max-width: 100%;
+}
+.ev-memo-feedback progress {
+  width: 100%;
+}
+.ev-workbench-memo .ev-memo-feedback {
+  grid-column: 2;
+  grid-row: 1;
+}
+@media (max-width: 760px) {
+  .ev-workbench-memo .ev-memo-feedback {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
 .ev-analysis .ev-scroll {
   max-height: 54vh;
   overflow: auto;

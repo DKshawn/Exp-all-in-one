@@ -10,6 +10,9 @@ import {
   DEMAND_STEP_OPTIONS,
   SETUP_NUMBER_RANGES,
   settingsSchema,
+  isMemo,
+  memoDefaults,
+  MEMO_PARTICIPANTS,
   type DemandStep,
   type Settings,
   type Mode,
@@ -144,7 +147,12 @@ export function SetupForm({
     if (!parsed.success) return;
     const roomTitle = title.trim() || t("title");
     if (onDemo) {
-      if (draft.validDemo) onDemo(roomTitle, parsed.data, n);
+      if (draft.validDemo || isMemo(parsed.data))
+        onDemo(
+          roomTitle,
+          parsed.data,
+          isMemo(parsed.data) ? MEMO_PARTICIPANTS : n,
+        );
       return;
     }
     setBusy(true);
@@ -178,9 +186,17 @@ export function SetupForm({
       <label className="field">
         {t("mode")}
         <select
-          value={s.mode}
+          value={isMemo(s) ? "memo" : s.mode}
           onChange={(e) => {
+            if (e.target.value === "memo") {
+              set(memoDefaults());
+              return;
+            }
             const next = defaults(e.target.value as Mode);
+            if (isMemo(s)) {
+              set(next);
+              return;
+            }
             set({
               ...next,
               groups: s.groups,
@@ -191,72 +207,120 @@ export function SetupForm({
           }}
         >
           <option value="coordination">{t("coordination")}</option>
+          <option value="memo">{t("memo")}</option>
           <option value="demand">{t("demand")}</option>
         </select>
       </label>
-      <div className="ev-fields">
-        {numberFields.map((key) => (
-          <NumberSetting
-            key={key}
-            lang={lang}
-            name={key}
-            value={s[key]}
-            bounds={SETUP_NUMBER_RANGES[key]}
-            onChange={(value) => set({ ...s, [key]: value })}
-          />
-        ))}
-      </div>
-      {s.mode === "coordination" ? (
+      {isMemo(s) ? (
         <>
-          <fieldset>
-            <legend>{t("names")}</legend>
-            <div className="ev-fields">
-              {names.map((x, i) => (
-                <label key={i} className="field">
-                  {t("choose")} {i + 1}
-                  <input
-                    value={x}
-                    maxLength={16}
-                    required
-                    onChange={(e) => {
-                      const updated = [...names] as typeof s.names;
-                      updated[i] = e.target.value;
-                      set({ ...s, names: updated });
-                    }}
-                  />
-                </label>
-              ))}
-            </div>
-          </fieldset>
-          <PayoffMatrix
-            s={s}
-            lang={lang}
-            onPayoffChange={(row, column, position, value) => {
-              const matrix = structuredClone(s.matrix);
-              matrix[row][column][position] = value;
-              set({ ...s, matrix });
-            }}
-          />
+          <p>{t("memoSettings")}</p>
+          <div className="ev-fields">
+            <label className="field">
+              {t("memoOrder")}
+              <select
+                value={s.memoOrder}
+                onChange={(e) =>
+                  set(
+                    memoDefaults(
+                      e.target.value === "large-first"
+                        ? "large-first"
+                        : "small-first",
+                      s.memoCounterbalance,
+                    ),
+                  )
+                }
+              >
+                <option value="small-first">10 → 30 → 150</option>
+                <option value="large-first">150 → 30 → 10</option>
+              </select>
+            </label>
+            <label className="field">
+              {t("memoInitial")}
+              <select
+                value={s.memoCounterbalance}
+                onChange={(e) =>
+                  set(
+                    memoDefaults(
+                      s.memoOrder,
+                      e.target.value === "hare" ? "hare" : "deer",
+                    ),
+                  )
+                }
+              >
+                <option value="deer">{t("memoDeer")}</option>
+                <option value="hare">{t("memoHare")}</option>
+              </select>
+            </label>
+          </div>
+          <p>{t("memoRule")}</p>
         </>
       ) : (
         <>
-          <div className="field">
-            <label htmlFor={demandStepId}>{t("demandStep")}</label>
-            <select
-              id={demandStepId}
-              value={demandStep(s)}
-              onChange={(e) =>
-                set({ ...s, demandStep: e.target.value as DemandStep })
-              }
-            >
-              {DEMAND_STEP_OPTIONS.map((step) => (
-                <option key={step} value={step}>
-                  {step}
-                </option>
-              ))}
-            </select>
+          <div className="ev-fields">
+            {numberFields.map((key) => (
+              <NumberSetting
+                key={key}
+                lang={lang}
+                name={key}
+                value={s[key]}
+                bounds={SETUP_NUMBER_RANGES[key]}
+                onChange={(value) => set({ ...s, [key]: value })}
+              />
+            ))}
           </div>
-          <PayoffRules s={s} lang={lang} />
+          {s.mode === "coordination" ? (
+            <>
+              <fieldset>
+                <legend>{t("names")}</legend>
+                <div className="ev-fields">
+                  {names.map((x, i) => (
+                    <label key={i} className="field">
+                      {t("choose")} {i + 1}
+                      <input
+                        value={x}
+                        maxLength={16}
+                        required
+                        onChange={(e) => {
+                          const updated = [...names] as typeof s.names;
+                          updated[i] = e.target.value;
+                          set({ ...s, names: updated });
+                        }}
+                      />
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+              <PayoffMatrix
+                s={s}
+                lang={lang}
+                onPayoffChange={(row, column, position, value) => {
+                  const matrix = structuredClone(s.matrix);
+                  matrix[row][column][position] = value;
+                  set({ ...s, matrix });
+                }}
+              />
+            </>
+          ) : (
+            <>
+              <div className="field">
+                <label htmlFor={demandStepId}>{t("demandStep")}</label>
+                <select
+                  id={demandStepId}
+                  value={demandStep(s)}
+                  onChange={(e) =>
+                    set({ ...s, demandStep: e.target.value as DemandStep })
+                  }
+                >
+                  {DEMAND_STEP_OPTIONS.map((step) => (
+                    <option key={step} value={step}>
+                      {step}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <PayoffRules s={s} lang={lang} />
+            </>
+          )}
         </>
       )}
       {problem && (
@@ -265,13 +329,15 @@ export function SetupForm({
         </p>
       )}
       {onDemo ? (
-        <NumberSetting
-          lang={lang}
-          name="demoSize"
-          value={n}
-          bounds={DEMO_PARTICIPANT_RANGE}
-          onChange={setN}
-        />
+        !isMemo(s) && (
+          <NumberSetting
+            lang={lang}
+            name="demoSize"
+            value={n}
+            bounds={DEMO_PARTICIPANT_RANGE}
+            onChange={setN}
+          />
+        )
       ) : (
         <label className="field">
           {t("password")}

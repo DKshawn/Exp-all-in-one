@@ -8,6 +8,14 @@ If the browser blocks preference storage, language changes apply to the open pag
 
 Each formal room accepts up to 5,000 registrations. **Demo participants** accepts 2 to 5,000 including the seat you control, with a default of six.
 
+## Stag Hunt v3 (new room only)
+
+Select Stag Hunt v3 at room creation. Classic coordination remains the default and existing rooms are unchanged. Close formal admission at exactly 150 participants. The same cohort completes three blocks, with group sizes of 10, 30, and 150 in small-first or large-first order. The teacher chooses the order; allocation is shuffled for each block and the student-visible history starts fresh. The research export retains all blocks.
+
+Each block has 120 rounds, with a nominal 5 seconds to decide and 1 second of feedback per round. Browser polls advance phases; measure the actual cadence in the intended setup. For the first 10 rounds, groups are locked to all stag or all hare. In size-10 groups, eight start stag and seven start hare. In size-30 groups, three use the chosen starting choice and two use the other. The single size-150 group uses the chosen starting choice. From round 11, a uniform random 20% of each group (2, 6, or 30 people) may revise each round. Others and eligible timeouts retain their prior choice. Hare always pays 3; stag pays 4 times the fraction of other members who chose stag.
+
+Students see their group's previous hare share and its rolling 20-round trend, plus their own previous result. JSON and CSV include block and group, initial choice, revision eligibility, timeout, carried choice, prior feedback data and the timestamp at which the server prepared the response. This timestamp is not evidence that the participant actually saw the screen. Demo mode simulates the remaining 149 seats. The 2-second ARUE condition, concurrent field load with 150 devices, and real-participant validation are outside this change.
+
 ## Run a classroom session
 
 1. At `/teacher`, select **Stochastic Evolutionary Games**. Choose the game, name the room, set the payoffs and enter a room password. Game, payoff and round settings lock on creation. Teachers and students each choose Japanese, Chinese or English in the page header. This preference is saved in their own browser.

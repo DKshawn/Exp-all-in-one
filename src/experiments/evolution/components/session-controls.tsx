@@ -8,6 +8,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { label, type Key, type Lang } from "../locale";
 import type { Action, RunControl } from "../engine";
 import type { View } from "../views";
+import { isMemo, MEMO_PARTICIPANTS, MEMO_ROUNDS } from "../settings";
 type Teacher = Extract<View, { role: "teacher" }>;
 type Act = (action: Action) => void | Promise<void>;
 
@@ -28,7 +29,9 @@ export function SessionOverview({
   const [confirm, setConfirm] = useState<RunControl | null>(null);
   const timerLabelId = useId();
   const paused = v.pausedAt !== null;
+  const memo = isMemo(v.settings);
   const waitingForPairs =
+    !memo &&
     v.phase === "playing" &&
     v.role === "student" &&
     v.current?.status === "settled";
@@ -83,16 +86,20 @@ export function SessionOverview({
             <progress
               className="ev-round-progress"
               aria-label={t("round")}
-              max={v.settings.rounds}
+              max={memo ? MEMO_ROUNDS : v.settings.rounds}
               value={
-                v.phase === "finished" ? v.round : Math.max(0, v.round - 1)
+                v.phase === "finished"
+                  ? (v.memoRound ?? v.round)
+                  : Math.max(0, (v.memoRound ?? v.round) - 1)
               }
             />
           )}
           <div className="session-bar">
             <div className="session-phase">
               <strong>
-                {t("round")} {v.round}/{v.settings.rounds}
+                {memo ? `${t("memoBlock")} ${v.memoBlock}/3 · ` : ""}
+                {t("round")} {v.memoRound ?? v.round}/
+                {memo ? MEMO_ROUNDS : v.settings.rounds}
               </strong>
               <h2 aria-live={v.role === "student" ? "polite" : undefined}>
                 {t(phaseLabel)}
@@ -133,24 +140,28 @@ export function SessionOverview({
                       {paused ? <Play size={16} /> : <Pause size={16} />}{" "}
                       {t(paused ? "resume" : "pause")}
                     </button>
-                    <button
-                      className="button secondary"
-                      disabled={busy || paused}
-                      onClick={() => control("shorten")}
-                    >
-                      <SkipForward size={16} />
-                      {t("fast")}
-                    </button>
+                    {!memo && (
+                      <button
+                        className="button secondary"
+                        disabled={busy || paused}
+                        onClick={() => control("shorten")}
+                      >
+                        <SkipForward size={16} />
+                        {t("fast")}
+                      </button>
+                    )}
                   </>
                 )}
-                <button
-                  className="button secondary"
-                  disabled={busy || paused}
-                  onClick={() => control("advance")}
-                >
-                  <SkipForward size={16} />
-                  {t(v.phase === "feedback" ? "nextRound" : "skip")}
-                </button>
+                {!memo && (
+                  <button
+                    className="button secondary"
+                    disabled={busy || paused}
+                    onClick={() => control("advance")}
+                  >
+                    <SkipForward size={16} />
+                    {t(v.phase === "feedback" ? "nextRound" : "skip")}
+                  </button>
+                )}
                 <EndExperimentButton
                   label={t("end")}
                   disabled={busy}
@@ -208,29 +219,35 @@ export function Admission({
     running = a.deadline !== null,
     paused = a.remaining !== null;
   const revision = v.revision;
+  const memo = isMemo(v.settings);
+  const notReady = memo
+    ? v.count !== MEMO_PARTICIPANTS
+    : v.sizes.some((n) => n < 2);
   return (
     <section className="study-admission" aria-label={t("open")}>
       <div className="study-admission-controls">
-        <label className="field">
-          {t("groups")}
-          <select
-            disabled={busy || v.phase !== "open"}
-            value={v.settings.groups}
-            onChange={(e) =>
-              act({
-                kind: "setGroups",
-                groups: Number(e.target.value),
-                revision,
-              })
-            }
-          >
-            {Array.from({ length: 32 }, (_, i) => (
-              <option key={i} value={i + 1}>
-                {i + 1}
-              </option>
-            ))}
-          </select>
-        </label>
+        {!memo && (
+          <label className="field">
+            {t("groups")}
+            <select
+              disabled={busy || v.phase !== "open"}
+              value={v.settings.groups}
+              onChange={(e) =>
+                act({
+                  kind: "setGroups",
+                  groups: Number(e.target.value),
+                  revision,
+                })
+              }
+            >
+              {Array.from({ length: 32 }, (_, i) => (
+                <option key={i} value={i + 1}>
+                  {i + 1}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         {v.phase === "open" ? (
           <>
             <AdmissionTimer
@@ -280,7 +297,7 @@ export function Admission({
             />
             <button
               className="button primary"
-              disabled={busy || v.sizes.some((n) => n < 2)}
+              disabled={busy || notReady}
               onClick={() => act({ kind: "close", revision })}
             >
               {t("close")}
@@ -306,10 +323,10 @@ export function Admission({
           </>
         )}
       </div>
-      {v.sizes.some((n) => n < 2) && (
+      {notReady && (
         <p className="field-help" role="status">
           {a.insufficient ? t("expiredShort") + " " : ""}
-          {t("tooFew")}
+          {t(memo ? "memoReady" : "tooFew")}
         </p>
       )}
     </section>

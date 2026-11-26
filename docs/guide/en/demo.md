@@ -18,6 +18,8 @@ Select **市場実験室** or **戻る** in the demo header to return to the dem
 
 Double Auction, EMH, and Stochastic Evolutionary Games demos support up to 5,000 seats, including the seat you control. The Judgement demo previews individual tasks in each browser without seat allocation.
 
+For Stag Hunt v3, see the [evolution game guide](evolution.md). The demo simulates 149 of the 150 seats.
+
 ## Double Auction
 
 Open [`/demo`](https://exp-all-in-one.vercel.app/demo) directly or choose Double Auction from the demo list. It starts with the same settings form used for production experiments. The defaults are one market and 16 participants; institutions, periods per institution, markets, participants, and timing are configurable using the same validation rules as room creation.

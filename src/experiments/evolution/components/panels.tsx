@@ -9,7 +9,8 @@ import type { Action } from "../engine";
 import type { View, Personal } from "../views";
 import { Admission, SessionOverview } from "./session-controls";
 import { PayoffMatrix, PayoffRules, Rules } from "./rules";
-import { continuous, DEMAND_STEPS, demandLabel } from "../settings";
+import { continuous, DEMAND_STEPS, demandLabel, isMemo } from "../settings";
+import { MemoFeedback } from "./memo-feedback";
 import { DemandDecision } from "./demand-decision";
 
 type Props = {
@@ -283,13 +284,14 @@ export function Panels({
   const mine = v.role === "student" ? v.current : null,
     names = displayChoices(lang, v.settings);
   const coordination = v.settings.mode === "coordination";
+  const memo = isMemo(v.settings);
   const name = (c: number | null) =>
     c === null ? null : continuous(v.settings) ? demandLabel(c) : names[c];
   const [page, setPage] = useState<View | null>(null);
   const [historyPending, setHistoryPending] = useState(false);
   const [historyError, setHistoryError] = useState(false);
   const oldest = (page ?? v).history[0]?.round ?? 1;
-  const controls = loadHistory && (oldest > 1 || page) && (
+  const controls = !memo && loadHistory && (oldest > 1 || page) && (
     <div className="ev-options">
       {oldest > 1 && (
         <button
@@ -393,7 +395,7 @@ export function Panels({
                             <td>{v.phase === "open" ? "—" : n - v.sides[i]}</td>
                           </>
                         )}
-                        <td>{n % 2}</td>
+                        <td>{memo ? "—" : n % 2}</td>
                         {v.phase === "ready" && (
                           <td className="ev-roster-seats">
                             {v.seats
@@ -447,7 +449,11 @@ export function Panels({
             className="ev-rules-dialog"
             triggerClassName="button secondary small-button"
           >
-            <Rules lang={lang} s={v.settings} />
+            {memo ? (
+              <p>{t("memoRule")}</p>
+            ) : (
+              <Rules lang={lang} s={v.settings} />
+            )}
           </StudyDetailDialog>
         </StudentWaitingCard>
       ) : (
@@ -473,12 +479,34 @@ export function Panels({
               className={
                 "ev-workbench" +
                 (v.history.length ? " has-history" : "") +
-                (coordination ? " ev-workbench-coordination" : "")
+                (coordination ? " ev-workbench-coordination" : "") +
+                (memo ? " ev-workbench-memo" : "")
               }
             >
               <div className="ev-play-column">
                 <section className="panel ev-panel ev-task">
-                  <h2>{t(mine.status)}</h2>
+                  {mine.memo ? (
+                    <>
+                      {mine.memo.blockRound === 1 && (
+                        <p role="status">{t("memoNew")}</p>
+                      )}
+                      <h2>
+                        {mine.status === "interrupted"
+                          ? t("interrupted")
+                          : mine.memo.blockRound <= 10
+                            ? `${t("memoForced")}: ${names[mine.memo.initialChoice]}`
+                            : mine.memo.timedOut
+                              ? t("memoTimeout")
+                              : !mine.memo.eligible
+                                ? t("memoCarry")
+                                : mine.status === "choosing"
+                                  ? t("memoEligible")
+                                  : t("memoSubmitted")}
+                      </h2>
+                    </>
+                  ) : (
+                    <h2>{t(mine.status)}</h2>
+                  )}
                   {(coordination || mine.status === "choosing") && (
                     <Decision
                       key={v.round}
@@ -495,7 +523,7 @@ export function Panels({
                       act={act}
                     />
                   )}
-                  {(coordination || mine.status !== "choosing") && (
+                  {!memo && (coordination || mine.status !== "choosing") && (
                     <dl className="ev-payoffs">
                       {(
                         [
@@ -517,7 +545,16 @@ export function Panels({
                     </dl>
                   )}
                 </section>
-                {v.settings.mode === "coordination" ? (
+                {memo ? (
+                  <section className="panel ev-panel ev-reference">
+                    <p>{t("memoRule")}</p>
+                    {mine.pay !== null && (
+                      <p>
+                        {t("pay")}: <strong>{mine.pay}</strong>
+                      </p>
+                    )}
+                  </section>
+                ) : v.settings.mode === "coordination" ? (
                   <section className="panel ev-panel ev-reference">
                     <PayoffMatrix s={v.settings} lang={lang} player={mine} />
                   </section>
@@ -529,21 +566,25 @@ export function Panels({
                   )
                 )}
               </div>
-              <section className="panel ev-panel ev-history">
-                <History
-                  view={v}
-                  lang={lang}
-                  rows={
-                    page?.role === "student"
-                      ? page.history
-                      : mine.status === "choosing" ||
-                          mine.status === "submitted"
-                        ? v.history
-                        : [...v.history, mine]
-                  }
-                />
-                {controls}
-              </section>
+              {mine.memo ? (
+                <MemoFeedback view={v} mine={mine} lang={lang} />
+              ) : (
+                <section className="panel ev-panel ev-history">
+                  <History
+                    view={v}
+                    lang={lang}
+                    rows={
+                      page?.role === "student"
+                        ? page.history
+                        : mine.status === "choosing" ||
+                            mine.status === "submitted"
+                          ? v.history
+                          : [...v.history, mine]
+                    }
+                  />
+                  {controls}
+                </section>
+              )}
             </div>
           </>
         )

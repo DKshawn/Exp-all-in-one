@@ -2,6 +2,76 @@ import { choices, type Settings } from "./settings";
 import type { UiLanguage } from "@/lib/ui-language";
 export type Lang = UiLanguage;
 const messages = {
+  memo: ["鹿兎・研究版 v3", "鹿兔研究版 v3", "Stag Hunt v3"],
+  memoOrder: ["ブロック順", "区块顺序", "Block order"],
+  memoInitial: [
+    "開始条件の割当",
+    "初始条件分配",
+    "Starting condition allocation",
+  ],
+  memoDeer: ["大群は全員が鹿", "大组全鹿", "All stag in large group"],
+  memoHare: ["大群は全員が兎", "大组全兔", "All hare in large group"],
+  memoSettings: [
+    "150人・120ラウンド×3・6秒（選択5秒＋結果1秒）",
+    "150 人，120 轮 × 3（作答 5 秒 + 反馈 1 秒）",
+    "150 people · 120 rounds × 3 · 5 s choice + 1 s feedback",
+  ],
+  memoReady: [
+    "参加者150人で締め切れます。",
+    "满 150 人后才可截止报名。",
+    "Close admission when 150 participants have joined.",
+  ],
+  memoBlock: ["ブロック", "区块", "Block"],
+  memoNew: [
+    "新しいグループです。",
+    "这是新分配的群体。",
+    "This is a new group.",
+  ],
+  memoForced: [
+    "このグループの初期選択",
+    "本组锁定的初始选择",
+    "Fixed starting choice",
+  ],
+  memoEligible: [
+    "今回は選択を変えられます。",
+    "本轮可以改选。",
+    "You can revise your choice this round.",
+  ],
+  memoCarry: [
+    "前回の選択が続きます。",
+    "本轮沿用上轮选择。",
+    "Your previous choice carries over.",
+  ],
+  memoTimeout: [
+    "時間切れ。前回の選択を維持しました。",
+    "超时，已沿用上轮选择。",
+    "Time expired; your previous choice carried over.",
+  ],
+  memoSubmitted: [
+    "選択を受け付けました。",
+    "已收到你的选择。",
+    "Choice received.",
+  ],
+  memoFeedback: [
+    "前回までのグループ内の兎の割合",
+    "截至上轮的小组选兔比例",
+    "Group share choosing hare through the previous round",
+  ],
+  memoNoFeedback: [
+    "このブロックの結果はまだありません。",
+    "本区块还没有上一轮结果。",
+    "No previous result in this block yet.",
+  ],
+  memoPrior: [
+    "前回の選択と得点",
+    "上轮选择和收益",
+    "Previous choice and payoff",
+  ],
+  memoRule: [
+    "兎は常に3点。鹿は他のメンバーの鹿の割合×4点。最初の10ラウンドは選択固定、その後は毎回各群の20%が変更できます。",
+    "兔恒得 3 分；鹿得 4 × 组内其他人选鹿的比例。前 10 轮锁定，之后每轮每组随机抽 20% 可以改选。",
+    "Hare always earns 3; stag earns 4 times the share of other group members choosing stag. The first 10 rounds are fixed. Afterward, 20% per group may revise each round.",
+  ],
   title: ["確率的進化ゲーム", "随机演化博弈", "Stochastic Evolutionary Games"],
   language: ["表示言語", "显示语言", "Language"],
   name: ["実験名", "实验名称", "Room title"],
