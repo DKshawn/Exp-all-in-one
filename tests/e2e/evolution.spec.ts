@@ -6,12 +6,14 @@ import { defaults } from "../../src/experiments/evolution/settings";
 import type { View } from "../../src/experiments/evolution/views";
 
 async function setDemand(page: Page, value: number) {
-  const field = page.getByRole("spinbutton", { name: "Demand" });
-  const slider = page.getByRole("slider");
-  await expect(field).toBeFocused();
-  await expect(field).toHaveValue("");
-  await expect(slider).toHaveCount(0);
-  await page.keyboard.type(String(value));
+  const slider = page.getByRole("slider", { name: "Demand" });
+  await expect(slider).toBeFocused();
+  await expect(slider).toHaveAttribute("aria-valuetext", "Not selected");
+  await slider.press("End");
+  await expect(slider).toHaveValue("1");
+  await slider.press("ArrowLeft");
+  await expect(slider).toHaveValue("0.999");
+  await slider.fill(String(value));
   await expect(slider).toHaveValue(String(value));
   await expect(
     page.getByRole("button", { name: "Submit demand" }),
@@ -289,20 +291,17 @@ test("1000-round Nash demo starts blank and confirms a touch selection", async (
       "1000",
     );
     await expect(page.locator(".round-step")).toHaveCount(0);
-    const track = page.getByRole("button", { name: "Choose on the scale" });
-    const field = page.getByRole("spinbutton", { name: "Demand" });
     const slider = page.getByRole("slider", { name: "Demand" });
     const submit = page.getByRole("button", { name: "Submit demand" });
-    await expect(field).toHaveValue("");
-    await expect(field).toHaveAttribute("step", "0.1");
-    await expect(slider).toHaveCount(0);
+    await expect(page.getByRole("spinbutton", { name: "Demand" })).toHaveCount(
+      0,
+    );
+    await expect(slider).toHaveAttribute("step", "0.1");
+    await expect(slider).toHaveAttribute("aria-valuetext", "Not selected");
+    await expect(slider).toHaveCSS("--thumb-opacity", "0");
     await expect(submit).toBeDisabled();
-    await track.focus();
-    await page.keyboard.press("Enter");
-    await expect(field).toBeFocused();
-    await page.keyboard.press("ArrowUp");
-    await page.keyboard.press("Enter");
-    await expect(field).toHaveValue("");
+    await slider.press("Enter");
+    await expect(slider).toHaveAttribute("aria-valuetext", "Not selected");
     await expect(submit).toBeDisabled();
     await page.screenshot({ path: info.outputPath("nash-blank-phone.png") });
     await page.setViewportSize({ width: 320, height: 844 });
@@ -317,18 +316,18 @@ test("1000-round Nash demo starts blank and confirms a touch selection", async (
       ),
     ).toBe(true);
     await page.setViewportSize({ width: 390, height: 844 });
-    await field.fill("0.35");
-    await submit.tap();
-    await expect(field).toHaveAttribute("aria-invalid", "true");
-    await expect(slider).toHaveCount(0);
-    const { width, height } = (await track.boundingBox())!;
-    await track.tap({
+    const { width, height } = (await slider.boundingBox())!;
+    await slider.tap({ position: { x: 1, y: Math.floor(height / 2) } });
+    await expect(slider).toHaveAttribute("aria-valuetext", "0");
+    await expect(submit).toBeEnabled();
+    await slider.tap({
       position: { x: Math.floor(width * 0.3), y: Math.floor(height / 2) },
     });
-    await expect(slider).toBeFocused();
-    await expect(field).toHaveValue("0.3");
-    await page.keyboard.press("ArrowRight");
-    await expect(field).toHaveValue("0.4");
+    await expect(slider).toHaveValue("0.3");
+    await expect(slider).toHaveCSS("--thumb-opacity", "1");
+    await slider.press("ArrowRight");
+    await expect(slider).toHaveValue("0.4");
+    await expect(page.locator(".ev-demand-current span")).toHaveText("0.4");
     await expect(slider).toHaveCSS("outline-style", "solid");
     await page.getByRole("button", { name: "Pause", exact: true }).click();
     await expect(submit).toBeDisabled();
@@ -508,7 +507,7 @@ for (const mode of ["coordination", "demand"] as const)
         await expectEndButton(page, "End experiment");
         await expect(
           mode === "demand"
-            ? players[0].getByRole("spinbutton", { name: "Demand" })
+            ? players[0].getByRole("slider", { name: "Demand" })
             : players[0].getByRole("button", { name: "Pine", exact: true }),
         ).toBeVisible();
         await expect(
@@ -785,7 +784,7 @@ for (const mode of ["coordination", "demand"] as const)
       await expect(page.getByRole("timer")).toHaveText(time);
       const decision =
         mode === "demand"
-          ? page.getByRole("button", { name: "在刻度上选择需求额" })
+          ? page.getByRole("slider", { name: "需求额" })
           : page.getByRole("button", { name: "鹿", exact: true });
       await expect(decision).toBeDisabled();
       await expect(fast).toBeDisabled();
@@ -866,8 +865,8 @@ for (const mode of ["coordination", "demand"] as const)
       await expect(page.locator(".round-step.active")).toHaveText("2");
       if (mode === "demand")
         await expect(
-          page.getByRole("spinbutton", { name: "需求额" }),
-        ).toHaveValue("");
+          page.getByRole("slider", { name: "需求额" }),
+        ).toHaveAttribute("aria-valuetext", "未选择");
       for (let i = 0; i < 10; i++)
         await page.getByRole("button", { name: "快进 30 秒" }).click();
       await fit(page);
