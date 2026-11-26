@@ -3,10 +3,20 @@ import { randomInt } from "@/experiments/double-auction/lib/random";
 import { AuctionError } from "@/lib/server/errors";
 import { add } from "./numbers";
 import {
+  chooseMemo,
+  openMemoRound,
+  settleMemo,
+  type MemoEntry,
+  type MemoRound,
+} from "./memo-v3";
+import {
   choiceCount,
   choiceStride,
   continuous,
   outcome,
+  isMemo,
+  memoSizes,
+  MEMO_PARTICIPANTS,
   type Settings,
 } from "./settings";
 
@@ -19,6 +29,7 @@ export type Seat = {
   total: string;
 };
 export type Entry = {
+  memo?: MemoEntry;
   opponent: string | null;
   position: "row" | "column" | null;
   choice: number | null;
@@ -38,6 +49,7 @@ export type Entry = {
     | "interrupted";
 };
 export type Round = {
+  memo?: MemoRound;
   number: number;
   openedAt: number;
   shortened?: boolean;
@@ -101,13 +113,18 @@ function reject(message: string): never {
 }
 export function groupSizes(g: Game) {
   const n = g.seats.length,
-    k = g.settings.groups;
+    k = isMemo(g.settings)
+      ? MEMO_PARTICIPANTS /
+        memoSizes(g.settings.memoOrder)[(g.round?.memo?.block ?? 1) - 1]
+      : g.settings.groups;
   return Array.from(
     { length: k },
     (_, i) => Math.floor(n / k) + Number(i < n % k),
   );
 }
 export function closeAdmission(g: Game, now: number) {
+  if (isMemo(g.settings) && g.seats.length !== MEMO_PARTICIPANTS)
+    reject("この実験の開始には150人必要です。");
   if (g.phase !== "open" || groupSizes(g).some((n) => n < 2))
     reject("各グループに2人以上必要です。");
   const roster = shuffled(g.seats);
@@ -135,6 +152,10 @@ export function closeAdmission(g: Game, now: number) {
   };
 }
 function openRound(g: Game, now: number) {
+  if (isMemo(g.settings)) {
+    openMemoRound(g, now);
+    return;
+  }
   const entries: Round["entries"] = {};
   function seat(p: Seat, opponent: string | null, position: Entry["position"]) {
     entries[p.id] = {
@@ -212,11 +233,20 @@ export function tick(g: Game, now: number) {
   if (g.pausedAt != null) return;
   const timer = admissionClock(g);
   if (g.phase === "open" && timer.deadline !== null && now >= timer.deadline) {
-    if (groupSizes(g).every((n) => n >= 2)) closeAdmission(g, timer.deadline);
+    if (
+      isMemo(g.settings)
+        ? g.seats.length === MEMO_PARTICIPANTS
+        : groupSizes(g).every((n) => n >= 2)
+    )
+      closeAdmission(g, timer.deadline);
     else g.admission = { ...timer, deadline: null, insufficient: true };
   }
   const r = g.round;
   if (!r) return;
+  if (g.phase === "playing" && now >= r.deadline && r.memo) {
+    settleMemo(g);
+    closeRound(g, r.deadline);
+  }
   if (g.phase === "playing" && now >= r.deadline) {
     let submittedDraft = false;
     for (const [id, entry] of Object.entries(r.entries)) {
@@ -245,6 +275,10 @@ export function choose(
   choice: number,
   now: number,
 ) {
+  if (isMemo(g.settings)) {
+    chooseMemo(g, id, round, choice, now);
+    return;
+  }
   if (!choosePair(g, g.round, id, round, choice, now)) return;
   const e = g.round!.entries[id];
   if (e.status === "settled")
@@ -373,6 +407,11 @@ export function teacherAction(
       seat.side = null;
     }
   } else if ("phase" in action) {
+    if (
+      isMemo(g.settings) &&
+      (action.kind === "advance" || action.kind === "shorten")
+    )
+      reject("この実験の時間は変更できません。");
     if (g.phase !== action.phase || g.round?.number !== action.round)
       reject("ラウンドが更新されました。");
     if (action.kind === "pause") {
@@ -411,6 +450,7 @@ export function teacherAction(
     if (g.phase !== "open") reject("入室受付は終了しました。");
     switch (action.kind) {
       case "setGroups":
+        if (isMemo(g.settings)) reject("この実験のグループ数は固定です。");
         if (
           !Number.isInteger(action.groups) ||
           action.groups < 1 ||

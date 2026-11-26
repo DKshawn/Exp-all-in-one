@@ -8,10 +8,24 @@ If the browser blocks preference storage, language changes apply to the open pag
 
 Each formal room accepts up to 5,000 registrations. **Demo participants** accepts 2 to 5,000 including the seat you control, with a default of six.
 
+## Stag Hunt v3 (new room only)
+
+Select Stag Hunt v3 at room creation. Classic coordination remains the default and existing rooms are unchanged. Close formal admission at exactly 150 participants. The same cohort completes three blocks, with group sizes of 10, 30, and 150 in small-first or large-first order. The teacher chooses the order; allocation is shuffled for each block and the student-visible history starts fresh. The research export retains all blocks.
+
+Each block has 120 rounds, with a nominal 5 seconds to decide and 1 second of feedback per round. Browser polls advance phases; measure the actual cadence in the intended setup. For the first 10 rounds, groups are locked to all stag or all hare. In size-10 groups, eight start stag and seven start hare. In size-30 groups, three use the chosen starting choice and two use the other. The single size-150 group uses the chosen starting choice. From round 11, a uniform random 20% of each group (2, 6, or 30 people) may revise each round. Others and eligible timeouts retain their prior choice.
+
+Each player has one choice per round. The system scores that choice against each other member of your group. If you chose Hare, you get 3 points against either choice. If you chose Stag, you get 4 against Stag and 0 against Hare. Your score for the round is the average of those points.
+
+In both formal rooms and demos, the choice card combines the revision status, the Stag and Hare buttons, and a one-opponent payoff table. Highlighted buttons are available for one-click submission, including keeping the same choice. A lock and muted buttons indicate a choice that is unavailable. During rounds 1–10, the card identifies the group's fixed choice. The previous round shows your group's hare share as a percentage and a bar, your own choice and score, and a full-width trend for up to 20 rounds in this block. The axes label rounds and 0%, 50%, and 100%. The full rules are displayed in the demo only. During feedback, the current payoff appears in the round progress panel. Payoffs are rounded to the nearest integer for display. Settlement, totals and research exports use exact values.
+
+The teacher's results show eligible players out of the selected group, actual submissions, timeouts, settled players, strategy shares and total payoffs. Strategy shares appear after settlement.
+
+JSON and CSV include block and group, initial choice, revision eligibility, timeout, carried choice, prior feedback data and the timestamp at which the server prepared the response. This timestamp is not evidence that the participant actually saw the screen. Demo mode simulates the remaining 149 seats. The 2-second ARUE condition, concurrent field load with 150 devices, and real-participant validation are outside this change.
+
 ## Run a classroom session
 
 1. At `/teacher`, select **Stochastic Evolutionary Games**. Choose the game, name the room, set the payoffs and enter a room password. Game, payoff and round settings lock on creation. Teachers and students each choose Japanese, Chinese or English in the page header. This preference is saved in their own browser.
-2. Click **Copy join link** beside the participant allocation heading and share the link. It opens the student entry with the room code filled in. Students join with a nickname and four-digit PIN. They can open **Rules** in the waiting card to check the rules and payoffs for this room.
+2. Click **Copy join link** beside the participant allocation heading and share the link. It opens the student entry with the room code filled in. Students join with a nickname and four-digit PIN. In classic coordination and Nash demand, they can open **Rules** in the waiting card to check the rules and payoffs.
 3. Check actual enrollment and projected group sizes, then close admission. Closing randomly assigns the roster to fixed, balanced groups. Each group needs at least two people. In the demand game each group also receives fixed, nearly equal A/B sides. In an odd group a random draw determines which side has the extra person. Check the allocation and confirm start.
 4. Click a coordination choice once to submit. For Nash demand, each round starts without a selected value. Click or tap the slider track or use the arrow keys to choose. The thumb and selected amount appear after selection. Submit early with Enter or the button. At the cutoff, the last saved value submits automatically. A round without a selection is recorded as a timeout. Both decisions are private until the pair settles. The full history stays in the teacher’s export.
 

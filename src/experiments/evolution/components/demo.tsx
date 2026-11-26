@@ -21,7 +21,13 @@ import {
   summaries,
   teacherView,
 } from "../views";
-import { continuous, HISTORY_ROUNDS, type Settings } from "../settings";
+import {
+  continuous,
+  HISTORY_ROUNDS,
+  isMemo,
+  MEMO_PARTICIPANTS,
+  type Settings,
+} from "../settings";
 import { label, type Lang } from "../locale";
 import { useLanguage } from "./language";
 import { SetupForm, useSetupDraft } from "./setup";
@@ -32,30 +38,45 @@ function DemoToolbar({
   teacher,
   onSwitch,
   bots,
+  compact,
   children,
 }: {
   lang: Lang;
   teacher: boolean;
   onSwitch: () => void;
   bots: number;
+  compact: boolean;
   children: ReactNode;
 }) {
+  const switchLabel = label(lang, teacher ? "toStudent" : "toTeacher");
   return (
     <section
-      className="demo-panel ev-demo-bar"
+      className={`demo-panel ev-demo-bar${compact ? " ev-memo-demo-bar" : ""}`}
       lang={lang}
       aria-label={label(lang, "demoView")}
     >
       <div className="demo-controls">
         <div className="demo-options">
-          <span className={`role-tag ${teacher ? "teacher" : "student"}`}>
+          <span
+            className={`ev-demo-meta role-tag ${teacher ? "teacher" : "student"}`}
+          >
             {label(lang, teacher ? "teacher" : "student")}
           </span>
-          <button type="button" className="button secondary" onClick={onSwitch}>
+          <button
+            type="button"
+            className="button secondary"
+            aria-label={compact ? switchLabel : undefined}
+            onClick={onSwitch}
+          >
             {teacher ? <UserRound size={16} /> : <GraduationCap size={16} />}
-            {label(lang, teacher ? "toStudent" : "toTeacher")}
+            <span className="ev-demo-full-label">{switchLabel}</span>
+            {compact && (
+              <span className="ev-demo-short-label">
+                {label(lang, teacher ? "memoToStudent" : "memoToTeacher")}
+              </span>
+            )}
           </button>
-          <span>
+          <span className="ev-demo-meta">
             {label(lang, "bots")} <b>{bots}</b>
           </span>
         </div>
@@ -116,8 +137,10 @@ function DemoRoom({
         entry &&
         demo.game.phase === "playing" &&
         demo.game.pausedAt == null
-      )
+      ) {
         entry.seenAt ??= at;
+        if (entry.memo) entry.memo.feedbackServedAt ??= at;
+      }
       setClock({ now: at });
     }, 250);
     return () => clearInterval(timer);
@@ -161,6 +184,7 @@ function DemoRoom({
             rows.map((row) => ({ ...row, heartbeatGap: null })),
             true,
             continuous(g.settings),
+            isMemo(g.settings),
           );
     const url = URL.createObjectURL(
       new Blob([body], {
@@ -174,12 +198,12 @@ function DemoRoom({
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   const base = baseView(demo.game, "DEMO", demo.title, now);
+  const groupSize = demo.game.round?.memo?.groupSize;
+  const groups = groupSize
+    ? MEMO_PARTICIPANTS / groupSize
+    : demo.game.settings.groups;
   const view = teacher
-    ? teacherView(
-        demo.game,
-        base,
-        demo.history.slice(-HISTORY_ROUNDS * demo.game.settings.groups),
-      )
+    ? teacherView(demo.game, base, demo.history.slice(-HISTORY_ROUNDS * groups))
     : studentView(
         demo.game,
         base,
@@ -187,6 +211,7 @@ function DemoRoom({
         demo.archive.slice(-HISTORY_ROUNDS).map((r) => personal(r, demo.human)),
       );
   const active = view.phase === "playing" || view.phase === "feedback";
+  const memo = isMemo(view.settings);
   return (
     <>
       <DemoToolbar
@@ -194,8 +219,10 @@ function DemoRoom({
         teacher={teacher}
         onSwitch={() => setTeacher(!teacher)}
         bots={demo.game.seats.length - 1}
+        compact={memo}
       >
         <button
+          type="button"
           className="button primary"
           disabled={!active}
           onClick={() => act({ kind: "playback", paused: !paused })}
@@ -204,7 +231,9 @@ function DemoRoom({
           {label(lang, paused ? "resume" : "pause")}
         </button>
         <button
-          className="button secondary"
+          type="button"
+          className="button secondary ev-demo-fast"
+          aria-label={memo ? label(lang, "fast") : undefined}
           disabled={!active || paused}
           onClick={() => {
             demo.fastForward(Date.now());
@@ -212,11 +241,26 @@ function DemoRoom({
           }}
         >
           <SkipForward size={16} />
-          {label(lang, "fast")}
+          <span className="ev-demo-full-label">{label(lang, "fast")}</span>
+          {memo && (
+            <span className="ev-demo-short-label">
+              {label(lang, "memoAdvance")}
+            </span>
+          )}
         </button>
-        <button className="button secondary" onClick={onSetup}>
+        <button
+          type="button"
+          className="button secondary"
+          aria-label={memo ? label(lang, "reset") : undefined}
+          onClick={onSetup}
+        >
           <RotateCcw size={16} />
-          {label(lang, "reset")}
+          <span className="ev-demo-full-label">{label(lang, "reset")}</span>
+          {memo && (
+            <span className="ev-demo-short-label">
+              {label(lang, "memoSetup")}
+            </span>
+          )}
         </button>
       </DemoToolbar>
       {err && (

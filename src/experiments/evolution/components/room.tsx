@@ -6,7 +6,7 @@ import { api, errorMessage } from "@/lib/client";
 import type { Action } from "../engine";
 import type { View } from "../views";
 import { label } from "../locale";
-import { HISTORY_ROUNDS } from "../settings";
+import { HISTORY_ROUNDS, isMemo } from "../settings";
 import { Panels } from "./panels";
 import { useLanguage } from "./language";
 export function EvolutionRoom({
@@ -41,6 +41,11 @@ export function EvolutionRoom({
         clock.current = { now: result.now, at: performance.now() };
         setNow(result.now);
         setView((previous) => {
+          if (
+            isMemo(result.settings) &&
+            result.memoBlock !== previous?.memoBlock
+          )
+            return result;
           const oldest = result.round - HISTORY_ROUNDS;
           if (result.role === "student" && previous?.role === "student")
             return {

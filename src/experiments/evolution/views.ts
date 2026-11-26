@@ -8,13 +8,34 @@ import {
   type Entry,
   type Seat,
 } from "./engine";
-import { choices, continuous, demandBand, outcome } from "./settings";
+import {
+  choices,
+  continuous,
+  demandBand,
+  MEMO_ROUNDS,
+  outcome,
+} from "./settings";
 
 export function personal(r: Round, id: string) {
   const e = r.entries[id],
-    peer = e.status === "settled" ? r.entries[e.opponent!] : null;
+    peer = e.status === "settled" && e.opponent ? r.entries[e.opponent] : null;
   return {
     round: r.number,
+    ...(r.memo && e.memo
+      ? {
+          memo: {
+            block: r.memo.block,
+            blockRound: r.memo.blockRound,
+            groupSize: r.memo.groupSize,
+            initialChoice: e.memo.initialChoice,
+            eligible: e.memo.eligible,
+            timedOut: e.memo.timedOut,
+            carriedChoice: e.memo.carriedChoice,
+            priorPay: e.memo.priorPay,
+            feedback: r.memo.feedback[e.memo.group],
+          },
+        }
+      : {}),
     position: e.position,
     status: e.status,
     choice: e.choice,
@@ -25,23 +46,33 @@ export function personal(r: Round, id: string) {
     otherPay: peer?.pay ?? null,
   };
 }
-export function summaries(g: Game, r: Round) {
-  return groupSizes(g).map((_, i) => {
-    const seats = g.seats.filter((s) => s.group === i + 1);
+export function summaries(g: Game, r: Round, includeMemoStats = false) {
+  const sizes = r.memo
+    ? Object.values(r.memo.feedback).map(() => r.memo!.groupSize)
+    : groupSizes(g);
+  return sizes.map((_, i) => {
+    const seats = g.seats.filter(
+      (s) => (r.entries[s.id]?.memo?.group ?? s.group) === i + 1,
+    );
     const slider = continuous(g.settings);
     const counts = (side: Seat["side"]) => {
       const counts = Array<number>(
         slider ? 10 : choices(g.settings).length,
       ).fill(0);
       for (const s of seats)
-        if (side === null || s.side === side) {
+        if (
+          (side === null || s.side === side) &&
+          (!r.memo || r.closedAt !== null)
+        ) {
           const c = r.entries[s.id].choice;
           if (c !== null) counts[slider ? demandBand(c) : c]++;
         }
       return counts;
     };
     const pairs: Record<string, number> = {};
-    let settled = 0,
+    let eligible = 0,
+      settledPlayers = 0,
+      settled = 0,
       agreements = 0,
       total = "0",
       byes = 0,
@@ -51,10 +82,14 @@ export function summaries(g: Game, r: Round) {
     for (const p of seats) {
       const e = r.entries[p.id];
       if (e.seenAt !== null) seen++;
-      if (e.choice !== null) submitted++;
+      if (e.memo ? e.submittedAt !== null : e.choice !== null) submitted++;
       if (e.status === "bye") byes++;
-      if (e.status === "timeout") timeouts++;
+      if (e.status === "timeout" || e.memo?.timedOut) timeouts++;
       if (e.pay !== null) total = add(total, e.pay);
+      if (includeMemoStats && e.memo) {
+        if (e.memo.eligible) eligible++;
+        if (e.status === "settled") settledPlayers++;
+      }
       if (e.status !== "settled" || e.position !== "row") continue;
       const right = r.entries[e.opponent!].choice!;
       if (!slider) {
@@ -66,9 +101,13 @@ export function summaries(g: Game, r: Round) {
     }
     return {
       round: r.number,
+      ...(r.memo ? { block: r.memo.block, blockRound: r.memo.blockRound } : {}),
+      ...(includeMemoStats && r.memo
+        ? { memoStats: { eligible, settledPlayers } }
+        : {}),
       group: i + 1,
       assigned: seats.length,
-      paired: seats.length - byes,
+      paired: r.memo ? 0 : seats.length - byes,
       seen,
       submitted,
       counts: counts(null),
@@ -92,6 +131,9 @@ export function baseView(g: Game, code: string, title: string, now: number) {
     settings: g.settings,
     phase: g.phase,
     round: g.round?.number ?? 0,
+    ...(g.round?.memo
+      ? { memoBlock: g.round.memo.block, memoRound: g.round.memo.blockRound }
+      : {}),
     now,
     deadline: phaseDeadline(g),
     pausedAt: g.pausedAt ?? null,
@@ -121,7 +163,12 @@ export function teacherView(
           side: seat.side,
         })),
     count: g.seats.length,
-    history: [...history, ...(g.round ? summaries(g, g.round) : [])],
+    history: [
+      ...(g.round?.memo
+        ? history.filter((item) => item.block === g.round!.memo!.block)
+        : history),
+      ...(g.round ? summaries(g, g.round, true) : []),
+    ],
   };
 }
 export function studentView(
@@ -138,7 +185,11 @@ export function studentView(
     side: seat.side,
     total: seat.total,
     current: g.round ? personal(g.round, id) : null,
-    history,
+    history: g.round?.memo
+      ? history.filter(
+          (item) => item.round > (g.round!.memo!.block - 1) * MEMO_ROUNDS,
+        )
+      : history,
   };
 }
 export type View =
@@ -149,8 +200,25 @@ export function rawRows(g: Game, r: Round, code: string) {
       p = e.opponent ? r.entries[e.opponent] : null;
     return {
       room: code,
-      group: s.group,
+      group: e.memo?.group ?? s.group,
       round: r.number,
+      ...(r.memo && e.memo
+        ? {
+            block: r.memo.block,
+            blockRound: r.memo.blockRound,
+            groupSize: r.memo.groupSize,
+            initialChoice: e.memo.initialChoice,
+            eligible: e.memo.eligible,
+            timedOut: e.memo.timedOut,
+            carriedChoice: e.memo.carriedChoice,
+            feedbackServedAt: e.memo.feedbackServedAt,
+            feedbackHare: r.memo.feedback[e.memo.group].at(-1)?.hare ?? null,
+            feedbackGroupSize:
+              r.memo.feedback[e.memo.group].at(-1)?.size ?? null,
+            feedbackHistory: r.memo.feedback[e.memo.group],
+            feedbackPriorPay: e.memo.priorPay,
+          }
+        : {}),
       id: s.id,
       side: s.side,
       position: e.position,

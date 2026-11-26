@@ -9,7 +9,9 @@ import type { Action } from "../engine";
 import type { View, Personal } from "../views";
 import { Admission, SessionOverview } from "./session-controls";
 import { PayoffMatrix, PayoffRules, Rules } from "./rules";
-import { continuous, DEMAND_STEPS, demandLabel } from "../settings";
+import { continuous, DEMAND_STEPS, demandLabel, isMemo } from "../settings";
+import { MemoStudent } from "./memo-student";
+import { MemoResults } from "./memo-results";
 import { DemandDecision } from "./demand-decision";
 
 type Props = {
@@ -19,7 +21,7 @@ type Props = {
   now: number;
   act: (action: Action) => void | Promise<void>;
   loadHistory?: (before: number) => Promise<View>;
-  downloads?: React.ReactNode;
+  downloads?: ReactNode;
 };
 function Decision({
   view,
@@ -28,6 +30,7 @@ function Decision({
   act,
   selected,
   draftChoice,
+  describedBy,
 }: {
   view: Extract<View, { role: "student" }>;
   lang: Lang;
@@ -35,6 +38,7 @@ function Decision({
   act: Props["act"];
   selected: number | null;
   draftChoice: number | null;
+  describedBy?: string;
 }) {
   const commit = (choice: number) => {
     if (!busy) void act({ kind: "choose", round: view.round, choice });
@@ -56,6 +60,7 @@ function Decision({
   return (
     <div className="ev-decision">
       <fieldset
+        aria-describedby={describedBy}
         aria-label={
           view.settings.mode === "coordination"
             ? label(lang, "choose")
@@ -283,13 +288,23 @@ export function Panels({
   const mine = v.role === "student" ? v.current : null,
     names = displayChoices(lang, v.settings);
   const coordination = v.settings.mode === "coordination";
+  const memo = isMemo(v.settings);
+  const memoStudent = memo && v.role === "student" && !waiting;
+  const canChooseMemo = Boolean(
+    mine?.memo?.eligible &&
+    mine.status === "choosing" &&
+    !busy &&
+    v.phase === "playing" &&
+    v.pausedAt === null &&
+    now < (v.deadline ?? Infinity),
+  );
   const name = (c: number | null) =>
     c === null ? null : continuous(v.settings) ? demandLabel(c) : names[c];
   const [page, setPage] = useState<View | null>(null);
   const [historyPending, setHistoryPending] = useState(false);
   const [historyError, setHistoryError] = useState(false);
   const oldest = (page ?? v).history[0]?.round ?? 1;
-  const controls = loadHistory && (oldest > 1 || page) && (
+  const controls = !memo && loadHistory && (oldest > 1 || page) && (
     <div className="ev-options">
       {oldest > 1 && (
         <button
@@ -333,7 +348,10 @@ export function Panels({
     </div>
   );
   return (
-    <main className="ev ev-room" lang={lang}>
+    <main
+      className={memoStudent ? "ev ev-room ev-memo-student" : "ev ev-room"}
+      lang={lang}
+    >
       <div className="ev-heading">
         <h1>{v.title}</h1>
         <span className="ev-code">
@@ -378,7 +396,7 @@ export function Panels({
                           <th>B</th>
                         </>
                       )}
-                      <th>{t("byes")}</th>
+                      {!memo && <th>{t("byes")}</th>}
                       {v.phase === "ready" && <th>{t("student")}</th>}
                     </tr>
                   </thead>
@@ -393,7 +411,7 @@ export function Panels({
                             <td>{v.phase === "open" ? "—" : n - v.sides[i]}</td>
                           </>
                         )}
-                        <td>{n % 2}</td>
+                        {!memo && <td>{n % 2}</td>}
                         {v.phase === "ready" && (
                           <td className="ev-roster-seats">
                             {v.seats
@@ -411,6 +429,8 @@ export function Panels({
                 </table>
               </div>
             </section>
+          ) : memo ? (
+            <MemoResults key={v.memoBlock} view={v} lang={lang} />
           ) : (
             <Analysis
               view={page?.role === "teacher" ? page : v}
@@ -441,15 +461,45 @@ export function Panels({
               {t("sec")}
             </strong>
           ) : null}
-          <StudyDetailDialog
-            label={t("rules")}
-            closeLabel={t("dismiss")}
-            className="ev-rules-dialog"
-            triggerClassName="button secondary small-button"
-          >
-            <Rules lang={lang} s={v.settings} />
-          </StudyDetailDialog>
+          {(!memo || v.code === "DEMO") && (
+            <StudyDetailDialog
+              label={t("rules")}
+              closeLabel={t("dismiss")}
+              className="ev-rules-dialog"
+              triggerClassName="button secondary small-button"
+            >
+              {memo ? (
+                <>
+                  <p>{t("memoRule")}</p>
+                  <p>{t("memoRevisionRule")}</p>
+                </>
+              ) : (
+                <Rules lang={lang} s={v.settings} />
+              )}
+            </StudyDetailDialog>
+          )}
         </StudentWaitingCard>
+      ) : memoStudent && mine?.memo ? (
+        <MemoStudent
+          view={v}
+          memo={mine.memo}
+          lang={lang}
+          mine={mine}
+          now={now}
+          canChoose={canChooseMemo}
+          renderDecision={(statusId) => (
+            <Decision
+              key={v.round}
+              view={v}
+              lang={lang}
+              busy={!canChooseMemo}
+              selected={mine.choice}
+              draftChoice={null}
+              act={act}
+              describedBy={statusId}
+            />
+          )}
+        />
       ) : (
         mine && (
           <>
