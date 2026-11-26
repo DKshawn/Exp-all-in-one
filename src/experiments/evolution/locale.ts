@@ -68,9 +68,14 @@ const messages = {
     "Previous choice and payoff",
   ],
   memoRule: [
-    "兎は常に3点。鹿は他のメンバーの鹿の割合×4点。最初の10ラウンドは選択固定、その後は毎回各群の20%が変更できます。",
-    "兔恒得 3 分；鹿得 4 × 组内其他人选鹿的比例。前 10 轮锁定，之后每轮每组随机抽 20% 可以改选。",
-    "Hare always earns 3; stag earns 4 times the share of other group members choosing stag. The first 10 rounds are fixed. Afterward, 20% per group may revise each round.",
+    "各ラウンドで使う選択は1人につき1つです。その選択を使い、同じグループの自分以外の全員について、相手ごとに点数を計算します。兎を選ぶと、相手が鹿でも兎でも3点。鹿を選ぶと、相手が鹿なら4点、兎なら0点です。相手ごとの点数を平均したものが、そのラウンドの得点です。",
+    "每人每轮只用一个选择结算。系统用这个选择，分别与你所在组内的其他每个人算分。你选兔，无论对方选鹿还是兔，都得3分；你选鹿，对方选鹿得4分，对方选兔得0分。把与各人的得分取平均，就是你的本轮得分。",
+    "Each player has one choice per round. The system scores that choice against each other member of your group. If you chose Hare, you get 3 points against either choice. If you chose Stag, you get 4 against Stag and 0 against Hare. Your score for the round is the average of those points.",
+  ],
+  memoRevisionRule: [
+    "最初の10ラウンドは選択が固定されます。11ラウンド目以降は、毎ラウンド、各グループの参加者の中から20%（10人グループなら2人）を無作為に抽選します。当選した人だけが選択を変更できます。変更は任意です。当選しなかった人や、時間内に回答しなかった人は、前のラウンドの選択を引き継ぎます。",
+    "前10轮选择固定。从第11轮起，系统每轮从每组参与者中随机抽出20%（例如10人组抽2人）。只有抽中的人可以改选，也可以保持原选项。没抽中或未在时限内作答的人沿用上轮选择。",
+    "Choices are fixed for the first 10 rounds. From round 11, the system randomly selects 20% of the participants in each group each round (for example, 2 people in a group of 10). Only those selected can change their choice, and they may keep it instead. Anyone not selected or who runs out of time keeps their previous choice.",
   ],
   title: ["確率的進化ゲーム", "随机演化博弈", "Stochastic Evolutionary Games"],
   language: ["表示言語", "显示语言", "Language"],

@@ -253,6 +253,7 @@ export function SetupForm({
             </label>
           </div>
           <p>{t("memoRule")}</p>
+          <p>{t("memoRevisionRule")}</p>
         </>
       ) : (
         <>

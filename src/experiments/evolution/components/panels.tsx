@@ -450,7 +450,10 @@ export function Panels({
             triggerClassName="button secondary small-button"
           >
             {memo ? (
-              <p>{t("memoRule")}</p>
+              <>
+                <p>{t("memoRule")}</p>
+                <p>{t("memoRevisionRule")}</p>
+              </>
             ) : (
               <Rules lang={lang} s={v.settings} />
             )}
@@ -548,6 +551,7 @@ export function Panels({
                 {memo ? (
                   <section className="panel ev-panel ev-reference">
                     <p>{t("memoRule")}</p>
+                    <p>{t("memoRevisionRule")}</p>
                     {mine.pay !== null && (
                       <p>
                         {t("pay")}: <strong>{mine.pay}</strong>

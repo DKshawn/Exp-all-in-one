@@ -7,15 +7,26 @@ test("memo v3 demo separates settings and student feedback from the classic game
   await page.goto("/evolution/demo");
   await enterTeacherPage(page);
   await page.clock.install();
-  await page.getByRole("banner").getByRole("combobox").selectOption("en");
   const mode = page.getByRole("combobox", { name: "Game", exact: true });
-  await expect(mode).toHaveValue("coordination");
+  await expect(async () => {
+    await page.getByRole("banner").getByRole("combobox").selectOption("en");
+    await expect(mode).toHaveValue("coordination", { timeout: 1000 });
+  }).toPass({ timeout: 15000 });
   await expect(
     page.getByRole("table", { name: "Payoff matrix" }),
   ).toBeVisible();
   await mode.selectOption("memo");
   await expect(page.getByText(/120 rounds × 3/)).toBeVisible();
   await expect(page.getByLabel("Decision time (s)")).toHaveCount(0);
+  await expect(
+    page.getByText("Only those selected can change their choice"),
+  ).toBeVisible();
+  await page.getByRole("banner").getByRole("combobox").selectOption("ja");
+  await expect(page.getByText("参加者の中から20%")).toBeVisible();
+  await page.getByRole("banner").getByRole("combobox").selectOption("en");
+  await expect(
+    page.getByText("Your score for the round is the average of those points."),
+  ).toBeVisible();
   await page.getByLabel("Block order").selectOption("large-first");
   await page.getByLabel("Starting condition allocation").selectOption("hare");
   await page.getByRole("button", { name: "Create demo" }).click();
@@ -24,6 +35,9 @@ test("memo v3 demo separates settings and student feedback from the classic game
   await page.getByRole("button", { name: "View student screen" }).click();
   await expect(page.getByText(/Block 1\/3.*Round 1\/120/)).toBeVisible();
   await expect(page.getByText("Fixed starting choice: Hare")).toBeVisible();
+  await expect(
+    page.getByText("Your score for the round is the average of those points."),
+  ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Stag", exact: true }),
   ).toBeDisabled();
@@ -57,6 +71,9 @@ test("memo v3 formal setup can return to classic and requires the full cohort on
   ).toBeVisible();
   await expect(page.getByLabel("Feedback time (s)")).toHaveValue("8");
   await mode.selectOption("memo");
+  await expect(
+    page.getByText("Your score for the round is the average of those points."),
+  ).toBeVisible();
   await page.getByLabel("Room title").fill("Synthetic Memo v3");
   await page.getByLabel("Room password").fill("review-password");
   await page.getByRole("button", { name: "Create room" }).click();
