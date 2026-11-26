@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { displayChoices, label, type Key, type Lang } from "../locale";
+import { roundedAmount } from "../numbers";
 import type { View } from "../views";
 
 export function MemoResults({
@@ -83,7 +84,7 @@ export function MemoResults({
                           ))
                         : "—"}
                     </td>
-                    <td>{settledPlayers ? row.total : "—"}</td>
+                    <td>{settledPlayers ? roundedAmount(row.total) : "—"}</td>
                   </tr>
                 );
               })}

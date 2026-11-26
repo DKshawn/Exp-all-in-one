@@ -75,6 +75,20 @@ async function checkStudentViewport(
       expect(bottoms[0]).toBeLessThan(bounds[2].y);
       expect(bottoms[2]).toBeLessThan(bounds[3].y);
       expect(Math.max(...bottoms)).toBeLessThanOrEqual(height);
+      const frame = page.locator(".ev-memo-options");
+      const lock = page.locator(".ev-memo-choice-lock");
+      const frameBox = (await frame.boundingBox())!;
+      const lockBox = (await lock.boundingBox())!;
+      expect(lockBox.width).toBe(24);
+      expect(lockBox.x + lockBox.width / 2).toBeCloseTo(
+        frameBox.x + frameBox.width / 2,
+      );
+      expect(lockBox.y + lockBox.height / 2).toBeCloseTo(
+        frameBox.y + frameBox.height / 2,
+      );
+      expect(bounds[0].x + bounds[0].width).toBeLessThan(lockBox.x);
+      expect(lockBox.x + lockBox.width).toBeLessThan(bounds[1].x);
+      await expect(frame).not.toHaveCSS("border-top-color", "rgba(0, 0, 0, 0)");
       const chartWidth = (await page.locator(".ev-memo-chart").boundingBox())!
         .width;
       const plotWidth = (await page
@@ -280,7 +294,36 @@ test("memo v3 demo shows the payoff table, fixed start, and one-click revision",
   await expect(
     page.getByText("No previous result in this block yet."),
   ).toBeVisible();
-  await page.clock.fastForward(6000);
+  const progressArea = page.locator(".ev-memo-overview");
+  const payoff = progressArea.locator(".ev-memo-round-payoff");
+  await expect(payoff).toBeEmpty();
+  await page.clock.pauseAt((await page.evaluate(() => Date.now())) + 100);
+  for (let step = 0; step < 22 && !(await payoff.locator("b").count()); step++)
+    await page.clock.runFor(250);
+
+  const originalViewport = page.viewportSize()!;
+  for (const [lang, payoffLabel] of [
+    ["ja", "今回の得点"],
+    ["zh-CN", "本轮收益"],
+    ["en", "Payoff"],
+  ] as const) {
+    await language.selectOption(lang);
+    await expect(payoff).toHaveText(payoffLabel + "3");
+    for (const width of [320, 390, 1440]) {
+      await page.setViewportSize({ width, height: 740 });
+      const phase = (await progressArea
+        .getByRole("heading", { level: 2 })
+        .boundingBox())!;
+      const hint = (await payoff.boundingBox())!;
+      const timer = (await progressArea.locator(".timers").boundingBox())!;
+      expect(phase.x + phase.width).toBeLessThan(hint.x);
+      expect(hint.x + hint.width).toBeLessThan(timer.x);
+    }
+  }
+  await page.setViewportSize(originalViewport);
+  await page.clock.runFor(1000);
+  await expect(payoff).toBeEmpty();
+  await page.clock.resume();
   const firstResult = page.getByRole("img", {
     name: "Round 1: 100%",
     exact: true,
@@ -308,6 +351,10 @@ test("memo v3 demo shows the payoff table, fixed start, and one-click revision",
   await expect(stag).not.toHaveCSS("color", mutedColor);
   await expect(hare).not.toHaveCSS("color", mutedColor);
   await expect(lock).toHaveCount(0);
+  await expect(choice.locator(".ev-memo-options")).toHaveCSS(
+    "border-top-color",
+    "rgba(0, 0, 0, 0)",
+  );
   expect(await studentLayout(page)).toEqual(initialLayout);
   await choice.screenshot({
     path: testInfo.outputPath("demo-eligible-390.png"),

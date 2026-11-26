@@ -6,6 +6,7 @@ import { RoundStrip, clockText } from "@/components/round-strip";
 import { AdmissionTimer } from "@/components/admission-timer";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { label, type Key, type Lang } from "../locale";
+import { roundedAmount } from "../numbers";
 import type { Action, RunControl } from "../engine";
 import type { View } from "../views";
 import {
@@ -65,6 +66,13 @@ export function SessionOverview({
   const urgent =
     remaining <= 5 &&
     (!memoStudent || (!paused && v.current?.status === "choosing"));
+  const payoff =
+    memoStudent && v.phase === "feedback" ? (v.current?.pay ?? null) : null;
+  const phaseHeading = (!memoStudent || phaseLabel !== "playing") && (
+    <h2 aria-live={v.role === "student" ? "polite" : undefined}>
+      {t(phaseLabel)}
+    </h2>
+  );
   function control(kind: RunControl["kind"]) {
     if (
       v.role !== "teacher" ||
@@ -122,10 +130,20 @@ export function SessionOverview({
                 {t("round")} {v.memoRound ?? v.round}/
                 {memo ? MEMO_ROUNDS : v.settings.rounds}
               </strong>
-              {(!memoStudent || phaseLabel !== "playing") && (
-                <h2 aria-live={v.role === "student" ? "polite" : undefined}>
-                  {t(phaseLabel)}
-                </h2>
+              {memoStudent ? (
+                <div className="ev-memo-phase-detail">
+                  {phaseHeading}
+                  <output className="ev-memo-round-payoff" aria-atomic="true">
+                    {payoff !== null && (
+                      <>
+                        <span>{t("memoEarned")}</span>
+                        <b>{roundedAmount(payoff)}</b>
+                      </>
+                    )}
+                  </output>
+                </div>
+              ) : (
+                phaseHeading
               )}
             </div>
             {v.deadline !== null && (

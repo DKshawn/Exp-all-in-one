@@ -3,6 +3,7 @@ import { LockKeyhole } from "lucide-react";
 import { useId, type ReactNode } from "react";
 import { displayChoices, label, type Key, type Lang } from "../locale";
 import { MEMO_LOCK_ROUNDS, MEMO_MATRIX } from "../settings";
+import { roundedAmount } from "../numbers";
 import type { FeedbackPoint } from "../memo-v3";
 import type { Personal, View } from "../views";
 
@@ -49,20 +50,20 @@ export function MemoStudent({
         className="panel ev-panel ev-memo-choice"
         data-can-choose={canChoose}
       >
-        <div className="ev-memo-choice-heading">
-          <h2>{t("mine")}</h2>
+        <h2>{t("mine")}</h2>
+        <p className="ev-memo-choice-status" id={statusId} role="status">
+          {status}
+        </p>
+        <div className="ev-memo-options">
+          {renderDecision(statusId)}
           {!canChoose && (
             <LockKeyhole
               className="ev-memo-choice-lock"
-              size={18}
+              size={24}
               aria-hidden="true"
             />
           )}
         </div>
-        <p className="ev-memo-choice-status" id={statusId} role="status">
-          {status}
-        </p>
-        {renderDecision(statusId)}
         <table>
           <caption>{t("memoPayoffTable")}</caption>
           <thead>
@@ -114,7 +115,9 @@ export function MemoStudent({
           </div>
           <div>
             <dt>{t("pay")}</dt>
-            <dd>{memo.priorPay ?? "—"}</dd>
+            <dd>
+              {memo.priorPay === null ? "—" : roundedAmount(memo.priorPay)}
+            </dd>
           </div>
         </dl>
         <MemoTrend points={points} lang={lang} format={format} />
@@ -122,11 +125,6 @@ export function MemoStudent({
 
       <div className="ev-memo-round-details">
         {memo.blockRound === 1 && <p>{t("memoNew")}</p>}
-        {mine.pay !== null && (
-          <p className="ev-memo-current-pay">
-            {t("pay")} <strong>{mine.pay}</strong>
-          </p>
-        )}
       </div>
 
       <div className="ev-account">
@@ -140,7 +138,7 @@ export function MemoStudent({
         </div>
         <div>
           <span>{t("sum")}</span>
-          <strong>{view.total}</strong>
+          <strong>{roundedAmount(view.total)}</strong>
         </div>
       </div>
       {view.code === "DEMO" && (

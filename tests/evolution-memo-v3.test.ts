@@ -31,6 +31,15 @@ import {
   summaries,
 } from "../src/experiments/evolution/views";
 import { responsesCsv } from "../src/experiments/evolution/export";
+import { roundedAmount } from "../src/experiments/evolution/numbers";
+
+test("v3 payoff displays round exact fractions to the nearest integer", () => {
+  assert.equal(roundedAmount("20/9"), "2");
+  assert.equal(roundedAmount("32/9"), "4");
+  assert.equal(roundedAmount("5/2"), "3");
+  assert.equal(roundedAmount("2.499"), "2");
+  assert.equal(roundedAmount("0"), "0");
+});
 
 test("memo v3 is explicit and the previous settings and timing limits remain unchanged", () => {
   const legacy = defaults("coordination");

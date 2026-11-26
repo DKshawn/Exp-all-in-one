@@ -46,6 +46,7 @@ const messages = {
   ],
   memoOpponent: ["相手が{choice}", "对手选{choice}", "vs. {choice}"],
   memoResult: ["前回の結果", "上轮结果", "Previous round"],
+  memoEarned: ["今回の得点", "本轮收益", "Payoff"],
   memoTrend: [
     "兎の割合（最大20回）",
     "选兔比例（最多 20 轮）",
