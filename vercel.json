@@ -1,5 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": {
+      "codex/seg-memo-v3": false
+    }
+  },
   "regions": ["sin1"],
   "functions": {
     "src/app/api/rooms/*/events/route.ts": {
