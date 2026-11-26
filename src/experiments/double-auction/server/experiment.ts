@@ -1,4 +1,5 @@
 import { GOODS, type GoodId } from "../lib/catalog";
+import { repeatSeatPrices } from "../lib/equilibrium";
 import type { MarketSettings } from "../lib/types";
 
 export { equilibrium } from "../lib/equilibrium";
@@ -22,12 +23,12 @@ export function schedules(capacity: number, base: MarketSettings = BASE) {
     GOODS.map(({ id }) => [
       id,
       {
-        values: Array.from({ length: capacity / 12 }, () => base[id].values)
-          .flat()
-          .sort((a, b) => b - a),
-        costs: Array.from({ length: capacity / 12 }, () => base[id].costs)
-          .flat()
-          .sort((a, b) => a - b),
+        values: repeatSeatPrices(base[id].values, capacity / 2).sort(
+          (a, b) => b - a,
+        ),
+        costs: repeatSeatPrices(base[id].costs, capacity / 2).sort(
+          (a, b) => a - b,
+        ),
       },
     ]),
   ) as MarketSettings;

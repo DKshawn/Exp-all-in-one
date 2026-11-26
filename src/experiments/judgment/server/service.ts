@@ -1,3 +1,4 @@
+import { MAX_ROOM_PARTICIPANTS } from "@/lib/participant-config";
 import { randomInt, randomUUID } from "node:crypto";
 import {
   database,
@@ -210,6 +211,16 @@ export class JudgmentService {
               403,
             ),
           };
+        if (!participant) {
+          const {
+            rows: [attendance],
+          } = await tx.query<{ count: number }>(
+            "SELECT count(*)::int AS count FROM judgment_participants WHERE room_code=$1",
+            [code],
+          );
+          if (attendance.count >= MAX_ROOM_PARTICIPANTS)
+            return { error: new AuctionError("このルームは満員です。", 409) };
+        }
         participant = participant
           ? { ...participant, tokenHash: digest(token), lastSeen: now }
           : {
@@ -554,7 +565,7 @@ export class JudgmentService {
       round: r.lessonCount,
       totalRounds: r.lessonCount,
       participantCount: count,
-      capacity: 0,
+      capacity: MAX_ROOM_PARTICIPANTS,
       flexibleAdmission: true,
       marketCount: 0,
       institutions: [],

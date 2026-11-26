@@ -1,3 +1,4 @@
+import { MAX_ROOM_PARTICIPANTS } from "@/lib/participant-config";
 import type { RoomConfig, Role } from "./types";
 import type { Institution, StudyPeriods, StudySettings } from "./study-types";
 import { STUDY_RULES } from "./study-rules";
@@ -155,7 +156,7 @@ export function resizeStudySettings(
     costs: resize(settings.costs, false),
   };
 }
-export const MAX_STUDY_PARTICIPANTS = 999;
+export const MAX_STUDY_PARTICIPANTS = MAX_ROOM_PARTICIPANTS;
 export const MAX_STUDY_MARKETS = Math.floor(MAX_STUDY_PARTICIPANTS / 2);
 // An odd largest market needs one unused profile on its smaller side.
 export const MAX_STUDY_PROFILES = Math.ceil(MAX_STUDY_PARTICIPANTS / 2);

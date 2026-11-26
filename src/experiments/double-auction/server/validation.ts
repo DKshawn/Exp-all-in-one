@@ -16,6 +16,7 @@ import {
 import {
   MAX_STUDY_ROUNDS,
   MAX_STUDY_MARKETS,
+  MAX_STUDY_PARTICIPANTS,
   MAX_STUDY_UNITS,
   studyUnits,
   studyUnitsPerSide,
@@ -24,10 +25,18 @@ import {
 import { studyCommissionSchema } from "../lib/study-commission";
 import { MAX_PRICE } from "../lib/price";
 
+// A teacher can save the base and three institution-specific five-unit schedules.
+export const MAX_STUDY_COMMAND_BODY_BYTES = 2 * 1024 * 1024;
+
 const legacyConfigSchema = z
   .object({
     title: z.string().trim().min(1).max(60),
-    capacity: z.union([z.literal(12), z.literal(24), z.literal(36)]),
+    capacity: z
+      .number()
+      .int()
+      .min(12)
+      .max(MAX_STUDY_PARTICIPANTS)
+      .multipleOf(2),
     rounds: z.number().int().min(1).max(12),
     duration: z.number().int().min(30).max(900),
   })

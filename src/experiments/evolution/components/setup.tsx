@@ -1,28 +1,103 @@
 "use client";
-import { useState, type FormEvent } from "react";
+import { useId, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { api, errorMessage } from "@/lib/client";
 import { teacherRoomHref } from "@/lib/room-navigation";
+import { MAX_ROOM_PARTICIPANTS } from "@/lib/participant-config";
 import {
   defaults,
   demandStep,
   DEMAND_STEP_OPTIONS,
-  MAX_ROUNDS,
+  SETUP_NUMBER_RANGES,
   settingsSchema,
   type DemandStep,
   type Settings,
   type Mode,
 } from "../settings";
-import { label, displayChoices, type Key } from "../locale";
+import { label, displayChoices, type Key, type Lang } from "../locale";
 import { PayoffMatrix, PayoffRules } from "./rules";
 import { useLanguage } from "./language";
+
+const DEMO_PARTICIPANT_RANGE = [2, MAX_ROOM_PARTICIPANTS] as const;
+const numberFields = Object.keys(
+  SETUP_NUMBER_RANGES,
+) as (keyof typeof SETUP_NUMBER_RANGES)[];
+
+function NumberSetting({
+  lang,
+  name,
+  bounds,
+  value,
+  onChange,
+}: {
+  lang: Lang;
+  name: Key;
+  bounds: readonly [number, number];
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  const id = useId();
+  const hintId = `${id}-range`;
+  const errorId = `${id}-error`;
+  const [showError, setShowError] = useState(false);
+  const [min, max] = bounds;
+  const field = label(lang, name);
+  const lower = min.toLocaleString(lang);
+  const upper = max.toLocaleString(lang);
+  let error = "";
+  if (showError) {
+    if (Number.isNaN(value)) error = label(lang, "numberRequired");
+    else if (!Number.isInteger(value)) error = label(lang, "numberInteger");
+    else if (value < min)
+      error = label(lang, "numberTooSmall").replace("{limit}", lower);
+    else if (value > max)
+      error = label(lang, "numberTooLarge").replace("{limit}", upper);
+    error = error.replace("{field}", field);
+  }
+
+  return (
+    <div className="field">
+      <label htmlFor={id}>{field}</label>
+      <input
+        id={id}
+        name={name}
+        type="number"
+        required
+        min={min}
+        max={max}
+        value={Number.isNaN(value) ? "" : value}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${hintId} ${errorId}` : hintId}
+        onBlur={() => setShowError(true)}
+        onInvalid={() => setShowError(true)}
+        onChange={(event) => {
+          setShowError(false);
+          onChange(event.currentTarget.valueAsNumber);
+        }}
+      />
+      <span id={hintId} className="field-help">
+        {label(lang, "inputRange")}
+        {lower}–{upper}
+      </span>
+      {error && (
+        <p id={errorId} className="error-message ev-input-error" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
 
 export function useSetupDraft() {
   const [s, set] = useState(() => defaults("coordination")),
     [title, setTitle] = useState(""),
     [n, setN] = useState(6);
   const parsed = settingsSchema.safeParse(s);
-  const validDemo = parsed.success && Number.isInteger(n) && n >= 2 && n <= 128;
+  const validDemo =
+    parsed.success &&
+    Number.isInteger(n) &&
+    n >= DEMO_PARTICIPANT_RANGE[0] &&
+    n <= DEMO_PARTICIPANT_RANGE[1];
   return { s, set, title, setTitle, n, setN, parsed, validDemo };
 }
 
@@ -47,16 +122,23 @@ export function SetupForm({
   const [password, setPassword] = useState(""),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  const demandStepId = useId();
   const names = displayChoices(lang, s);
-  const problem = parsed.success
-    ? ""
-    : t(
-        parsed.error.issues.some((i) =>
-          ["names", "matrix"].includes(String(i.path[0])),
-        )
-          ? "badMatrix"
-          : "invalid",
+  const otherIssues = parsed.success
+    ? []
+    : parsed.error.issues.filter(
+        (issue) => !numberFields.some((field) => issue.path[0] === field),
       );
+  const problem =
+    otherIssues.length === 0
+      ? ""
+      : t(
+          otherIssues.some((i) =>
+            ["names", "matrix"].includes(String(i.path[0])),
+          )
+            ? "badMatrix"
+            : "invalid",
+        );
   async function create(e: FormEvent) {
     e.preventDefault();
     if (!parsed.success) return;
@@ -113,21 +195,16 @@ export function SetupForm({
         </select>
       </label>
       <div className="ev-fields">
-        {(["groups", "rounds", "seconds", "feedbackSeconds"] as const).map(
-          (key, i) => (
-            <label className="field" key={key}>
-              {t(key)}
-              <input
-                type="number"
-                required
-                min={[1, 1, 5, 3][i]}
-                max={[32, MAX_ROUNDS, 600, 120][i]}
-                value={s[key] || ""}
-                onChange={(e) => set({ ...s, [key]: Number(e.target.value) })}
-              />
-            </label>
-          ),
-        )}
+        {numberFields.map((key) => (
+          <NumberSetting
+            key={key}
+            lang={lang}
+            name={key}
+            value={s[key]}
+            bounds={SETUP_NUMBER_RANGES[key]}
+            onChange={(value) => set({ ...s, [key]: value })}
+          />
+        ))}
       </div>
       {s.mode === "coordination" ? (
         <>
@@ -163,9 +240,10 @@ export function SetupForm({
         </>
       ) : (
         <>
-          <label className="field">
-            {t("demandStep")}
+          <div className="field">
+            <label htmlFor={demandStepId}>{t("demandStep")}</label>
             <select
+              id={demandStepId}
               value={demandStep(s)}
               onChange={(e) =>
                 set({ ...s, demandStep: e.target.value as DemandStep })
@@ -177,27 +255,23 @@ export function SetupForm({
                 </option>
               ))}
             </select>
-          </label>
+          </div>
           <PayoffRules s={s} lang={lang} />
         </>
       )}
-      {!parsed.success && (
+      {problem && (
         <p className="error-message" role="alert">
           {problem}
         </p>
       )}
       {onDemo ? (
-        <label className="field">
-          {t("demoSize")}
-          <input
-            type="number"
-            min="2"
-            max="128"
-            required
-            value={n || ""}
-            onChange={(e) => setN(Number(e.target.value))}
-          />
-        </label>
+        <NumberSetting
+          lang={lang}
+          name="demoSize"
+          value={n}
+          bounds={DEMO_PARTICIPANT_RANGE}
+          onChange={setN}
+        />
       ) : (
         <label className="field">
           {t("password")}
@@ -218,9 +292,7 @@ export function SetupForm({
         </p>
       )}
       <button
-        disabled={
-          busy || !ready || !parsed.success || (!!onDemo && !draft.validDemo)
-        }
+        disabled={busy || !ready || !!problem}
         className="button primary full"
       >
         {t(onDemo ? "demoCreate" : "create")}

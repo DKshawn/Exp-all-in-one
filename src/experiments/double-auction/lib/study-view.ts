@@ -130,6 +130,7 @@ function publicMarket(
   m: StudyMarket,
   actor: Participant | "teacher",
   now: number,
+  participantCount: number,
   cache?: StudyViewCache,
 ): StudyMarketView {
   const isTeacher = actor === "teacher",
@@ -160,9 +161,7 @@ function publicMarket(
           ? postedPurchase.remainingMs
           : m.remainingMs,
     call: m.call,
-    participantCount: room.participants.filter(
-      (p) => !p.withdrawnAt && studyMarketId(room.config, p.seat) === m.id,
-    ).length,
+    participantCount,
     activeBuyer:
       m.stage === "purchase" && !m.posted
         ? (room.participants.find((p) => p.id === m.buyerOrder[m.buyerIndex])
@@ -332,7 +331,20 @@ export function studyView(
   const study = room.study!,
     teacher = actor === "teacher",
     market = teacher ? study.markets[0] : marketFor(room, actor);
-  const publicState = publicMarket(room, market, actor, now, cache);
+  const counts = new Map<number, number>();
+  for (const participant of room.participants) {
+    if (participant.withdrawnAt) continue;
+    const id = studyMarketId(room.config, participant.seat);
+    counts.set(id, (counts.get(id) ?? 0) + 1);
+  }
+  const publicState = publicMarket(
+    room,
+    market,
+    actor,
+    now,
+    counts.get(market.id) ?? 0,
+    cache,
+  );
   const myTradeNotifications = teacher
     ? []
     : market.trades
@@ -469,7 +481,7 @@ export function studyView(
         : {}),
       ...(study.generation ? { generation: study.generation } : {}),
       markets: study.markets.map((m) =>
-        publicMarket(room, m, actor, now, cache),
+        publicMarket(room, m, actor, now, counts.get(m.id) ?? 0, cache),
       ),
       participants: room.participants.map((p, i) => ({
         id: p.id,

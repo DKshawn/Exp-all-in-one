@@ -4,6 +4,7 @@ import {
   advanceDemoTime,
   demoTraderValue,
   makeDemo,
+  makeDemoMarkets,
   PRACTICE_EXP2_OPTIONS,
 } from "../src/experiments/emh/demo-model";
 import { allocationPlan } from "../src/experiments/emh/allocation";
@@ -19,6 +20,40 @@ import {
   EXP2_SETTINGS,
 } from "../src/experiments/emh/settings";
 import { exportData } from "../src/experiments/emh/export";
+
+test("both EMH demos run 5,000 seats in markets with the formal size rules", () => {
+  const now = 1793580000000;
+  for (const experiment of ["exp1", "exp2"] as const) {
+    const settings = experiment === "exp1" ? DEFAULT_SETTINGS : EXP2_SETTINGS;
+    const rooms = makeDemoMarkets("Capacity", settings, now, experiment, 5000);
+    const allocation = allocationPlan(5000, settings);
+    assert.equal(rooms.length, allocation.length);
+    assert.deepEqual(
+      rooms.map((room) => room.participants.length),
+      allocation.map((market) => market.size),
+    );
+    assert.equal(
+      rooms.reduce((total, room) => total + room.participants.length, 0),
+      5000,
+    );
+    for (const room of rooms) {
+      assert.ok(room.participants.length <= (experiment === "exp1" ? 12 : 999));
+      assignParticipants(room);
+      assert.ok(room.typeCounts!.every((count) => count >= 1));
+      act(
+        room,
+        { role: "teacher" },
+        { kind: "start", expectedPhase: phaseKey(room) },
+        now,
+      );
+      advanceClock(room, now + 5000);
+      assert.equal(room.status, "trading");
+    }
+    assert.throws(() =>
+      makeDemoMarkets("Capacity", settings, now, experiment, 5001),
+    );
+  }
+});
 
 test("EMH demo uses formal settings limits, allocation, clocks, reset and settlement through six rounds", () => {
   let now = 1793580000000;

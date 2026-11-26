@@ -7,6 +7,7 @@ import { GOODS, type GoodId } from "@/experiments/double-auction/lib/catalog";
 import {
   equilibrium,
   equilibriumQuantity,
+  repeatSeatPrices,
 } from "@/experiments/double-auction/lib/equilibrium";
 import type {
   Command,
@@ -60,12 +61,10 @@ function EquilibriumPreview({
   capacity: number;
   name: string;
 }) {
-  const eq = equilibrium(settings.values, settings.costs);
-  const scaled = {
-    ...eq,
-    quantity: eq.quantity * (capacity / 12),
-    quantityMax: eq.quantityMax * (capacity / 12),
-  };
+  const eq = equilibrium(
+    repeatSeatPrices(settings.values, capacity / 2),
+    repeatSeatPrices(settings.costs, capacity / 2),
+  );
   return (
     <output className="settings-preview" aria-label={`${name}の均衡プレビュー`}>
       <span>
@@ -73,7 +72,7 @@ function EquilibriumPreview({
         円
       </span>
       <span>
-        均衡数量 <b>{equilibriumQuantity(scaled)}</b> 単位
+        均衡数量 <b>{equilibriumQuantity(eq)}</b> 単位
       </span>
       {eq.surplus === 0 && (
         <small>この条件では正の取引利益が生まれません。</small>
@@ -282,9 +281,8 @@ export function MarketSettingsPanel({
       <div className="settings-content">
         <p className="settings-help">
           各商品に6組の条件を設定します。{view.config.capacity}
-          人の実験では、各条件を買い手・売り手にそれぞれ
-          {view.config.capacity / 12}
-          人ずつランダムに割り当てます。値は1〜{MAX_PRICE}
+          人の実験では、6組を各役割の席に順に繰り返し、参加者を席にランダムに割り当てます。値は1〜
+          {MAX_PRICE}
           円の範囲で、整数で設定します。実験開始後は全ラウンドを通して固定されます。
         </p>
         {editing && editable ? (

@@ -8,7 +8,10 @@ import {
   sessionFor,
   tokenFor,
 } from "@/lib/server/http";
-import { commandSchema } from "@/experiments/double-auction/server/validation";
+import {
+  commandSchema,
+  MAX_STUDY_COMMAND_BODY_BYTES,
+} from "@/experiments/double-auction/server/validation";
 import { service } from "@/experiments/double-auction/server/service";
 
 export const runtime = "nodejs";
@@ -20,7 +23,12 @@ export async function POST(
   const receivedAt = Date.now();
   try {
     const code = codeFor((await ctx.params).code);
-    const data = await body(request, commandSchema);
+    const data = await body(
+      request,
+      commandSchema,
+      "application/json",
+      MAX_STUDY_COMMAND_BODY_BYTES,
+    );
     return json(
       await timed("command.total", async () =>
         (await service()).command(

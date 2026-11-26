@@ -26,6 +26,29 @@ import { rawRows } from "../src/experiments/evolution/views";
 import { responsesCsv } from "../src/experiments/evolution/export";
 import { EvolutionPractice } from "../src/experiments/evolution/practice";
 
+test("both SEG demos include 5,000 seats and settle a complete round", () => {
+  for (const mode of ["coordination", "demand"] as const) {
+    const demo = new EvolutionPractice(
+      "Capacity",
+      { ...defaults(mode), rounds: 2 },
+      5000,
+      0,
+    );
+    demo.act({ kind: "close" }, 0);
+    demo.act({ kind: "start" }, 1000);
+    assert.equal(Object.keys(demo.game.round!.entries).length, 5000);
+    demo.act({ kind: "choose", round: 1, choice: 0 }, 1500);
+    demo.advanceTo(6800);
+    assert.equal(demo.game.phase, "feedback");
+    assert.equal(
+      Object.values(demo.game.round!.entries).filter(
+        (entry) => entry.status === "settled",
+      ).length,
+      5000,
+    );
+  }
+});
+
 test("demo playback can pause across a phase boundary and resume the remaining feedback time", () => {
   const demo = new EvolutionPractice(
     "Review",

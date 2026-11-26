@@ -579,17 +579,15 @@ export function TeacherForm({
                 <div className="form-grid">
                   <label className="field">
                     {t("参加人数", "参加人数", "Participants")}
-                    <select name="capacity" defaultValue="12">
-                      {[12, 24, 36].map((count) => (
-                        <option key={count} value={count}>
-                          {t(
-                            `${count}人（買${count / 2}・売${count / 2}）`,
-                            `${count} 人（买方 ${count / 2}、卖方 ${count / 2}）`,
-                            `${count} (${count / 2} buyers, ${count / 2} sellers)`,
-                          )}
-                        </option>
-                      ))}
-                    </select>
+                    <input
+                      name="capacity"
+                      type="number"
+                      defaultValue={initialConfig?.capacity ?? 12}
+                      min={12}
+                      step={2}
+                      max={MAX_STUDY_PARTICIPANTS}
+                      required
+                    />
                   </label>
                   <label className="field">
                     {t("ラウンド数", "轮数", "Rounds")}

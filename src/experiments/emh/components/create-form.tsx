@@ -4,9 +4,11 @@ import { useRouter } from "next/navigation";
 import type { ServerStatus } from "@/lib/server/config";
 import { api, errorMessage } from "@/lib/client";
 import { TeacherPasswordHelp } from "@/components/teacher-password-help";
+import { MAX_ROOM_PARTICIPANTS } from "@/lib/participant-config";
 import {
   DEFAULT_SETTINGS,
   EXP2_SETTINGS,
+  MIN_MARKET_SIZE,
   settingsForExperiment,
   settingsSchema,
   type EmhSettings,
@@ -25,6 +27,7 @@ export function EmhCreateForm({
   initialTitle,
   initialSettings,
   initialExperiment,
+  initialDemoAttendance,
   onCreateDemo,
   exp2Defaults,
 }: {
@@ -32,10 +35,12 @@ export function EmhCreateForm({
   initialTitle?: string;
   initialSettings?: EmhSettings;
   initialExperiment?: "exp1" | "exp2";
+  initialDemoAttendance?: number;
   onCreateDemo?: (
     title: string,
     settings: EmhSettings,
     experiment: "exp1" | "exp2",
+    attendance?: number,
   ) => void;
   exp2Defaults?: Exp2Options;
 }) {
@@ -56,6 +61,7 @@ export function EmhCreateForm({
     structuredClone(initialSettings ?? DEFAULT_SETTINGS),
   );
   const [password, setPassword] = useState("");
+  const [demoAttendance, setDemoAttendance] = useState(initialDemoAttendance);
   const [experiment, setExperiment] = useState<"exp1" | "exp2">(
     initialExperiment ?? "exp1",
   );
@@ -77,7 +83,20 @@ export function EmhCreateForm({
           throw new Error(
             "実験名・人数・比率・証券数・時間を確認してください。",
           );
-        onCreateDemo(title.trim(), parsed, experiment);
+        const attendance = demoAttendance ?? parsed.targetMarketSize;
+        if (
+          !Number.isInteger(attendance) ||
+          attendance < MIN_MARKET_SIZE ||
+          attendance > MAX_ROOM_PARTICIPANTS
+        )
+          throw new Error(
+            t(
+              "デモ参加者数を確認してください。",
+              "请检查演示人数。",
+              "Check the demo participant count.",
+            ),
+          );
+        onCreateDemo(title.trim(), parsed, experiment, demoAttendance);
         return;
       }
       const result = await api<{ code: string }>("/api/emh/rooms", {
@@ -154,6 +173,22 @@ export function EmhCreateForm({
           experiment={experiment}
           demo={Boolean(onCreateDemo)}
         />
+        {onCreateDemo && (
+          <label className="field">
+            {t("デモ参加者数", "演示人数", "Demo participants")}
+            <input
+              type="number"
+              min={MIN_MARKET_SIZE}
+              max={MAX_ROOM_PARTICIPANTS}
+              value={(demoAttendance ?? settings.targetMarketSize) || ""}
+              onChange={(event) =>
+                setDemoAttendance(Number(event.target.value))
+              }
+              disabled={busy}
+              required
+            />
+          </label>
+        )}
         {!onCreateDemo && (
           <label className="field">
             {t("教員パスワード", "教师房间密码", "Room password")}

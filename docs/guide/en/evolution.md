@@ -6,6 +6,8 @@ The language selected using the globe icon at the top right carries over to othe
 
 If the browser blocks preference storage, language changes apply to the open page. On narrow screens, edit each payoff directly and scroll inside the input to inspect long values.
 
+Each formal room accepts up to 5,000 registrations. **Demo participants** accepts 2 to 5,000 including the seat you control, with a default of six.
+
 ## Run a classroom session
 
 1. At `/teacher`, select **Stochastic Evolutionary Games**. Choose the game, name the room, set the payoffs and enter a room password. Game, payoff and round settings lock on creation. Teachers and students each choose Japanese, Chinese or English in the page header. This preference is saved in their own browser.
@@ -20,6 +22,8 @@ Completed rounds are bright green. The current round has a double ring and is go
 On the teacher home page, **ルーム管理** labels SEG rooms as **協調ゲーム** (Coordination game) or **ナッシュ要求ゲーム** (Nash demand game). Select either game under **実験** to filter the list.
 
 ## Parameters and payoff rules
+
+Formal and demo setup show an **Input range** hint below each field that accepts whole numbers. Leaving the field or attempting to create a room shows missing, out-of-range, or non-integer errors under the affected field. Demo attendance accepts 2–5,000. The payoff matrix shows accepted number formats.
 
 | Setting                | Default    | Range    |
 | ---------------------- | ---------- | -------- |
