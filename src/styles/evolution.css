@@ -253,6 +253,13 @@
 .ev-setup .ev-heading h1 {
   margin: 0;
 }
+.ev-setup .field-help {
+  font-size: 12px;
+}
+.ev-setup .ev-input-error {
+  white-space: normal;
+  margin: 0;
+}
 .ev-payoff-matrix {
   display: grid;
   gap: 6px;

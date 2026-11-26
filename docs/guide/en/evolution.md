@@ -23,7 +23,7 @@ On the teacher home page, **ルーム管理** labels SEG rooms as **協調ゲー
 
 ## Parameters and payoff rules
 
-Formal and demo setup show the allowed range of 3–120 next to **Feedback time (s)**.
+Formal and demo setup show an **Input range** hint below each numeric field. Leaving the field or attempting to create a room shows missing, out-of-range, or non-integer errors under the affected field. Demo attendance accepts 2–5,000. The demand step lists its allowed values, and the payoff matrix shows accepted number formats.
 
 | Setting                | Default    | Range    |
 | ---------------------- | ---------- | -------- |

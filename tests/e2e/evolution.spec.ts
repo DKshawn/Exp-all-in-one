@@ -41,6 +41,81 @@ async function fit(page: Page) {
   }
 }
 
+for (const demo of [true, false]) {
+  test(`SEG ${demo ? "demo" : "formal"} setup describes numeric ranges and field errors`, async ({
+    page,
+  }) => {
+    await signInTeacher(page.request);
+    await page.goto(demo ? "/evolution/demo" : "/teacher?experiment=evolution");
+    const form = page.locator(".ev-setup");
+    const language = page.locator("header select").first();
+    await language.selectOption("en");
+
+    for (const [field, range] of [
+      ["Independent groups", "1–32"],
+      ["Rounds", "1–10,000"],
+      ["Decision time (s)", "5–600"],
+      ["Feedback time (s)", "3–120"],
+      ...(demo ? [["Demo participants", "2–5,000"]] : []),
+    ]) {
+      await expect(
+        form.getByRole("spinbutton", { name: field, exact: true }),
+      ).toHaveAccessibleDescription(`Input range: ${range}`);
+      await expect(
+        form.getByText(`Input range: ${range}`, { exact: true }),
+      ).toHaveCSS("color", "rgb(106, 114, 135)");
+    }
+
+    const feedback = form.getByRole("spinbutton", {
+      name: "Feedback time (s)",
+      exact: true,
+    });
+    const alert = form.getByRole("alert");
+    await feedback.fill("2");
+    await expect(alert).toHaveCount(0);
+    await feedback.press("Tab");
+    await expect(alert).toHaveText("Feedback time (s) must be at least 3.");
+    await expect(feedback).toHaveAttribute("aria-invalid", "true");
+    await feedback.fill("121");
+    await feedback.press("Enter");
+    await expect(alert).toHaveText("Feedback time (s) must be at most 120.");
+    await expect(feedback).toBeFocused();
+    await language.selectOption("ja");
+    await expect(alert).toHaveText(
+      "「結果表示（秒）」は120以下にしてください。",
+    );
+    await language.selectOption("zh-CN");
+    await expect(alert).toHaveText("「反馈时间（秒）」不能大于 120。");
+    await form
+      .getByRole("spinbutton", { name: "反馈时间（秒）", exact: true })
+      .fill("3");
+    await expect(alert).toHaveCount(0);
+
+    await language.selectOption("en");
+    const rounds = form.getByRole("spinbutton", {
+      name: "Rounds",
+      exact: true,
+    });
+    await rounds.fill("1.5");
+    await rounds.press("Tab");
+    await expect(alert).toHaveText("Rounds must be a whole number.");
+    await rounds.fill("");
+    await rounds.press("Tab");
+    await expect(alert).toHaveText("Enter a value for Rounds.");
+    await rounds.fill("10000");
+    await expect(alert).toHaveCount(0);
+
+    await expect(
+      form.getByText("Input format: integer, decimal, or fraction"),
+    ).toBeVisible();
+    await form.getByRole("combobox").first().selectOption("demand");
+    await expect(
+      form.getByRole("combobox", { name: "Demand step", exact: true }),
+    ).toHaveAccessibleDescription("Allowed values: 0.1 / 0.01 / 0.005 / 0.001");
+    await fit(page);
+  });
+}
+
 test("a settled SEG pair waits for room-wide feedback and the next round", async ({
   page,
   browser,

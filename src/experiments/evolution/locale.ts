@@ -12,6 +12,33 @@ const messages = {
   rounds: ["ラウンド数", "轮数", "Rounds"],
   seconds: ["回答時間（秒）", "作答时限（秒）", "Decision time (s)"],
   feedbackSeconds: ["結果表示（秒）", "反馈时间（秒）", "Feedback time (s)"],
+  inputRange: ["入力範囲：", "输入范围：", "Input range: "],
+  inputOptions: ["選択できる値：", "可选值：", "Allowed values: "],
+  numberRequired: [
+    "「{field}」を入力してください。",
+    "请输入「{field}」。",
+    "Enter a value for {field}.",
+  ],
+  numberInteger: [
+    "「{field}」は整数で入力してください。",
+    "「{field}」必须是整数。",
+    "{field} must be a whole number.",
+  ],
+  numberTooSmall: [
+    "「{field}」は{limit}以上にしてください。",
+    "「{field}」不能小于 {limit}。",
+    "{field} must be at least {limit}.",
+  ],
+  numberTooLarge: [
+    "「{field}」は{limit}以下にしてください。",
+    "「{field}」不能大于 {limit}。",
+    "{field} must be at most {limit}.",
+  ],
+  payoffFormat: [
+    "入力形式：整数・小数・分数",
+    "输入格式：整数、小数或分数",
+    "Input format: integer, decimal, or fraction",
+  ],
   names: ["戦略名", "策略名称", "Strategy names"],
   matrix: ["利得表", "收益矩阵", "Payoff matrix"],
   matrixRule: [
