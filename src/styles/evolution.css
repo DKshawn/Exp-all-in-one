@@ -926,6 +926,18 @@
   top: 0;
   z-index: 1;
 }
+.ev-memo-results .ev-scroll table {
+  border-collapse: separate;
+  border-spacing: 0;
+  white-space: nowrap;
+}
+.ev-memo-results .ev-scroll th:first-child {
+  position: sticky;
+  inset-inline-start: 0;
+}
+.ev-memo-results .ev-scroll thead th:first-child {
+  z-index: 2;
+}
 .ev-analysis .ev-filter {
   display: flex;
   align-items: center;

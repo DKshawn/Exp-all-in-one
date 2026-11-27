@@ -189,6 +189,8 @@ async function expectTeacherStats(page: Page, round: number, counts: string[]) {
     "Timeouts",
     "Settled players",
     "Choice shares",
+    "Stag → Hare",
+    "Hare → Stag",
     "Total payoff",
   ]);
   const row = results.getByRole("row").filter({
@@ -214,6 +216,16 @@ async function checkTeacherViewport(page: Page) {
         ),
     );
     expect(fits, `Teacher results at ${width}px`).toBe(true);
+    const keepsRoundVisible = await region.evaluate((viewport) => {
+      const round = viewport.querySelector("tbody th");
+      if (!round || viewport.scrollWidth <= viewport.clientWidth) return true;
+      const before = round.getBoundingClientRect().left;
+      viewport.scrollLeft = viewport.scrollWidth;
+      const after = round.getBoundingClientRect().left;
+      viewport.scrollLeft = 0;
+      return Math.abs(after - before) <= 1;
+    });
+    expect(keepsRoundVisible).toBe(true);
   }
 }
 
@@ -377,7 +389,7 @@ test("memo v3 demo shows the payoff table, fixed start, and one-click revision",
     path: testInfo.outputPath("demo-eligible-390.png"),
     animations: "disabled",
   });
-  await page.getByRole("button", { name: "Hare", exact: true }).click();
+  await stag.click();
   await expect(choice.getByRole("status")).toHaveText("Choice received.");
   await expect(lock).toBeVisible();
   expect(await studentLayout(page)).toEqual(initialLayout);
@@ -405,6 +417,19 @@ test("memo v3 demo shows the payoff table, fixed start, and one-click revision",
     "150/150",
   ]);
   await expect(row.getByRole("meter")).toHaveCount(2);
+  await expect(row.getByRole("cell").nth(5)).toHaveText("—");
+  await expect(row.getByRole("cell").nth(6)).toHaveText("0.7% (1/150)");
+  for (const [lang, headers] of [
+    ["ja", ["鹿 → 兎", "兎 → 鹿"]],
+    ["zh-CN", ["鹿 → 兔", "兔 → 鹿"]],
+  ] as const) {
+    await language.selectOption(lang);
+    for (const name of headers)
+      await expect(
+        page.getByRole("columnheader", { name, exact: true }),
+      ).toBeVisible();
+  }
+  await language.selectOption("en");
   await expectTeacherStats(page, 1, ["0/150", "0", "0", "150/150"]);
 
   await page.getByRole("button", { name: "View student screen" }).click();
@@ -533,6 +558,42 @@ test("memo v3 demo validates free-form durations and restores the locked setting
   expect(output.rows[0].deadline - output.rows[0].openedAt).toBe(1500);
 });
 
+test("H5 demo reports both transitions for the complete ring", async ({
+  page,
+}) => {
+  await signInTeacher(page.request);
+  await page.goto("/evolution/demo");
+  await page.clock.install();
+  await page.getByRole("banner").getByRole("combobox").selectOption("en");
+  await page
+    .getByRole("combobox", { name: "Game", exact: true })
+    .selectOption("neighbors");
+  await page.getByRole("button", { name: "Create demo" }).click();
+  await page.getByRole("button", { name: "Close admission" }).click();
+  await page.getByRole("button", { name: "Confirm and start" }).click();
+  const results = page.getByRole("table", { name: "Round results" });
+  await expect(
+    results.getByRole("columnheader", { name: "Stag → Hare" }),
+  ).toBeVisible();
+  await expect(
+    results.getByRole("columnheader", { name: "Hare → Stag" }),
+  ).toBeVisible();
+  await expect(
+    results.getByRole("columnheader", { name: "Total payoff" }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("combobox", { name: "Group", exact: true }),
+  ).toHaveCount(0);
+  await page.clock.fastForward(15_000);
+  const cells = results
+    .getByRole("row")
+    .filter({
+      has: page.getByRole("rowheader", { name: "2", exact: true }),
+    })
+    .getByRole("cell");
+  await expect(cells.filter({ hasText: "0% (0/150)" })).toHaveCount(1);
+});
+
 test("memo v3 formal teacher and student use normal entries with a 150-seat synthetic roster", async ({
   page,
   browser,
@@ -646,12 +707,17 @@ test("memo v3 formal teacher and student use normal entries with a 150-seat synt
       student.getByText("Only those selected can change their choice"),
     ).toHaveCount(0);
     const settled = await expectTeacherStats(page, 1, [
-      "0/10",
+      "0/150",
       "0",
       "0",
-      "10/10",
+      "150/150",
     ]);
     await expect(settled.getByRole("meter")).toHaveCount(2);
+    await expect(settled.getByRole("cell").nth(5)).toHaveText("—");
+    await expect(settled.getByRole("cell").nth(6)).toHaveText("—");
+    await expect(
+      page.getByRole("combobox", { name: "Group", exact: true }),
+    ).toHaveValue("0");
     await page
       .getByRole("combobox", { name: "Group", exact: true })
       .selectOption("15");

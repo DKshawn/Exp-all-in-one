@@ -22,7 +22,7 @@ SEG formal and demo setup show hints such as **Input range: 3–120** below fiel
 
 Formal rooms accept up to 5,000 registrations each. The Double Auction, EMH, and Stochastic Evolutionary Games demos support up to 5,000 seats, including the seat you control. The Judgement demo previews individual tasks.
 
-New formal rooms and demos can opt into Stag Hunt v3. Teachers enter the decision time in seconds at creation (default 5, decimals allowed). The setting locks on creation, and feedback lasts 1 second. Eligible students submit with one click, and results are settled at the shared deadline. Students always see the payoff table and their revision status alongside the choices. Payoffs are displayed as rounded integers. The demo shows the full rules. Teachers see revision and settlement counts by group. The classic coordination game remains the default. See the [evolution game guide](docs/guide/en/evolution.md).
+New formal rooms and demos can opt into Stag Hunt v3. Teachers enter the decision time in seconds at creation (default 5, decimals allowed). The setting locks on creation, and feedback lasts 1 second. Eligible students submit with one click, and results are settled at the shared deadline. Students always see the payoff table and their revision status alongside the choices. Payoffs are displayed as rounded integers. The demo shows the full rules. Teachers can view revision and settlement counts and Stag → Hare and Hare → Stag rates for all participants or one group. The classic coordination game remains the default. See the [evolution game guide](docs/guide/en/evolution.md).
 
 ## Get started
 

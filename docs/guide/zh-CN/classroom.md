@@ -91,6 +91,8 @@ EMH可设置初始证券数、目标人数、类型比例及各期时长；开�
 
 ## 4. 下载结果，保留房间
 
+鹿兔研究版教师可在「逐轮结果」查看全体或单组的鹿→兔、兔→鹿比例。
+
 在教师画面的数据下载区域选择所需文件。Double Auction 从 **Dashboard** 打开下面的区域；其他实验使用各自教师画面的导出按钮，文件格式和字段以该实验为准。
 
 ![Double Auction 的 Dashboard 下载区域：CSV 记录和 JSON 设置文件](../images/download-results.png)

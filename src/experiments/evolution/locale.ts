@@ -106,6 +106,7 @@ const messages = {
     "From round 11, 30 randomly selected participants may revise each round. Everyone else and anyone who times out keeps their previous choice.",
   ],
   memoSettledCount: ["精算人数", "已结算人数", "Settled players"],
+  memoAllGroups: ["全体", "全体", "All groups"],
   memoEligible: [
     "今回は選択を変えられます。",
     "本轮可以改选。",

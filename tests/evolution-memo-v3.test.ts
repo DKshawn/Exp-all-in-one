@@ -35,6 +35,7 @@ import {
 import { responsesCsv } from "../src/experiments/evolution/export";
 import { runStudent } from "../ai-emh/src/main.mjs";
 import { roundedAmount } from "../src/experiments/evolution/numbers";
+import { memoRoundReports } from "../src/experiments/evolution/memo-reports";
 
 test("v3 payoff displays round exact fractions to the nearest integer", () => {
   assert.equal(roundedAmount("20/9"), "2");
@@ -274,6 +275,7 @@ for (const [order, initial, expected] of [
         assert.equal(e.submittedAt, r.openedAt + 3000);
       }
       const live = teacherView(g, baseView(g, "TEST", "Test", r.deadline), []);
+      const previousRound = archive.at(-1);
       for (const [group, seats] of Object.entries(perGroup)) {
         const report = live.history.find((row) => row.group === Number(group))!;
         assert.deepEqual(report.memoStats, {
@@ -291,6 +293,22 @@ for (const [order, initial, expected] of [
         );
         const deer = seats!.filter(([, e]) => e.choice === 0).length;
         assert.deepEqual(report.counts, [deer, size - deer]);
+        const transitions = [0, 1].map((choice) =>
+          seats!.filter(([id]) => previousRound?.entries[id].choice === choice),
+        );
+        assert.deepEqual(
+          report.memoTransitions,
+          m.blockRound === 1
+            ? undefined
+            : {
+                previous: transitions.map((entries) => entries.length),
+                switched: transitions.map(
+                  (entries, choice) =>
+                    entries.filter(([, entry]) => entry.choice !== choice)
+                      .length,
+                ),
+              },
+        );
         for (const [, e] of seats!) {
           if (!e.memo!.eligible || e.memo!.timedOut) {
             assert.equal(e.choice, e.memo!.carriedChoice);
@@ -302,6 +320,24 @@ for (const [order, initial, expected] of [
             Number(q) * (e.choice === 1 ? 3 * (size - 1) : 4 * (deer - 1)),
           );
         }
+      }
+      const [overall] = memoRoundReports(live.history, 0);
+      assert.equal(overall.assigned, 150);
+      assert.equal(overall.settledPlayers, 150);
+      if (m.blockRound !== 1) {
+        assert.deepEqual(
+          overall.memoTransitions?.previous,
+          [0, 1].map(
+            (choice) =>
+              Object.values(previousRound!.entries).filter(
+                (entry) => entry.choice === choice,
+              ).length,
+          ),
+        );
+        assert.equal(
+          overall.memoTransitions?.switched.reduce((a, b) => a + b),
+          sample ? 1 : 0,
+        );
       }
       archive.push(r);
       if (n < 360) {
@@ -437,7 +473,10 @@ test("memo v3 service stores server feedback delivery and restricts eligibility 
       observed[1].feedbackHare,
       second.current?.memo?.feedback[0].hare,
     );
-    assert.doesNotMatch(JSON.stringify(data), /"Synthetic\d+"|"6521"|"room-password"/);
+    assert.doesNotMatch(
+      JSON.stringify(data),
+      /"Synthetic\d+"|"6521"|"room-password"/,
+    );
     const csv = await svc.export(code, token, "csv");
     assert.match(csv, /feedbackServedAt/);
     assert.match(csv, /"memoAnswerSeconds"\r\n/);
@@ -620,6 +659,10 @@ test("memo v3 service stores server feedback delivery and restricts eligibility 
     assert.equal(settled.submitted, 1);
     assert.equal(settled.timeouts, 1);
     assert.deepEqual(settled.counts, action.choice === 0 ? [10, 0] : [0, 10]);
+    assert.deepEqual(settled.memoTransitions, {
+      previous: action.choice === 0 ? [10, 0] : [0, 10],
+      switched: [0, 0],
+    });
     assert.equal(settled.total, action.choice === 0 ? "40" : "30");
 
     const revisionExport = JSON.parse(await svc.export(code, token, "json"));
@@ -646,6 +689,16 @@ test("memo v3 service stores server feedback delivery and restricts eligibility 
     assert.equal(revisionCsv.split("\r\n").length, 1651);
     for (const id of [submitId, timeoutId, carryId])
       assert.ok(revisionCsv.includes(`"${code}","1","11","${id}"`));
+
+    now = next.deadline! + 1000;
+    const following = await control();
+    assert.equal(following.role, "teacher");
+    assert.equal(following.round, 12);
+    assert.deepEqual(
+      following.history.find((row) => row.round === 11 && row.group === 1)
+        ?.memoTransitions,
+      settled.memoTransitions,
+    );
 
     const legacy = await svc.create(
       "Legacy Memo v3",
@@ -690,4 +743,5 @@ test("ending a live memo round records interruption and not timeout", () => {
   const summary = teacherView(g, baseView(g, "TEST", "Test", 0), []).history[0];
   assert.deepEqual(summary.memoStats, { eligible: 2, settledPlayers: 0 });
   assert.equal(summary.timeouts, 0);
+  assert.equal(summary.memoTransitions, undefined);
 });

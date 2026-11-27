@@ -85,6 +85,10 @@ export function summaries(g: Game, r: Round, includeMemoStats = false) {
       timeouts = 0,
       seen = 0,
       submitted = 0;
+    const memoTransitions =
+      includeMemoStats && r.memo && r.memo.blockRound > 1 && r.closedAt !== null
+        ? { previous: [0, 0], switched: [0, 0] }
+        : null;
     for (const p of seats) {
       const e = r.entries[p.id];
       if (e.seenAt !== null) seen++;
@@ -92,9 +96,17 @@ export function summaries(g: Game, r: Round, includeMemoStats = false) {
       if (e.status === "bye") byes++;
       if (e.status === "timeout" || e.memo?.timedOut) timeouts++;
       if (e.pay !== null) total = add(total, e.pay);
-      if (includeMemoStats && e.memo) {
-        if (e.memo.eligible) eligible++;
-        if (e.status === "settled") settledPlayers++;
+      const memo = e.memo;
+      if (includeMemoStats && memo) {
+        if (memo.eligible) eligible++;
+        if (e.status === "settled") {
+          settledPlayers++;
+          if (memoTransitions && (e.choice === 0 || e.choice === 1)) {
+            const previous = memo.carriedChoice;
+            memoTransitions.previous[previous]++;
+            if (e.choice !== previous) memoTransitions.switched[previous]++;
+          }
+        }
       }
       if (e.status !== "settled" || e.position !== "row") continue;
       const right = r.entries[e.opponent!].choice!;
@@ -111,6 +123,7 @@ export function summaries(g: Game, r: Round, includeMemoStats = false) {
       ...(includeMemoStats && r.memo
         ? { memoStats: { eligible, settledPlayers } }
         : {}),
+      ...(memoTransitions && settledPlayers ? { memoTransitions } : {}),
       group: i + 1,
       assigned: seats.length,
       paired: r.memo ? 0 : seats.length - byes,

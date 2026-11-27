@@ -128,6 +128,12 @@ test("H5 plays 120 rounds with a stable ring, previous-neighbor-only feedback an
     });
     assert.equal(summary.timeouts, eligible.length ? 28 : 0);
     assert.equal(summary.total, null);
+    if (round === 11) {
+      assert.deepEqual(summary.memoTransitions, {
+        previous: [0, 150],
+        switched: [0, 1],
+      });
+    }
 
     if (round === 12) {
       const stagSeat = ring.findIndex((id) => prior!.entries[id].choice === 0);

@@ -91,6 +91,8 @@ During the session, the teacher monitors overall progress and uses the selected 
 
 ## 4. Download results and keep the room
 
+In Stag Hunt v3, teachers can read Stag → Hare and Hare → Stag rates in **Round results** for all participants or for one group.
+
 Choose the files you need in the teacher view's download area. Double Auction opens the panel below through **Dashboard**. Other experiments have their own export controls; file formats and fields depend on the experiment.
 
 ![Double Auction Dashboard download area: CSV records and JSON settings](../images/download-results.png)
