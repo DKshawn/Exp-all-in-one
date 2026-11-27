@@ -23,11 +23,6 @@ const demos = [
     url: /\/evolution\/demo$/,
     heading: "確率的進化ゲーム",
   },
-  {
-    title: "鹿兎：近傍対戦",
-    url: /\/evolution\/neighbors\/demo$/,
-    heading: "鹿兎：近傍対戦",
-  },
 ];
 
 test("demo brands return to the experiment selection from every view", async ({
@@ -120,7 +115,7 @@ test("student home omits demo while the teacher hub links to the shared selectio
       ),
     ).toBe(true);
     const titles = page.locator(".demo-experiment-grid h2");
-    await expect(titles).toHaveCount(demos.length);
+    await expect(titles).toHaveCount(4);
     expect(
       await titles.evaluateAll((els) =>
         els.every((el) => el.scrollWidth <= el.clientWidth + 1),
@@ -149,13 +144,7 @@ test("student home omits demo while the teacher hub links to the shared selectio
   await expect(
     page.getByRole("link", { name: "戻る", exact: true }),
   ).toHaveCount(0);
-  for (const experiment of [
-    "institutions",
-    "emh",
-    "judgment",
-    "evolution",
-    "stag-hunt-h5",
-  ]) {
+  for (const experiment of ["institutions", "emh", "judgment", "evolution"]) {
     await page.goto(`/teacher?experiment=${experiment}`);
     await expect(
       page.getByRole("link", { name: "戻る", exact: true }),

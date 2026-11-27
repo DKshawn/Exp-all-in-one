@@ -80,7 +80,7 @@ For new Nash demand rooms, `demand` and `opponentDemand` are the exact displayed
 
 ## Stag Hunt: Neighbors (H5)
 
-Choose **Stag Hunt: Neighbors** on the teacher hub. The formal setup is at `/teacher?experiment=stag-hunt-h5` and the demo at `/evolution/neighbors/demo`. The room runs one 120-round block with 150 seats. Players are randomly seated on a ring at the start and keep their positions for the block. The ends wrap around, with five neighbors on either side. The demo has one human seat and 149 simulated participants.
+Open Stochastic Evolutionary Games from the formal setup (`/teacher?experiment=evolution`) or the demo (`/evolution/demo`). Select **Stag Hunt: Neighbors** from the **Game** menu. The room runs one 120-round block with 150 seats. Players are randomly seated on a ring at the start and keep their positions for the block. The ends wrap around, with five neighbors on either side. The demo has one human seat and 149 simulated participants.
 
 The teacher's starting condition fixes choices for rounds 1–10. From round 11, 30 players (20%) are drawn randomly each round, and an eligible player submits with one click. Ineligible players and players who time out keep their previous choice. The nominal windows are five seconds for decisions and one second for feedback. A small ring shows each neighbor's previous choice and a count shows how many chose Hare. There is no previous-round feedback in round 1. Student responses exclude the whole-group share and non-neighbors' choices.
 

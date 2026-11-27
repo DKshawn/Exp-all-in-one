@@ -93,10 +93,8 @@ function NumberSetting({
   );
 }
 
-export function useSetupDraft(neighbors = false) {
-  const [s, set] = useState<Settings>(() =>
-      neighbors ? neighborDefaults() : defaults("coordination"),
-    ),
+export function useSetupDraft() {
+  const [s, set] = useState<Settings>(() => defaults("coordination")),
     [title, setTitle] = useState(""),
     [n, setN] = useState(6);
   const parsed = settingsSchema.safeParse(s);
@@ -108,14 +106,8 @@ export function useSetupDraft(neighbors = false) {
   return { s, set, title, setTitle, n, setN, parsed, validDemo };
 }
 
-export function EvolutionSetup({
-  ready,
-  neighbors = false,
-}: {
-  ready: boolean;
-  neighbors?: boolean;
-}) {
-  const draft = useSetupDraft(neighbors);
+export function EvolutionSetup({ ready }: { ready: boolean }) {
+  const draft = useSetupDraft();
   return <SetupForm draft={draft} ready={ready} />;
 }
 
@@ -137,7 +129,7 @@ export function SetupForm({
     [error, setError] = useState("");
   const demandStepId = useId();
   const neighbors = isNeighborMemo(s);
-  const titleLabel = t(neighbors ? "h5Title" : "title");
+  const defaultRoomTitle = t(neighbors ? "h5Title" : "title");
   const names = displayChoices(lang, s);
   const otherIssues = parsed.success
     ? []
@@ -157,7 +149,7 @@ export function SetupForm({
   async function create(e: FormEvent) {
     e.preventDefault();
     if (!parsed.success) return;
-    const roomTitle = title.trim() || titleLabel;
+    const roomTitle = title.trim() || defaultRoomTitle;
     if (onDemo) {
       if (draft.validDemo || isMemo(parsed.data))
         onDemo(
@@ -184,47 +176,48 @@ export function SetupForm({
   return (
     <form lang={lang} className="emh-create ev ev-setup" onSubmit={create}>
       <div className="ev-heading">
-        <h1>{titleLabel}</h1>
+        <h1>{t("title")}</h1>
       </div>
       <label className="field">
         {t("name")}
         <input
           value={title}
-          placeholder={titleLabel}
+          placeholder={defaultRoomTitle}
           maxLength={60}
           onChange={(e) => setTitle(e.target.value)}
         />
       </label>
-      {!neighbors && (
-        <label className="field">
-          {t("mode")}
-          <select
-            value={isMemo(s) ? "memo" : s.mode}
-            onChange={(e) => {
-              if (e.target.value === "memo") {
-                set(memoDefaults());
-                return;
-              }
-              const next = defaults(e.target.value as Mode);
-              if (isMemo(s)) {
-                set(next);
-                return;
-              }
-              set({
-                ...next,
-                groups: s.groups,
-                seconds: s.seconds,
-                rounds: s.rounds,
-                feedbackSeconds: s.feedbackSeconds,
-              });
-            }}
-          >
-            <option value="coordination">{t("coordination")}</option>
-            <option value="memo">{t("memo")}</option>
-            <option value="demand">{t("demand")}</option>
-          </select>
-        </label>
-      )}
+      <label className="field">
+        {t("mode")}
+        <select
+          name="game"
+          value={neighbors ? "neighbors" : isMemo(s) ? "memo" : s.mode}
+          onChange={(e) => {
+            const game = e.target.value;
+            if (game === "memo" || game === "neighbors") {
+              set(game === "memo" ? memoDefaults() : neighborDefaults());
+              return;
+            }
+            const next = defaults(game as Mode);
+            if (isMemo(s)) {
+              set(next);
+              return;
+            }
+            set({
+              ...next,
+              groups: s.groups,
+              seconds: s.seconds,
+              rounds: s.rounds,
+              feedbackSeconds: s.feedbackSeconds,
+            });
+          }}
+        >
+          <option value="coordination">{t("coordination")}</option>
+          <option value="memo">{t("memo")}</option>
+          <option value="neighbors">{t("h5Title")}</option>
+          <option value="demand">{t("demand")}</option>
+        </select>
+      </label>
       {isMemo(s) ? (
         <>
           <p>{t(neighbors ? "h5Settings" : "memoSettings")}</p>

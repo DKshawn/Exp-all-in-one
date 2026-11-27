@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { Header } from "@/components/shell";
 import { DemoSelectionLink } from "@/components/demo-selection-link";
-import { DEMO_TEACHER_HREFS, H5_TEACHER_HREF } from "@/lib/demo-navigation";
+import { DEMO_TEACHER_HREFS } from "@/lib/demo-navigation";
 import { responsesCsv } from "../export";
 import { EvolutionPractice, type PracticeAction } from "../practice";
 import {
@@ -87,9 +87,9 @@ function DemoToolbar({
   );
 }
 
-export function EvolutionDemo({ neighbors = false }: { neighbors?: boolean }) {
+export function EvolutionDemo() {
   const lang = useLanguage();
-  const draft = useSetupDraft(neighbors);
+  const draft = useSetupDraft();
   const [room, setRoom] = useState<EvolutionPractice | null>(null);
   function create(title: string, s: Settings, n: number) {
     setRoom(new EvolutionPractice(title, s, n, Date.now()));
@@ -98,9 +98,7 @@ export function EvolutionDemo({ neighbors = false }: { neighbors?: boolean }) {
     <div className="demo-theme">
       <Header
         demoLabel="DEMOモード"
-        demoExitHref={
-          neighbors ? H5_TEACHER_HREF : DEMO_TEACHER_HREFS.evolution
-        }
+        demoExitHref={DEMO_TEACHER_HREFS.evolution}
         leading={<DemoSelectionLink />}
       />
       {room ? (

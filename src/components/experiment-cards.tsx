@@ -2,8 +2,6 @@
 
 import Link from "next/link";
 import { EXPERIMENT_CATALOG } from "@/lib/experiment-catalog";
-import { H5_DEMO_HREF, H5_TEACHER_HREF } from "@/lib/demo-navigation";
-import { label } from "@/experiments/evolution/locale";
 import { translator } from "@/lib/ui-language";
 import { useExperimentLanguage } from "./experiment-language";
 
@@ -63,13 +61,6 @@ export function ExperimentCards({ mode }: { mode: "teacher" | "demo" }) {
           </Link>
         );
       })}
-      <Link
-        className="experiment-card"
-        href={mode === "demo" ? H5_DEMO_HREF : H5_TEACHER_HREF}
-      >
-        <h2>{label(language, "h5Title")}</h2>
-        <p>{label(language, "h5Description")}</p>
-      </Link>
     </div>
   );
 }

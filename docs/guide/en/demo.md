@@ -73,7 +73,7 @@ Everyone can quote in EMH. Accepting an opposing price or submitting a crossing 
 
 ## Stag Hunt: Neighbors (H5)
 
-Open the separate `/evolution/neighbors/demo` to preview feedback on the fixed ring with your seat and 149 simulated participants. Payoff timing is pending.
+Open the Stochastic Evolutionary Games demo (`/evolution/demo`) and select **Stag Hunt: Neighbors** in the **Game** menu. Your seat and 149 simulated participants are assigned to the ring. Payoff timing is pending.
 
 ---
 

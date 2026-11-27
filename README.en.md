@@ -88,8 +88,7 @@ Judgement teacher pages and the demo share task cards, the selection list and co
 | Double Auction                | Compare CDA, Call Market, and Posted Offer; allocate markets and roles using actual attendance                                                    | [Flow and rules](docs/guide/en/double-auction.md) | [Demo Model](https://exp-all-in-one.vercel.app/demo)           |
 | EMH                           | Configure round count, round, trade and break durations in both experiments; Experiment 2 also configures participants, information and dividends | [Flow and rules](docs/guide/en/emh.md)            | [Demo Model](https://exp-all-in-one.vercel.app/emh/demo)       |
 | Judgement under Uncertainty   | 14 judgment and cognitive bias tasks, condition assignment, task and option ordering, timing, and Japanese/Chinese/English display                | [Flow and data](docs/guide/en/judgment.md)        | [Demo Model](https://exp-all-in-one.vercel.app/judgment/demo)  |
-| Stochastic Evolutionary Games | Coordination or Nash demand, private random matches, group trends and raw exports                                                                 | [Rules and data](docs/guide/en/evolution.md)      | [Demo Model](https://exp-all-in-one.vercel.app/evolution/demo) |
-| Stag Hunt: Neighbors | H5 review treatment with a fixed ring and five neighbors on each side. Payoff timing is pending | [Rules and data](docs/guide/en/evolution.md#stag-hunt-neighbors-h5) | [Local demo](docs/guide/en/demo.md#stag-hunt-neighbors-h5) |
+| Stochastic Evolutionary Games | Coordination, Nash demand, Stag Hunt v3, and Stag Hunt: Neighbors, with group results and raw exports                                                                 | [Rules and data](docs/guide/en/evolution.md)      | [Demo Model](https://exp-all-in-one.vercel.app/evolution/demo) |
 
 ## Development and materials
 

@@ -1,7 +1,6 @@
 import { createHmac } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { assertTeacherAccess, equal, newToken } from "./auth";
-import { H5_DEMO_HREF } from "../demo-navigation";
 import { AuctionError } from "./errors";
 
 export const TEACHER_SESSION_COOKIE = "lab_teacher_session";
@@ -58,7 +57,6 @@ const demoPages = new Set([
   "/emh/demo/preview",
   "/judgment/demo",
   "/evolution/demo",
-  H5_DEMO_HREF,
 ]);
 
 export function teacherPageAvailable(path: string) {

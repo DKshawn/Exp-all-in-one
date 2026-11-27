@@ -244,6 +244,10 @@ test("memo v3 demo shows the payoff table, fixed start, and one-click revision",
   await expect(
     page.getByRole("table", { name: "Payoff matrix" }),
   ).toBeVisible();
+  await mode.selectOption({ label: "Stag Hunt: Neighbors" });
+  await expect(mode).toHaveValue("neighbors");
+  await expect(page.getByText(/150 seats · 120 rounds/)).toBeVisible();
+  await expect(page.getByLabel("Block order")).toHaveCount(0);
   await mode.selectOption("memo");
   await expect(page.getByText(/120 rounds × 3/)).toBeVisible();
   await expect(page.getByLabel("Decision time (s)")).toHaveCount(0);
@@ -448,6 +452,9 @@ test("memo v3 formal teacher and student use normal entries with a 150-seat synt
   await page.goto("/teacher?experiment=evolution");
   await page.getByRole("banner").getByRole("combobox").selectOption("en");
   const mode = page.getByRole("combobox", { name: "Game", exact: true });
+  await mode.selectOption({ label: "Stag Hunt: Neighbors" });
+  await expect(mode).toHaveValue("neighbors");
+  await expect(page.getByLabel("Block order")).toHaveCount(0);
   await mode.selectOption("memo");
   await mode.selectOption("coordination");
   await expect(
