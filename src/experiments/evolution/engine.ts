@@ -15,7 +15,7 @@ import {
   continuous,
   outcome,
   isMemo,
-  memoSizes,
+  memoBlockSizes,
   MEMO_PARTICIPANTS,
   type Settings,
 } from "./settings";
@@ -59,6 +59,7 @@ export type Round = {
 };
 export type Game = {
   distributed?: true;
+  memoRing?: string[];
   settings: Settings;
   phase: Phase;
   seats: Seat[];
@@ -115,7 +116,7 @@ export function groupSizes(g: Game) {
   const n = g.seats.length,
     k = isMemo(g.settings)
       ? MEMO_PARTICIPANTS /
-        memoSizes(g.settings.memoOrder)[(g.round?.memo?.block ?? 1) - 1]
+        memoBlockSizes(g.settings)[(g.round?.memo?.block ?? 1) - 1]
       : g.settings.groups;
   return Array.from(
     { length: k },

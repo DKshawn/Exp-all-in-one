@@ -89,6 +89,7 @@ Judgement 教师页面和 Demo 共用任务卡片、已选列表和操作区，�
 | EMH                           | 两种实验可设置轮数、每轮、单次交易和休息时间；实验2可设置人数、内部信息及分红 | [流程与规则](docs/guide/zh-CN/emh.md)            | [Demo Model](https://exp-all-in-one.vercel.app/emh/demo)       |
 | Judgement under Uncertainty   | 14项判断与认知偏差任务，支持条件分配、任务与选项顺序、计时及日中英显示        | [流程与数据](docs/guide/zh-CN/judgment.md)       | [Demo Model](https://exp-all-in-one.vercel.app/judgment/demo)  |
 | Stochastic Evolutionary Games | 协调或 Nash 需求博弈、匿名随机配对、逐群演化与原始数据导出                    | [规则与数据](docs/guide/zh-CN/evolution.md)      | [Demo Model](https://exp-all-in-one.vercel.app/evolution/demo) |
+| 鹿兔：邻居对战 | 在固定环上观察左右各五位邻居的上轮选择。H5 审查版暂不计分 | [规则与数据](docs/guide/zh-CN/evolution.md#鹿兔邻居对战h5) | [本地 Demo](docs/guide/zh-CN/demo.md#鹿兔邻居对战h5) |
 
 ## 开发与资料
 

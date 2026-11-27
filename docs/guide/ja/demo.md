@@ -65,6 +65,10 @@ EMHの画面サイズ別プレビューは `/emh/demo/preview` またはデモ�
 
 EMHでは全員が提示でき、相手の価格を受ける操作と跨ぐ提示は1単位が即時成立します。学生は匿名の取引記録と注文板で自分の未成立の指値を確認でき、実験1の得点はB期末または教員による実験終了時に確定します。
 
+## 鹿兎：近傍対戦（H5）
+
+「鹿兎：近傍対戦」は独立した `/evolution/neighbors/demo` で確認できます。自分1人と模擬参加者149人で、固定円環の近傍フィードバックを確認できます。利得の計算時点は確認中です。
+
 ---
 
 [ホーム](../../../README.md) · [授業での使い方](classroom.md) · [Double Auction](double-auction.md) · [EMH 資産市場実験](emh.md) · [Judgement under Uncertainty](judgment.md) · [開発・デプロイ・検証](development.md)

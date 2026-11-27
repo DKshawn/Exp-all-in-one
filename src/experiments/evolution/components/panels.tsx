@@ -9,7 +9,13 @@ import type { Action } from "../engine";
 import type { View, Personal } from "../views";
 import { Admission, SessionOverview } from "./session-controls";
 import { PayoffMatrix, PayoffRules, Rules } from "./rules";
-import { continuous, DEMAND_STEPS, demandLabel, isMemo } from "../settings";
+import {
+  continuous,
+  DEMAND_STEPS,
+  demandLabel,
+  isMemo,
+  isNeighborMemo,
+} from "../settings";
 import { MemoStudent } from "./memo-student";
 import { MemoResults } from "./memo-results";
 import { DemandDecision } from "./demand-decision";
@@ -289,6 +295,7 @@ export function Panels({
     names = displayChoices(lang, v.settings);
   const coordination = v.settings.mode === "coordination";
   const memo = isMemo(v.settings);
+  const neighbors = isNeighborMemo(v.settings);
   const memoStudent = memo && v.role === "student" && !waiting;
   const canChooseMemo = Boolean(
     mine?.memo?.eligible &&
@@ -470,8 +477,9 @@ export function Panels({
             >
               {memo ? (
                 <>
-                  <p>{t("memoRule")}</p>
-                  <p>{t("memoRevisionRule")}</p>
+                  <p>{t(neighbors ? "h5Description" : "memoRule")}</p>
+                  <p>{t(neighbors ? "h5Revision" : "memoRevisionRule")}</p>
+                  {neighbors && <p>{t("h5Pending")}</p>}
                 </>
               ) : (
                 <Rules lang={lang} s={v.settings} />

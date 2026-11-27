@@ -6,12 +6,20 @@ import {
   MEMO_PARTICIPANTS,
   MEMO_ROUNDS,
   isMemo,
-  memoSizes,
+  memoBlockSizes,
+  isNeighborMemo,
+  H5_RADIUS,
 } from "./settings";
 import type { Entry, Game } from "./engine";
 
 export type FeedbackPoint = { round: number; hare: number; size: number };
+export type NeighborFeedback = {
+  seat: number;
+  // Ordered from five counterclockwise seats to five clockwise seats.
+  previous: (0 | 1)[];
+};
 export type MemoEntry = {
+  neighborhood?: NeighborFeedback;
   group: number;
   groupSize: number;
   initialChoice: 0 | 1;
@@ -28,9 +36,7 @@ export type MemoRound = {
   feedback: Record<number, FeedbackPoint[]>;
 };
 export function memoGroups(g: Game, block: number) {
-  const size = isMemo(g.settings)
-    ? memoSizes(g.settings.memoOrder)[block - 1]
-    : 0;
+  const size = isMemo(g.settings) ? memoBlockSizes(g.settings)[block - 1] : 0;
   if (!size || g.seats.length !== MEMO_PARTICIPANTS)
     throw new AuctionError("この実験の開始には150人必要です。", 409);
   const roster = shuffled(g.seats);
@@ -44,9 +50,13 @@ export function openMemoRound(g: Game, now: number) {
   const number = (previous?.number ?? 0) + 1;
   const block = Math.ceil(number / MEMO_ROUNDS);
   const blockRound = ((number - 1) % MEMO_ROUNDS) + 1;
-  const groupSize = memoSizes(g.settings.memoOrder)[block - 1];
+  const groupSize = memoBlockSizes(g.settings)[block - 1];
   const groupCount = MEMO_PARTICIPANTS / groupSize;
   const fresh = blockRound === 1;
+  const neighbors = isNeighborMemo(g.settings);
+  if (neighbors && fresh) g.memoRing = shuffled(g.seats).map((seat) => seat.id);
+  const ring = neighbors ? g.memoRing! : null;
+  const ringPositions = ring && new Map(ring.map((id, index) => [id, index]));
   if (fresh && block > 1) memoGroups(g, block);
   const firstDeerCount =
     groupSize === 10
@@ -76,17 +86,18 @@ export function openMemoRound(g: Game, now: number) {
         : [],
     );
     const last = previous?.memo?.feedback[group] ?? [];
-    feedback[group] = fresh
-      ? []
-      : [
-          ...last,
-          {
-            round: blockRound - 1,
-            hare: seats.filter((s) => previous?.entries[s.id].choice === 1)
-              .length,
-            size: groupSize,
-          },
-        ].slice(-20);
+    feedback[group] =
+      fresh || neighbors
+        ? []
+        : [
+            ...last,
+            {
+              round: blockRound - 1,
+              hare: seats.filter((s) => previous?.entries[s.id].choice === 1)
+                .length,
+              size: groupSize,
+            },
+          ].slice(-20);
     for (const s of seats) {
       const prior = fresh ? undefined : previous?.entries[s.id];
       const initialChoice = fresh
@@ -96,6 +107,20 @@ export function openMemoRound(g: Game, now: number) {
         : prior!.memo!.initialChoice;
       const carriedChoice = prior?.choice === 1 ? 1 : prior ? 0 : initialChoice;
       const canChoose = eligible.has(s.id);
+      const index = ringPositions?.get(s.id);
+      const neighborhood =
+        ring && index !== undefined
+          ? {
+              seat: index + 1,
+              previous: prior
+                ? neighborIndices(index, ring.length).map((other) =>
+                    previous!.entries[ring[other]].choice === 1
+                      ? (1 as const)
+                      : (0 as const),
+                  )
+                : [],
+            }
+          : undefined;
       entries[s.id] = {
         opponent: null,
         position: null,
@@ -106,6 +131,7 @@ export function openMemoRound(g: Game, now: number) {
         total: s.total,
         status: canChoose ? "choosing" : "submitted",
         memo: {
+          ...(neighborhood ? { neighborhood } : {}),
           group,
           groupSize,
           initialChoice,
@@ -157,15 +183,25 @@ export function chooseMemo(
   entry.seenAt ??= now;
   entry.status = "submitted";
 }
+export function neighborIndices(index: number, size: number) {
+  const offsets = Array.from({ length: H5_RADIUS }, (_, i) => i + 1);
+  return [...offsets.map((offset) => -offset).reverse(), ...offsets].map(
+    (offset) => (index + size + offset) % size,
+  );
+}
 export function settleMemo(g: Game) {
+  const score = !isNeighborMemo(g.settings);
   const r = g.round!;
   const counts = new Map<number, number>();
   for (const e of Object.values(r.entries)) {
     const m = e.memo!;
     m.timedOut = m.eligible && e.submittedAt === null;
     e.choice ??= m.carriedChoice;
-    if (e.choice === 0) counts.set(m.group, (counts.get(m.group) ?? 0) + 1);
+    if (score && e.choice === 0)
+      counts.set(m.group, (counts.get(m.group) ?? 0) + 1);
+    e.status = "settled";
   }
+  if (!score) return;
   for (const seat of g.seats) {
     const e = r.entries[seat.id],
       m = e.memo!;
@@ -176,6 +212,5 @@ export function settleMemo(g: Game) {
             `${4 * ((counts.get(m.group) ?? 1) - 1)}/${m.groupSize - 1}`,
           );
     e.total = seat.total = add(seat.total, e.pay);
-    e.status = "settled";
   }
 }

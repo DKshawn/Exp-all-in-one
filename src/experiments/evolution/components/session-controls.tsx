@@ -11,6 +11,7 @@ import type { Action, RunControl } from "../engine";
 import type { View } from "../views";
 import {
   isMemo,
+  isNeighborMemo,
   MEMO_LOCK_ROUNDS,
   MEMO_PARTICIPANTS,
   MEMO_ROUNDS,
@@ -126,7 +127,9 @@ export function SessionOverview({
           <div className="session-bar">
             <div className="session-phase">
               <strong>
-                {memo ? `${t("memoBlock")} ${v.memoBlock}/3 · ` : ""}
+                {memo && !isNeighborMemo(v.settings)
+                  ? `${t("memoBlock")} ${v.memoBlock}/3 · `
+                  : ""}
                 {t("round")} {v.memoRound ?? v.round}/
                 {memo ? MEMO_ROUNDS : v.settings.rounds}
               </strong>

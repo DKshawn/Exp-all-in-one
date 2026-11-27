@@ -31,6 +31,7 @@ export function responsesCsv(
   header = true,
   slider = rows.some((row) => row.demand !== undefined),
   memo = rows.some((row) => row.block !== undefined),
+  neighbors = rows.some((row) => row.ringSeat !== undefined),
 ) {
   const fields: (keyof RecordRow)[] = slider
     ? [...standardFields, "demand", "opponentDemand", "submissionSource"]
@@ -45,16 +46,20 @@ export function responsesCsv(
           "timedOut",
           "carriedChoice",
           "feedbackServedAt",
-          "feedbackHare",
-          "feedbackGroupSize",
-          "feedbackHistory",
-          "feedbackPriorPay",
+          ...(neighbors
+            ? (["scoringStatus", "ringSeat", "neighborChoices"] as const)
+            : ([
+                "feedbackHare",
+                "feedbackGroupSize",
+                "feedbackHistory",
+                "feedbackPriorPay",
+              ] as const)),
         ]
       : standardFields;
   const values = rows.map((row) =>
     fields.map((field) =>
-      field === "feedbackHistory"
-        ? JSON.stringify(row.feedbackHistory)
+      field === "feedbackHistory" || field === "neighborChoices"
+        ? JSON.stringify(row[field])
         : row[field],
     ),
   );

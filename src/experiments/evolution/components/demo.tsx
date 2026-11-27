@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { Header } from "@/components/shell";
 import { DemoSelectionLink } from "@/components/demo-selection-link";
-import { DEMO_TEACHER_HREFS } from "@/lib/demo-navigation";
+import { DEMO_TEACHER_HREFS, H5_TEACHER_HREF } from "@/lib/demo-navigation";
 import { responsesCsv } from "../export";
 import { EvolutionPractice, type PracticeAction } from "../practice";
 import {
@@ -25,6 +25,7 @@ import {
   continuous,
   HISTORY_ROUNDS,
   isMemo,
+  isNeighborMemo,
   MEMO_PARTICIPANTS,
   type Settings,
 } from "../settings";
@@ -86,9 +87,9 @@ function DemoToolbar({
   );
 }
 
-export function EvolutionDemo() {
+export function EvolutionDemo({ neighbors = false }: { neighbors?: boolean }) {
   const lang = useLanguage();
-  const draft = useSetupDraft();
+  const draft = useSetupDraft(neighbors);
   const [room, setRoom] = useState<EvolutionPractice | null>(null);
   function create(title: string, s: Settings, n: number) {
     setRoom(new EvolutionPractice(title, s, n, Date.now()));
@@ -97,7 +98,9 @@ export function EvolutionDemo() {
     <div className="demo-theme">
       <Header
         demoLabel="DEMOモード"
-        demoExitHref={DEMO_TEACHER_HREFS.evolution}
+        demoExitHref={
+          neighbors ? H5_TEACHER_HREF : DEMO_TEACHER_HREFS.evolution
+        }
         leading={<DemoSelectionLink />}
       />
       {room ? (
@@ -173,6 +176,7 @@ function DemoRoom({
               admissionClosedAt: g.closedAt,
               phase: g.phase,
               settings: g.settings,
+              ...(isNeighborMemo(g.settings) && { scoringStatus: "pending" }),
               participants: g.seats,
               rounds: rounds.flatMap((r) => summaries(g, r)),
               rows,
@@ -185,6 +189,7 @@ function DemoRoom({
             true,
             continuous(g.settings),
             isMemo(g.settings),
+            isNeighborMemo(g.settings),
           );
     const url = URL.createObjectURL(
       new Blob([body], {

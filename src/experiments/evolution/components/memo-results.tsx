@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { displayChoices, label, type Key, type Lang } from "../locale";
+import { isNeighborMemo } from "../settings";
 import { roundedAmount } from "../numbers";
 import type { View } from "../views";
 
@@ -13,6 +14,7 @@ export function MemoResults({
 }) {
   const [group, setGroup] = useState(1);
   const t = (k: Key) => label(lang, k);
+  const neighbors = isNeighborMemo(view.settings);
   const names = displayChoices(lang, view.settings);
   const percent = new Intl.NumberFormat(lang, {
     style: "percent",
@@ -21,19 +23,23 @@ export function MemoResults({
   return (
     <section className="panel ev-panel ev-analysis">
       <h2>{t("results")}</h2>
-      <label className="field ev-filter">
-        {t("group")}
-        <select
-          value={group}
-          onChange={(e) => setGroup(Number(e.target.value))}
-        >
-          {view.sizes.map((_, i) => (
-            <option key={i} value={i + 1}>
-              {i + 1}
-            </option>
-          ))}
-        </select>
-      </label>
+      {neighbors ? (
+        <p>{t("h5Pending")}</p>
+      ) : (
+        <label className="field ev-filter">
+          {t("group")}
+          <select
+            value={group}
+            onChange={(e) => setGroup(Number(e.target.value))}
+          >
+            {view.sizes.map((_, i) => (
+              <option key={i} value={i + 1}>
+                {i + 1}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       <div
         className="ev-scroll"
         tabIndex={0}
@@ -47,9 +53,11 @@ export function MemoResults({
               <th scope="col">{t("memoEligibleCount")}</th>
               <th scope="col">{t("responses")}</th>
               <th scope="col">{t("timeouts")}</th>
-              <th scope="col">{t("memoSettledCount")}</th>
+              <th scope="col">
+                {t(neighbors ? "h5Finalized" : "memoSettledCount")}
+              </th>
               <th scope="col">{t("share")}</th>
-              <th scope="col">{t("earnings")}</th>
+              {!neighbors && <th scope="col">{t("earnings")}</th>}
             </tr>
           </thead>
           <tbody>
@@ -84,7 +92,13 @@ export function MemoResults({
                           ))
                         : "—"}
                     </td>
-                    <td>{settledPlayers ? roundedAmount(row.total) : "—"}</td>
+                    {!neighbors && (
+                      <td>
+                        {settledPlayers && row.total !== null
+                          ? roundedAmount(row.total)
+                          : "—"}
+                      </td>
+                    )}
                   </tr>
                 );
               })}

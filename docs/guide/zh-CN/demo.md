@@ -71,6 +71,10 @@ EMH 的屏幕尺寸预览可从 `/emh/demo/preview` 或演示设置页的「画�
 
 EMH 允许所有人报价；接受对方价格或提交跨价报价会立即成交1单位。学生可查看匿名成交记录和自己在订单板上标出的挂单，实验 1 的得分在 B 期末或教师结束实验时确定。
 
+## 鹿兔：邻居对战（H5）
+
+在独立的 `/evolution/neighbors/demo` 试玩鹿兔：邻居对战。你和 149 位模拟参与者占据固定环位，可查看邻居反馈。计分时点待确认。
+
 ---
 
 [首页](../../../README.zh-CN.md) · [课堂使用流程](classroom.md) · [Double Auction](double-auction.md) · [EMH 资产市场实验](emh.md) · [Judgement under Uncertainty](judgment.md) · [开发、部署与验证](development.md)

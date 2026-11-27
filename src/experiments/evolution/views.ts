@@ -13,6 +13,7 @@ import {
   continuous,
   demandBand,
   MEMO_ROUNDS,
+  isNeighborMemo,
   outcome,
 } from "./settings";
 
@@ -32,7 +33,10 @@ export function personal(r: Round, id: string) {
             timedOut: e.memo.timedOut,
             carriedChoice: e.memo.carriedChoice,
             priorPay: e.memo.priorPay,
-            feedback: r.memo.feedback[e.memo.group],
+            ...(e.memo.neighborhood
+              ? { neighborhood: e.memo.neighborhood }
+              : {}),
+            feedback: e.memo.neighborhood ? [] : r.memo.feedback[e.memo.group],
           },
         }
       : {}),
@@ -41,7 +45,7 @@ export function personal(r: Round, id: string) {
     choice: e.choice,
     ...(e.draftChoice === undefined ? {} : { draftChoice: e.draftChoice }),
     pay: e.pay,
-    total: e.total,
+    total: e.memo?.neighborhood ? null : e.total,
     otherChoice: peer?.choice ?? null,
     otherPay: peer?.pay ?? null,
   };
@@ -116,7 +120,7 @@ export function summaries(g: Game, r: Round, includeMemoStats = false) {
       pairs,
       settled,
       agreements,
-      total,
+      total: isNeighborMemo(g.settings) ? null : total,
       byes,
       timeouts,
     };
@@ -180,16 +184,21 @@ export function studentView(
   const seat = g.seats.find((p) => p.id === id)!;
   return {
     ...base,
+    settings: isNeighborMemo(base.settings)
+      ? { ...base.settings, memoCounterbalance: undefined }
+      : base.settings,
     role: "student" as const,
     group: seat.group,
     side: seat.side,
-    total: seat.total,
+    total: isNeighborMemo(g.settings) ? null : seat.total,
     current: g.round ? personal(g.round, id) : null,
-    history: g.round?.memo
-      ? history.filter(
-          (item) => item.round > (g.round!.memo!.block - 1) * MEMO_ROUNDS,
-        )
-      : history,
+    history: isNeighborMemo(g.settings)
+      ? []
+      : g.round?.memo
+        ? history.filter(
+            (item) => item.round > (g.round!.memo!.block - 1) * MEMO_ROUNDS,
+          )
+        : history,
   };
 }
 export type View =
@@ -212,11 +221,18 @@ export function rawRows(g: Game, r: Round, code: string) {
             timedOut: e.memo.timedOut,
             carriedChoice: e.memo.carriedChoice,
             feedbackServedAt: e.memo.feedbackServedAt,
-            feedbackHare: r.memo.feedback[e.memo.group].at(-1)?.hare ?? null,
-            feedbackGroupSize:
-              r.memo.feedback[e.memo.group].at(-1)?.size ?? null,
-            feedbackHistory: r.memo.feedback[e.memo.group],
-            feedbackPriorPay: e.memo.priorPay,
+            ...(e.memo.neighborhood && {
+              scoringStatus: "pending" as const,
+              ringSeat: e.memo.neighborhood.seat,
+              neighborChoices: e.memo.neighborhood.previous,
+            }),
+            ...(!e.memo.neighborhood && {
+              feedbackHare: r.memo.feedback[e.memo.group].at(-1)?.hare ?? null,
+              feedbackGroupSize:
+                r.memo.feedback[e.memo.group].at(-1)?.size ?? null,
+              feedbackHistory: r.memo.feedback[e.memo.group],
+              feedbackPriorPay: e.memo.priorPay,
+            }),
           }
         : {}),
       id: s.id,
@@ -239,7 +255,7 @@ export function rawRows(g: Game, r: Round, code: string) {
         : {}),
       pay: e.pay,
       opponentPay: p?.pay ?? null,
-      total: e.total,
+      total: e.memo?.neighborhood ? null : e.total,
       status: e.status,
       openedAt: r.openedAt,
       deadline: r.deadline,

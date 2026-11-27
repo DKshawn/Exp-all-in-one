@@ -48,6 +48,8 @@ import {
   MAX_ROUNDS,
   settingsSchema,
   isMemo,
+  isNeighborMemo,
+  H5_PROTOCOL,
   MEMO_PARTICIPANTS,
   type Settings,
 } from "../settings";
@@ -497,6 +499,7 @@ export class EvolutionService {
           history.rows.flatMap((x) => x.summary),
         );
       }
+      if (isNeighborMemo(g.settings)) return studentView(g, base, id, []);
       const history = await tx.query<{ item: Personal }>(
         "SELECT personal -> $2::text AS item FROM evolution_rounds WHERE room=$1 AND number<$3 AND number>=greatest($3-$4,$5+1) ORDER BY number",
         [code, id, Math.min(base.round, before), HISTORY_ROUNDS, after],
@@ -574,7 +577,13 @@ export class EvolutionService {
     async function* chunks() {
       const slider = continuous(g.settings);
       if (format === "csv")
-        yield responsesCsv([], true, slider, isMemo(g.settings));
+        yield responsesCsv(
+          [],
+          true,
+          slider,
+          isMemo(g.settings),
+          isNeighborMemo(g.settings),
+        );
       else {
         const info = JSON.stringify({
           version: 1,
@@ -589,6 +598,7 @@ export class EvolutionService {
           exportedAt: now,
           phase: g.phase,
           settings: g.settings,
+          ...(isNeighborMemo(g.settings) && { scoringStatus: "pending" }),
           participants,
         });
         yield info.slice(0, -1) + ',"rows":[';
@@ -604,7 +614,16 @@ export class EvolutionService {
             ),
         }));
         if (format === "csv")
-          return "\r\n" + responsesCsv(rows, false, slider, isMemo(g.settings));
+          return (
+            "\r\n" +
+            responsesCsv(
+              rows,
+              false,
+              slider,
+              isMemo(g.settings),
+              isNeighborMemo(g.settings),
+            )
+          );
         const body = (first ? "" : ",") + JSON.stringify(rows).slice(1, -1);
         first = false;
         return body;
@@ -665,6 +684,7 @@ export class EvolutionService {
       title: string;
       created_at: string;
       mode: Settings["mode"];
+      protocol: string | null;
       phase: Game["phase"];
       round: number;
       rounds: number;
@@ -673,6 +693,7 @@ export class EvolutionService {
       count: number;
     }>(
       `SELECT code,title,created_at,game->'settings'->>'mode' AS mode,
+        game->'settings'->>'memoProtocol' AS protocol,
         game->>'phase' AS phase,(game->>'pausedAt' IS NOT NULL) AS paused,
         COALESCE((game->'round'->>'number')::int,0) AS round,
         (game->'settings'->>'rounds')::int AS rounds,
@@ -686,7 +707,7 @@ export class EvolutionService {
       title: r.title,
       createdAt: Number(r.created_at),
       experiment: "evolution",
-      variant: r.mode,
+      variant: r.protocol === H5_PROTOCOL ? H5_PROTOCOL : r.mode,
       phase: r.paused
         ? "paused"
         : r.phase === "playing"
@@ -699,7 +720,8 @@ export class EvolutionService {
       round: r.round,
       totalRounds: r.rounds,
       participantCount: r.count,
-      capacity: MAX_ROOM_PARTICIPANTS,
+      capacity:
+        r.protocol === H5_PROTOCOL ? MEMO_PARTICIPANTS : MAX_ROOM_PARTICIPANTS,
       flexibleAdmission: true,
       marketCount: r.groups,
       institutions: [],

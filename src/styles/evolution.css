@@ -951,3 +951,75 @@
     padding-inline: 4px;
   }
 }
+
+.ev-h5-result {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+}
+.ev-h5-ring {
+  display: block;
+  width: 100%;
+}
+.ev-h5-track {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 3;
+}
+.ev-h5-count {
+  display: grid;
+  gap: 0.25rem;
+}
+.ev-h5-count span {
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+.ev-h5-count strong {
+  color: var(--accent);
+  font-size: 1.5rem;
+}
+.ev-h5-legend {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+.ev-h5-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  white-space: nowrap;
+}
+.ev-h5-seat,
+.ev-h5-legend span {
+  --seat-color: var(--line);
+}
+.ev-h5-feedback [data-choice="0"] {
+  --seat-color: var(--buy);
+}
+.ev-h5-feedback [data-choice="1"] {
+  --seat-color: var(--sell);
+}
+.ev-h5-seat {
+  fill: var(--seat-color);
+}
+.ev-h5-seat[data-self="true"] {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.ev-h5-legend span::before {
+  content: "";
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: var(--seat-color);
+}
+.ev-h5-legend span[data-self="true"]::before {
+  border: 2px solid var(--accent);
+}
+@media (max-width: 380px) {
+  .ev-h5-result {
+    grid-template-columns: 5rem minmax(0, 1fr);
+    gap: 0.5rem;
+  }
+}

@@ -53,6 +53,37 @@ const messages = {
     "Hare share (up to 20 rounds)",
   ],
   memoEligibleCount: ["見直し対象", "有改选资格", "Eligible"],
+  h5Title: ["鹿兎：近傍対戦", "鹿兔：邻居对战", "Stag Hunt: Neighbors"],
+  h5Description: [
+    "円環上の左右5人ずつの前回の選択を表示します。",
+    "查看环上左右各五位邻居的上轮选择。",
+    "See the previous choices of five neighbors on each side of the ring.",
+  ],
+  h5Settings: [
+    "150人・120ラウンド・選択5秒＋結果表示1秒",
+    "150 人 · 120 轮 · 作答 5 秒＋反馈 1 秒",
+    "150 seats · 120 rounds · 5 s to choose + 1 s feedback",
+  ],
+  h5Pending: [
+    "選択のみ記録します。利得の計算時点は確認中です。",
+    "目前只记录选择。收益的计分时点待教授确认。",
+    "Choices are recorded. The payoff timing is pending confirmation.",
+  ],
+  h5Fixed: [
+    "最初の10ラウンドは「{choice}」に固定されます。",
+    "前 10 轮，你的选择固定为「{choice}」。",
+    "Your choice is fixed at {choice} for rounds 1–10.",
+  ],
+  h5PriorHare: ["前回の近傍の兎", "上轮邻居选兔", "Neighbor Hare count"],
+  h5You: ["自分", "你", "You"],
+  h5Left: ["左の5人", "左侧五位", "Five to the left"],
+  h5Right: ["右の5人", "右侧五位", "Five to the right"],
+  h5Finalized: ["選択確定人数", "已确定选择", "Finalized choices"],
+  h5Revision: [
+    "第11ラウンドから、毎回30人が無作為に選び直せます。選び直せない場合や時間切れの場合は、前回の選択を引き継ぎます。",
+    "从第 11 轮开始，每轮随机抽出 30 人改选。未获资格或超时则沿用上轮选择。",
+    "From round 11, 30 randomly selected participants may revise each round. Everyone else and anyone who times out keeps their previous choice.",
+  ],
   memoSettledCount: ["精算人数", "已结算人数", "Settled players"],
   memoEligible: [
     "今回は選択を変えられます。",

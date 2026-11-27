@@ -1,4 +1,5 @@
 import { DemoEntryLink } from "@/components/demo-entry-link";
+import { H5_EXPERIMENT } from "@/lib/demo-navigation";
 import { TeacherHub } from "@/components/teacher-hub";
 import { EvolutionSetup } from "@/experiments/evolution/components/setup";
 import { ExperimentText } from "@/components/experiment-language";
@@ -82,7 +83,8 @@ export default async function Teacher({
       !returnRoom &&
       (experiment === "emh" ||
         experiment === "judgment" ||
-        experiment === "evolution");
+        experiment === "evolution" ||
+        experiment === H5_EXPERIMENT);
     return (
       <>
         <Header
@@ -114,8 +116,12 @@ export default async function Teacher({
             <div
               className={`teacher-hub-main teacher-entry-content${experiment === "judgment" ? " judgment-entry-content" : ""}`}
             >
-              {experiment === "evolution" ? (
-                <EvolutionSetup ready={status.ready} />
+              {experiment === "evolution" || experiment === H5_EXPERIMENT ? (
+                <EvolutionSetup
+                  key={experiment}
+                  ready={status.ready}
+                  neighbors={experiment === H5_EXPERIMENT}
+                />
               ) : experiment === "judgment" ? (
                 <JudgmentCreateForm status={status} studies={studies} />
               ) : (
