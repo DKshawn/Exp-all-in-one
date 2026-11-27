@@ -6,10 +6,19 @@ import { defaults } from "../../src/experiments/evolution/settings";
 import type { View } from "../../src/experiments/evolution/views";
 
 async function setDemand(page: Page, value: number) {
-  const slider = page.getByRole("slider");
+  const slider = page.getByRole("slider", { name: "Demand" });
+  await expect(slider).toBeFocused();
+  await expect(slider).toHaveAttribute("aria-valuetext", "Not selected");
+  await slider.press("End");
+  await expect(slider).toHaveValue("1");
+  await slider.press("ArrowLeft");
+  await expect(slider).toHaveValue("0.999");
   await slider.fill(String(value));
-  await expect(slider).toBeVisible(); // Editing alone must not submit.
-  await slider.press("Enter");
+  await expect(slider).toHaveValue(String(value));
+  await expect(
+    page.getByRole("button", { name: "Submit demand" }),
+  ).toBeEnabled();
+  await page.keyboard.press("Enter");
 }
 
 async function clockPosition(page: Page, name?: string) {
@@ -39,6 +48,89 @@ async function fit(page: Page) {
       );
     expect(overflow, "Control overflow at " + width).toEqual([]);
   }
+}
+
+for (const demo of [true, false]) {
+  test(`SEG ${demo ? "demo" : "formal"} setup describes numeric ranges and field errors`, async ({
+    page,
+  }) => {
+    await signInTeacher(page.request);
+    await page.goto(demo ? "/evolution/demo" : "/teacher?experiment=evolution");
+    const form = page.locator(".ev-setup");
+    const language = page.locator("header select").first();
+    await language.selectOption("en");
+
+    for (const [field, range] of [
+      ["Independent groups", "1–32"],
+      ["Rounds", "1–10,000"],
+      ["Decision time (s)", "5–600"],
+      ["Feedback time (s)", "3–120"],
+      ...(demo ? [["Demo participants", "2–5,000"]] : []),
+    ]) {
+      await expect(
+        form.getByRole("spinbutton", { name: field, exact: true }),
+      ).toHaveAccessibleDescription(`Input range: ${range}`);
+      await expect(
+        form.getByText(`Input range: ${range}`, { exact: true }),
+      ).toHaveCSS("color", "rgb(106, 114, 135)");
+    }
+
+    const feedback = form.getByRole("spinbutton", {
+      name: "Feedback time (s)",
+      exact: true,
+    });
+    const alert = form.getByRole("alert");
+    await feedback.fill("2");
+    await expect(alert).toHaveCount(0);
+    await feedback.press("Tab");
+    await expect(alert).toHaveText("Feedback time (s) must be at least 3.");
+    await expect(feedback).toHaveAttribute("aria-invalid", "true");
+    await feedback.fill("121");
+    await feedback.press("Enter");
+    await expect(alert).toHaveText("Feedback time (s) must be at most 120.");
+    await expect(feedback).toBeFocused();
+    await language.selectOption("ja");
+    await expect(alert).toHaveText(
+      "「結果表示（秒）」は120以下にしてください。",
+    );
+    await language.selectOption("zh-CN");
+    await expect(alert).toHaveText("「反馈时间（秒）」不能大于 120。");
+    await form
+      .getByRole("spinbutton", { name: "反馈时间（秒）", exact: true })
+      .fill("3");
+    await expect(alert).toHaveCount(0);
+
+    await language.selectOption("en");
+    const rounds = form.getByRole("spinbutton", {
+      name: "Rounds",
+      exact: true,
+    });
+    await rounds.fill("1.5");
+    await rounds.press("Tab");
+    await expect(alert).toHaveText("Rounds must be a whole number.");
+    await rounds.fill("");
+    await rounds.press("Tab");
+    await expect(alert).toHaveText("Enter a value for Rounds.");
+    await rounds.fill("10000");
+    await expect(alert).toHaveCount(0);
+
+    await expect(
+      form.getByText("Input format: integer, decimal, or fraction"),
+    ).toBeVisible();
+    await form.getByRole("combobox").first().selectOption("demand");
+    const step = form.getByRole("combobox", {
+      name: "Demand step",
+      exact: true,
+    });
+    await expect(step).toHaveAccessibleDescription("");
+    await expect(step.locator("option")).toHaveText([
+      "0.1",
+      "0.01",
+      "0.005",
+      "0.001",
+    ]);
+    await fit(page);
+  });
 }
 
 test("a settled SEG pair waits for room-wide feedback and the next round", async ({
@@ -169,7 +261,114 @@ test("a settled SEG pair waits for room-wide feedback and the next round", async
   }
 });
 
-test("1000-round Nash demo submits a demand on phone tap", async ({
+test("Nash demo automatically submits the latest slider value at the cutoff", async ({
+  page,
+}) => {
+  await signInTeacher(page.request);
+  await page.clock.install();
+  await page.goto("/evolution/demo");
+  await page.getByRole("banner").getByLabel("表示言語").selectOption("en");
+  await page
+    .getByRole("combobox", { name: "Game", exact: true })
+    .selectOption("demand");
+  await page.getByLabel("Decision time (s)").fill("5");
+  await page.getByRole("button", { name: "Create demo" }).click();
+  await page.getByRole("button", { name: "Close admission" }).click();
+  await page.getByRole("button", { name: "Confirm and start" }).click();
+  await page.getByRole("button", { name: "View student screen" }).click();
+  const slider = page.getByRole("slider", { name: "Demand" });
+  await slider.press("Home");
+  await slider.press("ArrowRight");
+  await slider.press("ArrowRight");
+  await slider.press("ArrowRight");
+  await expect(slider).toHaveValue("0.3");
+  await expect(
+    page.getByRole("heading", { name: "Submitted · waiting" }),
+  ).toHaveCount(0);
+  await page.clock.fastForward(6_000);
+  await expect(page.locator(".ev-payoffs dd").first()).toHaveText("0.3");
+  await expect(page.getByRole("slider")).toHaveCount(0);
+});
+
+test("formal Nash saves each slider draft and submits it at the server cutoff", async ({
+  page,
+  browser,
+  baseURL,
+}) => {
+  await signInTeacher(page.request);
+  const created = await page.request.post("/api/evolution/rooms", {
+    data: {
+      title: "Nash deadline",
+      password: "review-password",
+      settings: { ...defaults("demand"), seconds: 7, rounds: 1 },
+    },
+  });
+  await expect(created).toBeOK();
+  const { code } = await created.json();
+  const route = `/api/rooms/${code}/evolution`;
+  const contexts = await Promise.all([
+    browser.newContext({ baseURL }),
+    browser.newContext({ baseURL }),
+  ]);
+  try {
+    const students = await Promise.all(
+      contexts.map(async (context, index) => {
+        await expect(
+          await context.request.post(`/api/rooms/${code}/join`, {
+            data: { nickname: `Nash ${index}`, pin: "1234" },
+          }),
+        ).toBeOK();
+        const screen = await context.newPage();
+        await screen.goto(`/room/${code}`);
+        await screen
+          .getByRole("banner")
+          .getByLabel("表示言語")
+          .selectOption("en");
+        return screen;
+      }),
+    );
+    for (const kind of ["close", "start"])
+      await expect(
+        await page.request.post(route + "?session=teacher", { data: { kind } }),
+      ).toBeOK();
+    await Promise.all(
+      students.map(async (screen, index) => {
+        const slider = screen.getByRole("slider", { name: "Demand" });
+        const saved = screen.waitForResponse(
+          (response) =>
+            response.url().includes(route) &&
+            response.request().method() === "POST",
+        );
+        await slider.fill(index === 0 ? "0.4" : "0.6");
+        expect(await (await saved).json()).toEqual({ saved: true });
+        await expect(
+          screen.getByRole("heading", { name: "Submitted · waiting" }),
+        ).toHaveCount(0);
+      }),
+    );
+    await students[0].reload();
+    await expect(
+      students[0].getByRole("slider", { name: "Demand" }),
+    ).toHaveValue("0.4");
+    await expect(students[0].locator(".ev-payoffs dd").first()).toHaveText(
+      "0.4",
+    );
+    await expect(students[1].locator(".ev-payoffs dd").first()).toHaveText(
+      "0.6",
+    );
+    const exported = await page.request.get(route + "/export?format=json");
+    await expect(exported).toBeOK();
+    expect(
+      (await exported.json()).rows.map(
+        (row: { submissionSource: string }) => row.submissionSource,
+      ),
+    ).toEqual(["deadline", "deadline"]);
+  } finally {
+    await Promise.all(contexts.map((context) => context.close()));
+  }
+});
+
+test("1000-round Nash demo starts blank and confirms a touch selection", async ({
   browser,
   baseURL,
 }, info) => {
@@ -200,10 +399,18 @@ test("1000-round Nash demo submits a demand on phone tap", async ({
     );
     await expect(page.locator(".round-step")).toHaveCount(0);
     const slider = page.getByRole("slider", { name: "Demand" });
-    await expect(slider).toBeVisible();
+    const submit = page.getByRole("button", { name: "Submit demand" });
+    await expect(page.getByRole("spinbutton", { name: "Demand" })).toHaveCount(
+      0,
+    );
     await expect(slider).toHaveAttribute("step", "0.1");
-    await slider.press("ArrowRight");
-    await expect(slider).toHaveValue("0.6");
+    await expect(slider).toHaveAttribute("aria-valuetext", "Not selected");
+    await expect(slider).toHaveCSS("--thumb-opacity", "0");
+    await expect(submit).toBeDisabled();
+    await slider.press("Enter");
+    await expect(slider).toHaveAttribute("aria-valuetext", "Not selected");
+    await expect(submit).toBeDisabled();
+    await page.screenshot({ path: info.outputPath("nash-blank-phone.png") });
     await page.setViewportSize({ width: 320, height: 844 });
     expect(
       await page
@@ -216,13 +423,28 @@ test("1000-round Nash demo submits a demand on phone tap", async ({
       ),
     ).toBe(true);
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.screenshot({ path: info.outputPath("long-nash-phone.png") });
     const { width, height } = (await slider.boundingBox())!;
+    await slider.tap({ position: { x: 1, y: Math.floor(height / 2) } });
+    await expect(slider).toHaveAttribute("aria-valuetext", "0");
+    await expect(submit).toBeEnabled();
     await slider.tap({
       position: { x: Math.floor(width * 0.3), y: Math.floor(height / 2) },
     });
+    await expect(slider).toHaveValue("0.3");
+    await expect(slider).toHaveCSS("--thumb-opacity", "1");
+    await slider.press("ArrowRight");
+    await expect(slider).toHaveValue("0.4");
+    await expect(page.locator(".ev-demand-current span")).toHaveText("0.4");
+    await expect(slider).toHaveCSS("outline-style", "solid");
+    await page.getByRole("button", { name: "Pause", exact: true }).click();
+    await expect(submit).toBeDisabled();
+    await page.getByRole("button", { name: "Resume", exact: true }).click();
+    await expect(slider).toHaveValue("0.4");
+    await expect(submit).toBeEnabled();
+    await page.screenshot({ path: info.outputPath("nash-selected-phone.png") });
+    await submit.tap();
     await expect(slider).toHaveCount(0);
-    await expect(page.locator(".ev-payoffs dd").first()).toHaveText("0.3");
+    await expect(page.locator(".ev-payoffs dd").first()).toHaveText("0.4");
   } finally {
     await context.close();
   }
@@ -392,7 +614,7 @@ for (const mode of ["coordination", "demand"] as const)
         await expectEndButton(page, "End experiment");
         await expect(
           mode === "demand"
-            ? players[0].getByRole("slider")
+            ? players[0].getByRole("slider", { name: "Demand" })
             : players[0].getByRole("button", { name: "Pine", exact: true }),
         ).toBeVisible();
         await expect(
@@ -661,17 +883,15 @@ for (const mode of ["coordination", "demand"] as const)
       expect(await clockPosition(page, "剩余")).toEqual(teacherClock);
       const time = await page.getByRole("timer").innerText();
       await student.click();
-      const resumeColor = await resume.evaluate(
-        (button) => getComputedStyle(button).backgroundColor,
-      );
-      await expect(
-        page.locator('.round-strip [aria-current="step"] > span'),
-      ).toHaveCSS("background-color", resumeColor);
+      const roundColor = await page
+        .locator('.round-strip [aria-current="step"] > span')
+        .evaluate((step) => getComputedStyle(step).backgroundColor);
+      await expect(resume).toHaveCSS("background-color", roundColor);
       await page.clock.fastForward(60_000);
       await expect(page.getByRole("timer")).toHaveText(time);
       const decision =
         mode === "demand"
-          ? page.getByRole("slider")
+          ? page.getByRole("slider", { name: "需求额" })
           : page.getByRole("button", { name: "鹿", exact: true });
       await expect(decision).toBeDisabled();
       await expect(fast).toBeDisabled();
@@ -698,14 +918,28 @@ for (const mode of ["coordination", "demand"] as const)
       const studentClock = await clockPosition(page, "剩余");
       if (mode === "demand") {
         const box = (await decision.boundingBox())!;
-        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-        await page.mouse.down();
-        await page.mouse.move(box.x + box.width * 0.7, box.y + box.height / 2, {
-          steps: 5,
+        await decision.click({
+          position: { x: box.width * 0.6, y: box.height / 2 },
         });
-        await expect(decision).toBeVisible();
-        expect(Number(await decision.inputValue())).toBeGreaterThan(0.5);
+        const slider = page.getByRole("slider");
+        await expect(slider).toHaveValue("0.6");
+        const range = (await slider.boundingBox())!;
+        await page.mouse.move(
+          range.x + range.width * 0.6,
+          range.y + range.height / 2,
+        );
+        await page.mouse.down();
+        await page.mouse.move(
+          range.x + range.width * 0.7,
+          range.y + range.height / 2,
+          {
+            steps: 5,
+          },
+        );
         await page.mouse.up();
+        await expect(slider).toBeVisible();
+        expect(Number(await slider.inputValue())).toBeGreaterThan(0.6);
+        await page.keyboard.press("Enter");
       } else await decision.click();
       await expect(
         page.getByRole("heading", { name: "轮间反馈" }),
@@ -736,6 +970,10 @@ for (const mode of ["coordination", "demand"] as const)
       await resume.click();
       await page.clock.fastForward(9_000);
       await expect(page.locator(".round-step.active")).toHaveText("2");
+      if (mode === "demand")
+        await expect(
+          page.getByRole("slider", { name: "需求额" }),
+        ).toHaveAttribute("aria-valuetext", "未选择");
       for (let i = 0; i < 10; i++)
         await page.getByRole("button", { name: "快进 30 秒" }).click();
       await fit(page);

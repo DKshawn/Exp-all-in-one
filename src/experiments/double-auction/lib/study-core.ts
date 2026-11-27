@@ -350,12 +350,14 @@ export function createStudy(
     })),
   };
 }
-export const marketFor = (room: Room, p: Participant) =>
-  p.seat < 0
-    ? room.study!.markets[0]
-    : room.study!.markets.find(
-        (m) => m.id === studyMarketId(room.config, p.seat),
-      )!;
+export const marketFor = (room: Room, p: Participant) => {
+  const markets = room.study!.markets;
+  if (p.seat < 0) return markets[0];
+  const id = studyMarketId(room.config, p.seat);
+  return markets[id - 1]?.id === id
+    ? markets[id - 1]
+    : markets.find((m) => m.id === id)!;
+};
 export const marketRound = (room: Room, market: StudyMarket) =>
   market.round ?? market.periods.at(-1)?.round ?? room.round;
 export const institutionFor = (room: Room, market: StudyMarket) =>

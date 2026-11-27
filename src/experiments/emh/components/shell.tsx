@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { ChartNoAxesCombined } from "lucide-react";
-import { DemoModeBadge } from "@/components/demo-mode-badge";
-import { DemoExitLink } from "@/components/demo-exit-link";
-import { DEMO_SELECTION_HREF, DEMO_TEACHER_HREFS } from "@/lib/demo-navigation";
+import { ExperimentText } from "@/components/experiment-language";
+import { Header } from "@/components/shell";
+import { DEMO_TEACHER_HREFS } from "@/lib/demo-navigation";
 
 export function Shell({
   children,
@@ -19,45 +19,34 @@ export function Shell({
 }) {
   return (
     <div className="emh-app">
-      <header className={`site-header ${room ? "compact" : ""}`}>
-        <div className="header-inner">
-          <div className="header-left">
-            <Link
-              href={demo ? DEMO_SELECTION_HREF : "/"}
-              className="brand"
-              aria-label={demo ? "市場実験室 デモの実験選択" : undefined}
-              target={demo ? "_top" : undefined}
-            >
-              <span className="brand-mark">
-                <ChartNoAxesCombined size={22} strokeWidth={1.7} />
-              </span>
-              市場実験室
-            </Link>
-            {demo && <DemoModeBadge />}
-            {leading}
-          </div>
-          <nav aria-label="メインナビゲーション">
-            {demo && <DemoExitLink href={DEMO_TEACHER_HREFS.emh} />}
-            {!room && (
-              <>
-                <Link className="button secondary small-button" href="/">
-                  参加する
-                </Link>
-                <Link className="button secondary small-button" href="/teacher">
-                  教員
-                </Link>
-              </>
-            )}
-            <Link
-              className="button secondary small-button"
-              href="/emh/guide"
-              target={room ? "_blank" : undefined}
-            >
-              ルール{room && <span className="sr-only">（新しいタブ）</span>}
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <Header
+        className={room ? "compact" : undefined}
+        brandIcon={<ChartNoAxesCombined size={22} strokeWidth={1.7} />}
+        demoLabel={demo ? "DEMOモード" : undefined}
+        demoExitHref={DEMO_TEACHER_HREFS.emh}
+        leading={leading}
+      >
+        <nav aria-label="メインナビゲーション">
+          {!room && (
+            <>
+              <Link className="button secondary small-button" href="/">
+                <ExperimentText ja="参加する" zh="参加" en="Join" />
+              </Link>
+              <Link className="button secondary small-button" href="/teacher">
+                <ExperimentText ja="教員" zh="教师" en="Teacher" />
+              </Link>
+            </>
+          )}
+          <Link
+            className="button secondary small-button"
+            href="/emh/guide"
+            target={room ? "_blank" : undefined}
+          >
+            <ExperimentText ja="ルール" zh="规则" en="Rules" />
+            {room && <span className="sr-only">（新しいタブ）</span>}
+          </Link>
+        </nav>
+      </Header>
       <main className={wide ? "container wide" : "container"}>{children}</main>
       <footer className="site-footer">
         <span>実験経済学</span>

@@ -1,6 +1,147 @@
 import { choices, type Settings } from "./settings";
-export type Lang = "ja" | "zh-CN" | "en";
+import type { UiLanguage } from "@/lib/ui-language";
+export type Lang = UiLanguage;
 const messages = {
+  memo: ["鹿兎・研究版 v3", "鹿兔研究版 v3", "Stag Hunt v3"],
+  memoOrder: ["ブロック順", "区块顺序", "Block order"],
+  memoInitial: [
+    "開始条件の割当",
+    "初始条件分配",
+    "Starting condition allocation",
+  ],
+  memoDeer: ["大群は全員が鹿", "大组全鹿", "All stag in large group"],
+  memoHare: ["大群は全員が兎", "大组全兔", "All hare in large group"],
+  memoSettings: [
+    "150人・120ラウンド×3・結果表示1秒",
+    "150 人，120 轮 × 3，反馈 1 秒",
+    "150 people · 120 rounds × 3 · 1 s feedback",
+  ],
+  memoAnswerTime: ["回答時間（秒）", "作答时间（秒）", "Decision time (s)"],
+  memoAnswerRequired: [
+    "回答時間を入力してください。",
+    "请输入作答时间。",
+    "Enter a decision time.",
+  ],
+  memoAnswerNumber: [
+    "回答時間は秒数を数値で入力してください。",
+    "请用数字输入作答时间（秒）。",
+    "Enter the decision time as a number of seconds.",
+  ],
+  memoAnswerPositive: [
+    "回答時間は0秒より長くしてください。",
+    "作答时间必须大于 0 秒。",
+    "Decision time must be greater than zero.",
+  ],
+  memoAnswerPrecision: [
+    "この回答時間は正確に計時できません。ミリ秒単位で、上限を超えない値を入力してください。",
+    "系统无法准确计时。请输入可用整毫秒表示且在范围内的时长。",
+    "This duration cannot be timed exactly. Enter a whole number of milliseconds within range, expressed in seconds.",
+  ],
+  memoReady: [
+    "参加者150人で締め切れます。",
+    "满 150 人后才可截止报名。",
+    "Close admission when 150 participants have joined.",
+  ],
+  memoBlock: ["ブロック", "区块", "Block"],
+  memoNew: [
+    "新しいグループです。",
+    "这是新分配的群体。",
+    "This is a new group.",
+  ],
+  memoLocked: ["選択固定中", "选择锁定中", "Choices locked"],
+  memoForced: [
+    "最初の10回はグループ全員が「{choice}」に固定。",
+    "前 10 轮，本组全员固定选{choice}。",
+    "Your whole group plays {choice} in rounds 1–10.",
+  ],
+  memoChoiceClosed: ["回答終了", "本轮作答已截止", "Decisions closed"],
+  memoPayoffTable: [
+    "相手1人あたりの点数",
+    "对单个对手的得分",
+    "Points against one opponent",
+  ],
+  memoRoundPay: [
+    "自分以外のグループ全員に対する点数の平均が、今回の得点です。",
+    "本轮得分取你与组内其他所有成员分别计算的得分的平均值。",
+    "Your round score averages your points against all other group members.",
+  ],
+  memoOpponent: ["相手が{choice}", "对手选{choice}", "vs. {choice}"],
+  memoResult: ["前回の結果", "上轮结果", "Previous round"],
+  memoEarned: ["今回の得点", "本轮收益", "Payoff"],
+  memoTrend: [
+    "兎の割合（最大20回）",
+    "选兔比例（最多 20 轮）",
+    "Hare share (up to 20 rounds)",
+  ],
+  memoEligibleCount: ["見直し対象", "有改选资格", "Eligible"],
+  h5Title: ["鹿兎：近傍対戦", "鹿兔：邻居对战", "Stag Hunt: Neighbors"],
+  h5Description: [
+    "円環上の左右5人ずつの前回の選択を表示します。",
+    "查看环上左右各五位邻居的上轮选择。",
+    "See the previous choices of five neighbors on each side of the ring.",
+  ],
+  h5Settings: [
+    "150人・120ラウンド・選択5秒＋結果表示1秒",
+    "150 人 · 120 轮 · 作答 5 秒＋反馈 1 秒",
+    "150 seats · 120 rounds · 5 s to choose + 1 s feedback",
+  ],
+  h5Pending: [
+    "選択のみ記録します。利得の計算時点は確認中です。",
+    "目前只记录选择。收益的计分时点待教授确认。",
+    "Choices are recorded. The payoff timing is pending confirmation.",
+  ],
+  h5Fixed: [
+    "最初の10ラウンドは「{choice}」に固定されます。",
+    "前 10 轮，你的选择固定为「{choice}」。",
+    "Your choice is fixed at {choice} for rounds 1–10.",
+  ],
+  h5PriorHare: ["前回の近傍の兎", "上轮邻居选兔", "Neighbor Hare count"],
+  h5You: ["自分", "你", "You"],
+  h5Left: ["左の5人", "左侧五位", "Five to the left"],
+  h5Right: ["右の5人", "右侧五位", "Five to the right"],
+  h5Finalized: ["選択確定人数", "已确定选择", "Finalized choices"],
+  h5Revision: [
+    "第11ラウンドから、毎回30人が無作為に選び直せます。選び直せない場合や時間切れの場合は、前回の選択を引き継ぎます。",
+    "从第 11 轮开始，每轮随机抽出 30 人改选。未获资格或超时则沿用上轮选择。",
+    "From round 11, 30 randomly selected participants may revise each round. Everyone else and anyone who times out keeps their previous choice.",
+  ],
+  memoSettledCount: ["精算人数", "已结算人数", "Settled players"],
+  memoEligible: [
+    "今回は選択を変えられます。",
+    "本轮可以改选。",
+    "You can revise your choice this round.",
+  ],
+  memoCarry: [
+    "対象外のため、前回の選択を維持します。",
+    "本轮未获改选资格，沿用上轮选择。",
+    "Not selected. Previous choice carries over.",
+  ],
+  memoTimeout: [
+    "時間切れ。前回の選択を維持しました。",
+    "超时，已沿用上轮选择。",
+    "Timed out. Previous choice carried over.",
+  ],
+  memoSubmitted: [
+    "選択を受け付けました。",
+    "已收到你的选择。",
+    "Choice received.",
+  ],
+  memoFeedback: ["グループ内の兎の割合", "组选兔比例", "Group hare share"],
+  memoNoFeedback: [
+    "このブロックの結果はまだありません。",
+    "本区块还没有上一轮结果。",
+    "No previous result in this block yet.",
+  ],
+  memoRule: [
+    "各ラウンドで使う選択は1人につき1つです。その選択を使い、同じグループの自分以外の全員について、相手ごとに点数を計算します。兎を選ぶと、相手が鹿でも兎でも3点。鹿を選ぶと、相手が鹿なら4点、兎なら0点です。相手ごとの点数を平均したものが、そのラウンドの得点です。",
+    "每人每轮只用一个选择结算。系统用这个选择，分别与你所在组内的其他每个人算分。你选兔，无论对方选鹿还是兔，都得3分；你选鹿，对方选鹿得4分，对方选兔得0分。把与各人的得分取平均，就是你的本轮得分。",
+    "Each player has one choice per round. The system scores that choice against each other member of your group. If you chose Hare, you get 3 points against either choice. If you chose Stag, you get 4 against Stag and 0 against Hare. Your score for the round is the average of those points.",
+  ],
+  memoRevisionRule: [
+    "最初の10ラウンドは選択が固定されます。11ラウンド目以降は、毎ラウンド、各グループの参加者の中から20%（10人グループなら2人）を無作為に抽選します。当選した人だけが選択を変更できます。変更は任意です。当選しなかった人や、時間内に回答しなかった人は、前のラウンドの選択を引き継ぎます。",
+    "前10轮选择固定。从第11轮起，系统每轮从每组参与者中随机抽出20%（例如10人组抽2人）。只有抽中的人可以改选，也可以保持原选项。没抽中或未在时限内作答的人沿用上轮选择。",
+    "Choices are fixed for the first 10 rounds. From round 11, the system randomly selects 20% of the participants in each group each round (for example, 2 people in a group of 10). Only those selected can change their choice, and they may keep it instead. Anyone not selected or who runs out of time keeps their previous choice.",
+  ],
   title: ["確率的進化ゲーム", "随机演化博弈", "Stochastic Evolutionary Games"],
   language: ["表示言語", "显示语言", "Language"],
   name: ["実験名", "实验名称", "Room title"],
@@ -11,6 +152,32 @@ const messages = {
   rounds: ["ラウンド数", "轮数", "Rounds"],
   seconds: ["回答時間（秒）", "作答时限（秒）", "Decision time (s)"],
   feedbackSeconds: ["結果表示（秒）", "反馈时间（秒）", "Feedback time (s)"],
+  inputRange: ["入力範囲：", "输入范围：", "Input range: "],
+  numberRequired: [
+    "「{field}」を入力してください。",
+    "请输入「{field}」。",
+    "Enter a value for {field}.",
+  ],
+  numberInteger: [
+    "「{field}」は整数で入力してください。",
+    "「{field}」必须是整数。",
+    "{field} must be a whole number.",
+  ],
+  numberTooSmall: [
+    "「{field}」は{limit}以上にしてください。",
+    "「{field}」不能小于 {limit}。",
+    "{field} must be at least {limit}.",
+  ],
+  numberTooLarge: [
+    "「{field}」は{limit}以下にしてください。",
+    "「{field}」不能大于 {limit}。",
+    "{field} must be at most {limit}.",
+  ],
+  payoffFormat: [
+    "入力形式：整数・小数・分数",
+    "输入格式：整数、小数或分数",
+    "Input format: integer, decimal, or fraction",
+  ],
   names: ["戦略名", "策略名称", "Strategy names"],
   matrix: ["利得表", "收益矩阵", "Payoff matrix"],
   matrixRule: [
@@ -24,10 +191,17 @@ const messages = {
   you: ["自分", "我", "You"],
   peer: ["相手", "对方", "Peer"],
   matrixResult: ["今回の結果", "本轮结果", "Round outcome"],
+  demandUnselected: ["未選択", "未选择", "Not selected"],
+  confirmDemand: ["回答を確定", "确认提交", "Submit demand"],
+  draftSaveFailed: [
+    "選択値を保存できませんでした。選び直すか、回答を確定してください。",
+    "所选值保存失败。请重新调整滑块或手动确认提交。",
+    "Couldn't save this value. Adjust the slider again or submit it now.",
+  ],
   sliderRule: [
-    "{step}刻み。指を離すと確定。キーボードでは矢印キーで調整し、Enterで確定します。",
-    "步长为 {step}。松手即提交，也可用方向键调整，按 Enter 提交。",
-    "Step size: {step}. Release to submit. With a keyboard, adjust with the arrow keys and press Enter to submit.",
+    "{step}刻み。スライダーで選び、Enterまたはボタンで確定できます。時間切れになると保存済みの選択値が提出されます。",
+    "步长为 {step}。可用 Enter 或确认按钮提前提交。倒计时结束时，系统会提交最后保存的值。",
+    "Step size: {step}. Submit early with Enter or the button. When time runs out, your last saved value is submitted.",
   ],
   demandRule: [
     "要求額の合計が総額以下なら各自が要求額を得ます。超えた場合は双方の利得が0になります。",
@@ -132,6 +306,10 @@ const messages = {
   student: ["参加者", "参与者", "Participant"],
   demoSize: ["デモ参加者数", "演示人数", "Demo participants"],
   toStudent: ["学生画面を見る", "查看学生页面", "View student screen"],
+  memoToStudent: ["学生画面", "学生页面", "Student"],
+  memoToTeacher: ["教員画面", "教师页面", "Teacher"],
+  memoAdvance: ["30秒", "30 秒", "30 s"],
+  memoSetup: ["設定", "配置", "Setup"],
   toTeacher: ["教員画面を見る", "查看教师页面", "View teacher screen"],
   bots: ["模擬参加者", "模拟参与者", "Simulated participants"],
   pause: ["一時停止", "暂停", "Pause"],

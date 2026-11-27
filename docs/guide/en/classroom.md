@@ -8,7 +8,7 @@ Teachers can end the current experiment by confirming the red **実験を終了*
 
 In Stochastic Evolutionary Games, teachers and students each choose their own display language in the page header. Group count remains editable during admission. Close manually or start the 5–3600 second admission timer (default 60). Pause, resume or reset it as needed. When time expires, admission closes if every group can pair at least two people. Otherwise it stays open. Reopen before starting to admit more participants and draw a new allocation at the next cutoff. [Rules and data](evolution.md)
 
-New SEG rooms support up to 10,000 rounds. A coordination choice submits on click, and the controls and payoff matrix stay in place while the realized cell is highlighted. Nash demand uses a 0–1 slider with a configurable step (default 0.1), submitted on release or with Enter. Settled pairs see **Waiting for other pairs** while room-wide decisions remain open. **Next round in** counts down once feedback starts for the whole room. The countdown stays in place as the status changes.
+New SEG rooms support up to 10,000 rounds. A coordination choice submits on click, and the controls and payoff matrix stay in place while the realized cell is highlighted. Nash demand uses a 0–1 slider with a configurable step (default 0.1). Each round starts without a selected value. Click or tap the slider track or use the arrow keys to choose, and submit early with Enter or the button. At the cutoff, the last saved value submits automatically. A round without a selection is recorded as a timeout. Settled pairs see **Waiting for other pairs** while room-wide decisions remain open. **Next round in** counts down once feedback starts for the whole room. The countdown stays in place as the status changes.
 
 In EMH and Stochastic Evolutionary Games, teachers and students see completed rounds in bright green. The current round has a double ring, gold in demos and purple in formal rooms.
 
@@ -23,6 +23,8 @@ On experiment setup and re-entry pages, use **戻る** in the header to return t
 Judgement room creation places task cards beside the selection and create controls; on narrow screens controls appear above the cards. See the [Judgement guide](judgment.md) for language switching and controls during a run.
 
 In CDA and EMH, switch the order book between the list (一覧) and the bar chart (棒グラフ). Student views mark their own orders and omit other participant identifiers. Each experiment module keeps its own order and settlement rules.
+
+In formal setup or Demo, choose **Stag Hunt: Neighbors** in the Stochastic Evolutionary Games **Game** menu. Room management lists it under Stochastic Evolutionary Games. [Rules and data](evolution.md)
 
 ## 1. Choose an experiment and create a room
 
@@ -47,6 +49,8 @@ EMH supports initial securities, target market size, type ratios and period dura
 
 Students need the student entry, room code, and their own entry details. Do not share the teacher key or room teacher password.
 
+Use the globe icon at the top right of the header to choose Japanese, Chinese, or English. The browser shares the preference across teacher home, room management, and supported settings. Switching languages preserves your entries.
+
 ## 2. Share the entry and let students join
 
 In Double Auction, EMH and Stochastic Evolutionary Games, click **参加リンクをコピー** in the teacher's room and share the copied address with the class. During admission it opens the student entry with the six-character code filled in. If the browser blocks clipboard access, select the address shown and copy it manually.
@@ -58,6 +62,10 @@ Students open the link, check the code, enter a nickname and their own four-digi
 ![Student entry example: room code, nickname, four-digit PIN, and join button](../images/student-join.png)
 
 The student homepage is for joining a classroom with its room code. The teacher chooses the experiment and explains its rules. After joining, keep the page open, wait for the start, and follow the teacher’s explanation and the prompts on your own screen.
+
+Each formal room accepts up to 5,000 registrations. Once a room is full, registered students can still reenter with the same student ID or nickname and PIN. See the experiment guides for market and group sizes.
+
+Double Auction on this AI branch retains its separate 9,999-person limit.
 
 ## Admit AI students
 

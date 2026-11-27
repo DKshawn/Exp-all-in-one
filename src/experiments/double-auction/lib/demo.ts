@@ -409,7 +409,7 @@ export class DemoSession {
 
   private sendBot(bot: Participant, command: Command) {
     // Bots build valid commands from the current state, synchronously. They use
-    // the same validating engine without copying all 192 participants per order.
+    // the same validating engine without copying the entire room per order.
     this.applyCommand(this.room, bot, command, this.events);
   }
 

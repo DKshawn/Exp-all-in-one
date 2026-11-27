@@ -14,6 +14,7 @@ import {
   act,
   assignParticipants,
   advanceClock,
+  drawStates,
   phaseKey,
   unitKey,
   view,
@@ -22,14 +23,10 @@ import type { Action, Actor, Room } from "../types";
 import {
   advanceDemoTime,
   demoTraderValue,
-  makeDemo,
+  makeDemoMarkets,
   PRACTICE_EXP2_OPTIONS,
 } from "../demo-model";
-import {
-  DEFAULT_SETTINGS,
-  settingsSchema,
-  type EmhSettings,
-} from "../settings";
+import { settingsSchema, type EmhSettings } from "../settings";
 import { Shell } from "./shell";
 import { RoomDashboard } from "./room-dashboard";
 import { EmhCreateForm } from "./create-form";
@@ -40,12 +37,15 @@ import { Header } from "@/components/shell";
 import { StudentWaitingCard } from "@/components/student-waiting-card";
 import { DemoSelectionLink } from "@/components/demo-selection-link";
 import { DEMO_TEACHER_HREFS } from "@/lib/demo-navigation";
+import { useExperimentLanguage } from "@/components/experiment-language";
+import { translator } from "@/lib/ui-language";
 
-function bot(room: Room, now: number) {
+function bot(room: Room, now: number, reserveHuman = true) {
   if (room.status !== "trading" || room.pausedAt !== null) return;
+  const first = reserveHuman ? 1 : 0;
   const p =
     room.participants[
-      1 + Math.floor(Math.random() * (room.participants.length - 1))
+      first + Math.floor(Math.random() * (room.participants.length - first))
     ]!;
   const value = Math.round(demoTraderValue(room, p));
   const actor: Actor = { role: "student", participantId: p.id };
@@ -94,16 +94,15 @@ type Setup = {
   title: string;
   settings: EmhSettings;
   experiment: "exp1" | "exp2";
+  attendance?: number;
 };
 
 export function Demo() {
-  const [setup, setSetup] = useState<Setup>({
-    title: "資産市場実験 · デモ",
-    settings: structuredClone(DEFAULT_SETTINGS),
-    experiment: "exp1",
-  });
+  const language = useExperimentLanguage();
+  const t = translator(language);
+  const [setup, setSetup] = useState<Setup>();
   const [running, setRunning] = useState(false);
-  if (running)
+  if (running && setup)
     return (
       <DemoRoom
         initial={setup}
@@ -117,9 +116,10 @@ export function Demo() {
     <>
       <Header
         homeHref="/emh/demo"
-        demoLabel="DEMOモード"
+        demoLabel={t("DEMOモード", "演示模式", "Demo mode")}
+        demoExitLabel={t("DEMOモードを終了", "退出演示", "Exit demo")}
         demoExitHref={DEMO_TEACHER_HREFS.emh}
-        leading={<DemoSelectionLink />}
+        leading={<DemoSelectionLink label={t("戻る", "返回", "Back")} />}
       >
         <Link
           className="button secondary small-button"
@@ -127,19 +127,20 @@ export function Demo() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          画面サイズ別プレビュー
+          {t("画面サイズ別プレビュー", "屏幕尺寸预览", "Screen-size preview")}
         </Link>
       </Header>
-      <main className="narrow-main teacher-setup-main">
+      <main className="narrow-main teacher-setup-main" lang={language}>
         <div className="teacher-hub-main teacher-entry-content">
           <EmhCreateForm
             status={{ mode: "local", ready: true, keyRequired: false }}
-            initialTitle={setup.title}
-            initialSettings={setup.settings}
-            initialExperiment={setup.experiment}
+            initialTitle={setup?.title}
+            initialSettings={setup?.settings}
+            initialExperiment={setup?.experiment}
+            initialDemoAttendance={setup?.attendance}
             exp2Defaults={PRACTICE_EXP2_OPTIONS}
-            onCreateDemo={(title, settings, experiment) => {
-              setSetup({ title, settings, experiment });
+            onCreateDemo={(title, settings, experiment, attendance) => {
+              setSetup({ title, settings, experiment, attendance });
               setRunning(true);
             }}
           />
@@ -156,10 +157,19 @@ function DemoRoom({
   initial: Setup;
   onConfigure: (setup: Setup) => void;
 }) {
-  const [room, setRoom] = useState(() =>
-    makeDemo(initial.title, initial.settings, Date.now(), initial.experiment),
+  const t = translator(useExperimentLanguage());
+  const [rooms, setRooms] = useState(() =>
+    makeDemoMarkets(
+      initial.title,
+      initial.settings,
+      Date.now(),
+      initial.experiment,
+      initial.attendance,
+    ),
   );
-  const current = useRef(room);
+  const [market, setMarket] = useState(0);
+  const room = rooms[market];
+  const current = useRef(rooms);
   const [settings, setSettings] = useState(initial.settings);
   const [draft, setDraft] = useState<EmhSettings | null>(null);
   const [assigned, setAssigned] = useState(false);
@@ -169,7 +179,7 @@ function DemoRoom({
   const [error, setError] = useState("");
   const [now, setNow] = useState(room.createdAt);
   const offset = useRef(0);
-  const lastBot = useRef(room.createdAt);
+  const lastBot = useRef(rooms.map((entry) => entry.createdAt));
   const [controlsTarget] = useState<HTMLElement | null>(() => {
     if (typeof window === "undefined") return null;
     const id = window.frameElement?.getAttribute("data-demo-controls");
@@ -179,61 +189,103 @@ function DemoRoom({
   const dirty =
     draft !== null && JSON.stringify(draft) !== JSON.stringify(settings);
   const locked = assigned || room.status !== "lobby";
-  function replace(next: Room, at = Date.now()) {
+  function replace(next: Room[], at = Date.now()) {
     current.current = next;
-    setRoom(next);
+    setRooms(next);
     setNow(at);
     setError("");
   }
-  const simulationRunning =
-    room.status !== "lobby" && room.status !== "completed";
+  function rebuild(nextSettings: EmhSettings, at = Date.now()) {
+    const next = makeDemoMarkets(
+      initial.title,
+      nextSettings,
+      at,
+      initial.experiment,
+      initial.attendance,
+    );
+    setMarket(0);
+    lastBot.current = next.map(() => at);
+    replace(next, at);
+  }
+  const simulationRunning = rooms.some(
+    (entry) =>
+      entry.status !== "lobby" &&
+      entry.status !== "completed" &&
+      entry.pausedAt === null,
+  );
   useEffect(() => {
     if (!simulationRunning) return;
     const timer = setInterval(() => {
       const stored = current.current;
-      if (stored.status === "lobby" || stored.status === "completed") return;
       const at = Date.now() + offset.current;
       if (document.hidden) {
         hiddenAt.current ??= at;
         return;
       }
-      const next = structuredClone(stored);
-      if (hiddenAt.current !== null) {
-        const delta = at - hiddenAt.current;
-        if (next.pausedAt === null) {
-          if (next.countdownEndsAt != null) next.countdownEndsAt += delta;
-          if (next.periodEndsAt !== null) next.periodEndsAt += delta;
-          if (next.unitEndsAt !== null) next.unitEndsAt += delta;
-          if (next.breakEndsAt !== null) next.breakEndsAt += delta;
+      const hiddenDelta = hiddenAt.current === null ? 0 : at - hiddenAt.current;
+      hiddenAt.current = null;
+      const next = stored.map((entry, i) => {
+        if (
+          entry.status === "lobby" ||
+          entry.status === "completed" ||
+          entry.pausedAt !== null
+        )
+          return entry;
+        const updated = structuredClone(entry);
+        if (hiddenDelta) {
+          if (updated.countdownEndsAt != null)
+            updated.countdownEndsAt += hiddenDelta;
+          if (updated.periodEndsAt !== null)
+            updated.periodEndsAt += hiddenDelta;
+          if (updated.unitEndsAt !== null) updated.unitEndsAt += hiddenDelta;
+          if (updated.breakEndsAt !== null) updated.breakEndsAt += hiddenDelta;
         }
-        hiddenAt.current = null;
-      }
-      advanceClock(next, at);
-      if (at - lastBot.current >= 1800) {
-        bot(next, at);
-        lastBot.current = at;
-      }
+        advanceClock(updated, at);
+        if (at - lastBot.current[i] >= 1800) {
+          bot(updated, at, i === market);
+          lastBot.current[i] = at;
+        }
+        return updated;
+      });
       current.current = next;
-      setRoom(next);
+      setRooms(next);
       setNow(at);
     }, 500);
     return () => clearInterval(timer);
-  }, [simulationRunning]);
+  }, [simulationRunning, market]);
   async function run(action: Action, as?: Actor) {
-    const next = structuredClone(current.current);
     const at = Date.now() + offset.current;
     try {
       if (action.kind === "start" && !assigned)
         throw new Error("分け方を確定してください。");
-      act(
-        next,
+      const actor: Actor =
         as ??
-          (role === "teacher"
-            ? { role: "teacher" }
-            : { role: "student", participantId: "demo-0" }),
-        action,
-        at,
-      );
+        (role === "teacher"
+          ? { role: "teacher" }
+          : { role: "student", participantId: "demo-0" });
+      const all =
+        action.kind === "start" ||
+        action.kind === "pause" ||
+        action.kind === "resume" ||
+        action.kind === "finish";
+      const states = room.config.states;
+      const outcomes =
+        action.kind === "start" && states?.outcomes.length === 0
+          ? drawStates(states.prior, room.config.rounds ?? 6)
+          : undefined;
+      const next = current.current.map((entry, i) => {
+        if (i !== market && (!all || entry.status === "completed"))
+          return entry;
+        const updated = structuredClone(entry);
+        if (outcomes && updated.config.states)
+          updated.config.states.outcomes = [...outcomes];
+        const command =
+          i !== market && "expectedPhase" in action
+            ? { ...action, expectedPhase: phaseKey(updated) }
+            : action;
+        act(updated, actor, command, at);
+        return updated;
+      });
       replace(next, at);
     } catch (e) {
       setError(e instanceof Error ? e.message : "操作できませんでした。");
@@ -242,23 +294,42 @@ function DemoRoom({
   function advance(mode: "30-seconds" | "next-period") {
     const next = structuredClone(current.current);
     const at = Date.now() + offset.current;
-    const result = advanceDemoTime(next, at, lastBot.current, bot, mode);
+    const result = advanceDemoTime(
+      next[market],
+      at,
+      lastBot.current[market],
+      bot,
+      mode,
+    );
     offset.current += result.now - at;
-    lastBot.current = result.lastBotAt;
+    lastBot.current = next.map((entry, i) =>
+      i === market
+        ? result.lastBotAt
+        : advanceDemoTime(
+            entry,
+            at,
+            lastBot.current[i],
+            (updated, time) => bot(updated, time, false),
+            result.now,
+          ).lastBotAt,
+    );
     replace(next, result.now);
   }
   function resetDemo() {
     const at = Date.now();
     offset.current = 0;
-    lastBot.current = at;
     hiddenAt.current = null;
     setAssigned(false);
     setDraft(null);
     setConditionsOpen(false);
-    replace(makeDemo(room.config.title, settings, at, initial.experiment), at);
+    rebuild(settings, at);
   }
   const active = room.status === "trading" || room.status === "break";
   const teacher = role === "teacher";
+  const attendance = rooms.reduce(
+    (sum, entry) => sum + entry.participants.length,
+    0,
+  );
   const toolbar = (
     <section
       className="demo-panel emh-demo-panel"
@@ -278,6 +349,20 @@ function DemoRoom({
             {teacher ? <UserRound size={16} /> : <GraduationCap size={16} />}
             {teacher ? "学生画面を見る" : "教員画面を見る"}
           </button>
+          {rooms.length > 1 && (
+            <select
+              className="button secondary small-button"
+              aria-label={t("表示する市場", "查看市场", "View market")}
+              value={market}
+              onChange={(event) => setMarket(Number(event.target.value))}
+            >
+              {rooms.map((_, i) => (
+                <option key={i} value={i}>
+                  {t(`市場 ${i + 1}`, `市场 ${i + 1}`, `Market ${i + 1}`)}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
         <div className="demo-actions">
           <button
@@ -333,6 +418,7 @@ function DemoRoom({
                 title: room.config.title,
                 settings,
                 experiment: initial.experiment,
+                attendance: initial.attendance,
               })
             }
           >
@@ -342,7 +428,11 @@ function DemoRoom({
       </div>
       <div className="demo-caption">
         <span className="demo-count">
-          1市場・あなた1人 ＋ 仮想参加者{room.participants.length - 1}人
+          {t(
+            `${rooms.length}市場・あなた1人 ＋ 仮想参加者${attendance - 1}人`,
+            `${rooms.length} 个市场 · 你和 ${attendance - 1} 名模拟参与者`,
+            `${rooms.length} markets · you and ${attendance - 1} simulated participants`,
+          )}
         </span>
       </div>
     </section>
@@ -384,14 +474,7 @@ function DemoRoom({
                   }
                   setSettings(parsed.data);
                   setDraft(null);
-                  replace(
-                    makeDemo(
-                      room.config.title,
-                      parsed.data,
-                      Date.now(),
-                      initial.experiment,
-                    ),
-                  );
+                  rebuild(parsed.data);
                 }}
               >
                 <SettingsFields
@@ -431,11 +514,11 @@ function DemoRoom({
               </p>
               <p>
                 {assigned
-                  ? "市場 1 に参加します。開始後に自分の配当を確認してください。"
+                  ? `市場 ${market + 1} に参加します。開始後に自分の配当を確認してください。`
                   : "教員が受付を終了するまで、この画面を開いたままお待ちください。"}
               </p>
               <div className="student-waiting-count">
-                参加者 <b>{room.participants.length}</b>人
+                参加者 <b>{attendance}</b>人
               </div>
             </StudentWaitingCard>
           ) : (
@@ -447,7 +530,7 @@ function DemoRoom({
                 </span>
               </div>
               <section className="panel emh-waiting">
-                <h2>{room.participants.length}人が入室</h2>
+                <h2>{attendance}人が入室</h2>
                 {role === "teacher" ? (
                   <div className="emh-actions">
                     {assigned ? (
@@ -477,7 +560,7 @@ function DemoRoom({
                         onClick={() => {
                           if (dirty) return;
                           const next = structuredClone(current.current);
-                          assignParticipants(next);
+                          for (const entry of next) assignParticipants(entry);
                           replace(next);
                           setAssigned(true);
                         }}
@@ -498,7 +581,8 @@ function DemoRoom({
                   <div className="emh-allocation-grid">
                     <article>
                       <h3>
-                        市場 1 <span>{room.participants.length}人</span>
+                        市場 {market + 1}{" "}
+                        <span>{room.participants.length}人</span>
                       </h3>
                       <p>タイプ別人数 {room.typeCounts!.join(" / ")}</p>
                       {initial.experiment === "exp2" && settings.exp2 && (
@@ -527,13 +611,17 @@ function DemoRoom({
           )
         ) : (
           <RoomDashboard
-            room={view(
-              room,
-              role === "teacher"
-                ? { role: "teacher" }
-                : { role: "student", participantId: "demo-0" },
-              now,
-            )}
+            key={market}
+            room={{
+              ...view(
+                room,
+                role === "teacher"
+                  ? { role: "teacher" }
+                  : { role: "student", participantId: "demo-0" },
+                now,
+              ),
+              ...(rooms.length > 1 ? { marketId: market + 1 } : {}),
+            }}
             act={run}
             demo
           />
@@ -549,15 +637,8 @@ function DemoRoom({
             confirmLabel="解除して受付再開"
             onCancel={() => setReopen(false)}
             onConfirm={async () => {
-              if (current.current.status !== "lobby") return;
-              replace(
-                makeDemo(
-                  room.config.title,
-                  settings,
-                  Date.now(),
-                  initial.experiment,
-                ),
-              );
+              if (current.current[market].status !== "lobby") return;
+              rebuild(settings);
               setAssigned(false);
               setDraft(null);
               setReopen(false);

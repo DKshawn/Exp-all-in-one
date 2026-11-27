@@ -1,3 +1,4 @@
+import { MAX_ROOM_PARTICIPANTS } from "@/lib/participant-config";
 import type { Allocation } from "./session-types";
 import {
   DEFAULT_SETTINGS,
@@ -8,7 +9,7 @@ import {
   type EmhSettings,
 } from "./settings";
 
-export const MAX_PARTICIPANTS = 999;
+export const MAX_PARTICIPANTS = MAX_ROOM_PARTICIPANTS;
 export function allocationPlan(
   attendance: number,
   input: EmhSettings = DEFAULT_SETTINGS,

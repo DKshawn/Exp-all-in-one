@@ -243,6 +243,7 @@ export async function runStudent(client, config, slots, signal, report) {
           attempt = {
             ...position,
             variant:
+              observation.variant ??
               observation.mode ??
               observation.institution ??
               state.experiment ??

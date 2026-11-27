@@ -3,13 +3,12 @@ import type { NextRequest } from "next/server";
 import { body, failure, loginResponse } from "@/lib/server/http";
 import { teacherAccessKey } from "@/lib/server/teacher-session";
 import { evolutionService } from "@/experiments/evolution/server/service";
-import { settingsSchema } from "@/experiments/evolution/settings";
 const schema = z
   .object({
     title: z.string().trim().min(1).max(60),
     password: z.string().min(8).max(128),
     accessKey: z.string().max(256).optional(),
-    settings: settingsSchema,
+    settings: z.record(z.string(), z.unknown()),
   })
   .strict();
 export async function POST(request: NextRequest) {

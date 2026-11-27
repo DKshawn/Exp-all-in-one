@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_ROOM_PARTICIPANTS } from "@/lib/participant-config";
 import { aiAdmissionSchema } from "@/lib/server/ai-admission";
 import { interactionSchema } from "./action-log";
 import { marketSettingsSchema } from "./market-settings";
@@ -35,7 +36,7 @@ export const studyAiAdmissionSchema = aiAdmissionSchema.extend({
 const legacyConfigSchema = z
   .object({
     title: z.string().trim().min(1).max(60),
-    capacity: z.union([z.literal(12), z.literal(24), z.literal(36)]),
+    capacity: z.number().int().min(12).max(MAX_ROOM_PARTICIPANTS).multipleOf(2),
     rounds: z.number().int().min(1).max(12),
     duration: z.number().int().min(30).max(900),
   })

@@ -1,21 +1,26 @@
 "use client";
-import { useId, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { CopyJoinLinkButton } from "@/components/copy-join-link-button";
 import { StudentWaitingCard } from "@/components/student-waiting-card";
 import { StudyDetailDialog } from "@/experiments/double-auction/components/study-detail-dialog";
 import { studentJoinHref } from "@/lib/room-navigation";
-import {
-  label,
-  displayChoices,
-  sliderInstructions,
-  type Key,
-  type Lang,
-} from "../locale";
+import { label, displayChoices, type Key, type Lang } from "../locale";
 import type { Action } from "../engine";
 import type { View, Personal } from "../views";
 import { Admission, SessionOverview } from "./session-controls";
 import { PayoffMatrix, PayoffRules, Rules } from "./rules";
-import { continuous, DEMAND_STEPS, demandLabel, demandStep } from "../settings";
+import {
+  continuous,
+  DEMAND_STEPS,
+  demandLabel,
+  isMemo,
+  isMemoV3,
+  isNeighborMemo,
+  memoAnswerSeconds,
+} from "../settings";
+import { MemoStudent } from "./memo-student";
+import { MemoResults } from "./memo-results";
+import { DemandDecision } from "./demand-decision";
 
 type Props = {
   view: View;
@@ -25,7 +30,7 @@ type Props = {
   act: (action: Action) => void | Promise<void>;
   teacherToolbar?: ReactNode;
   loadHistory?: (before: number) => Promise<View>;
-  downloads?: React.ReactNode;
+  downloads?: ReactNode;
 };
 function Decision({
   view,
@@ -33,65 +38,38 @@ function Decision({
   busy,
   act,
   selected,
+  draftChoice,
+  describedBy,
 }: {
   view: Extract<View, { role: "student" }>;
   lang: Lang;
   busy: boolean;
   act: Props["act"];
   selected: number | null;
+  draftChoice: number | null;
+  describedBy?: string;
 }) {
-  const [value, setValue] = useState(DEMAND_STEPS / 2);
-  const id = useId();
-  const options = displayChoices(lang, view.settings);
   const commit = (choice: number) => {
     if (!busy) void act({ kind: "choose", round: view.round, choice });
   };
-  if (continuous(view.settings)) {
-    const step = demandStep(view.settings);
+  if (continuous(view.settings))
     return (
-      <div className="ev-demand">
-        <div className="ev-heading">
-          <label htmlFor={id}>{label(lang, "demandAmount")}</label>
-          <output htmlFor={id} aria-live="off">
-            {demandLabel(value)}
-          </output>
-        </div>
-        <input
-          id={id}
-          type="range"
-          min={0}
-          max={1}
-          step={step}
-          value={demandLabel(value)}
-          disabled={busy}
-          aria-describedby={id + "-help"}
-          onChange={(e) =>
-            setValue(Math.round(e.currentTarget.valueAsNumber * DEMAND_STEPS))
-          }
-          onPointerUp={(e) => {
-            if (e.isPrimary && e.button === 0)
-              commit(Math.round(e.currentTarget.valueAsNumber * DEMAND_STEPS));
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.repeat) {
-              e.preventDefault();
-              commit(value);
-            }
-          }}
-        />
-        <div className="ev-demand-endpoints" aria-hidden="true">
-          <span>0</span>
-          <span>1</span>
-        </div>
-        <p id={id + "-help"} className="field-help">
-          {sliderInstructions(lang, step)}
-        </p>
-      </div>
+      <DemandDecision
+        settings={view.settings}
+        lang={lang}
+        busy={busy}
+        initialChoice={draftChoice}
+        saveDraft={(choice) =>
+          act({ kind: "draft", round: view.round, choice })
+        }
+        commit={commit}
+      />
     );
-  }
+  const options = displayChoices(lang, view.settings);
   return (
     <div className="ev-decision">
       <fieldset
+        aria-describedby={describedBy}
         aria-label={
           view.settings.mode === "coordination"
             ? label(lang, "choose")
@@ -320,13 +298,25 @@ export function Panels({
   const mine = v.role === "student" ? v.current : null,
     names = displayChoices(lang, v.settings);
   const coordination = v.settings.mode === "coordination";
+  const settings = v.settings;
+  const memo = isMemo(settings);
+  const neighbors = isNeighborMemo(settings);
+  const memoStudent = memo && v.role === "student" && !waiting;
+  const canChooseMemo = Boolean(
+    mine?.memo?.eligible &&
+    mine.status === "choosing" &&
+    !busy &&
+    v.phase === "playing" &&
+    v.pausedAt === null &&
+    now < (v.deadline ?? Infinity),
+  );
   const name = (c: number | null) =>
     c === null ? null : continuous(v.settings) ? demandLabel(c) : names[c];
   const [page, setPage] = useState<View | null>(null);
   const [historyPending, setHistoryPending] = useState(false);
   const [historyError, setHistoryError] = useState(false);
   const oldest = (page ?? v).history[0]?.round ?? 1;
-  const controls = loadHistory && (oldest > 1 || page) && (
+  const controls = !memo && loadHistory && (oldest > 1 || page) && (
     <div className="ev-options">
       {oldest > 1 && (
         <button
@@ -370,7 +360,10 @@ export function Panels({
     </div>
   );
   return (
-    <main className="ev ev-room" lang={lang}>
+    <main
+      className={memoStudent ? "ev ev-room ev-memo-student" : "ev ev-room"}
+      lang={lang}
+    >
       {v.role === "teacher" && teacherToolbar}
       <div className="ev-heading">
         <h1>{v.title}</h1>
@@ -403,6 +396,11 @@ export function Panels({
                   />
                 )}
               </div>
+              {isMemoV3(settings) && (
+                <p>
+                  {t("memoAnswerTime")} <b>{memoAnswerSeconds(settings)}</b>
+                </p>
+              )}
               <Admission view={v} lang={lang} now={now} busy={busy} act={act} />
               <div className="ev-scroll">
                 <table>
@@ -416,7 +414,7 @@ export function Panels({
                           <th>B</th>
                         </>
                       )}
-                      <th>{t("byes")}</th>
+                      {!memo && <th>{t("byes")}</th>}
                       {v.phase === "ready" && <th>{t("student")}</th>}
                     </tr>
                   </thead>
@@ -431,7 +429,7 @@ export function Panels({
                             <td>{v.phase === "open" ? "—" : n - v.sides[i]}</td>
                           </>
                         )}
-                        <td>{n % 2}</td>
+                        {!memo && <td>{n % 2}</td>}
                         {v.phase === "ready" && (
                           <td className="ev-roster-seats">
                             {v.seats
@@ -449,6 +447,8 @@ export function Panels({
                 </table>
               </div>
             </section>
+          ) : memo ? (
+            <MemoResults key={v.memoBlock} view={v} lang={lang} />
           ) : (
             <Analysis
               view={page?.role === "teacher" ? page : v}
@@ -479,15 +479,46 @@ export function Panels({
               {t("sec")}
             </strong>
           ) : null}
-          <StudyDetailDialog
-            label={t("rules")}
-            closeLabel={t("dismiss")}
-            className="ev-rules-dialog"
-            triggerClassName="button secondary small-button"
-          >
-            <Rules lang={lang} s={v.settings} />
-          </StudyDetailDialog>
+          {(!memo || v.code === "DEMO") && (
+            <StudyDetailDialog
+              label={t("rules")}
+              closeLabel={t("dismiss")}
+              className="ev-rules-dialog"
+              triggerClassName="button secondary small-button"
+            >
+              {memo ? (
+                <>
+                  <p>{t(neighbors ? "h5Description" : "memoRule")}</p>
+                  <p>{t(neighbors ? "h5Revision" : "memoRevisionRule")}</p>
+                  {neighbors && <p>{t("h5Pending")}</p>}
+                </>
+              ) : (
+                <Rules lang={lang} s={v.settings} />
+              )}
+            </StudyDetailDialog>
+          )}
         </StudentWaitingCard>
+      ) : memoStudent && mine?.memo ? (
+        <MemoStudent
+          view={v}
+          memo={mine.memo}
+          lang={lang}
+          mine={mine}
+          now={now}
+          canChoose={canChooseMemo}
+          renderDecision={(statusId) => (
+            <Decision
+              key={v.round}
+              view={v}
+              lang={lang}
+              busy={!canChooseMemo}
+              selected={mine.choice}
+              draftChoice={null}
+              act={act}
+              describedBy={statusId}
+            />
+          )}
+        />
       ) : (
         mine && (
           <>
@@ -523,6 +554,7 @@ export function Panels({
                       view={v}
                       lang={lang}
                       selected={mine.choice}
+                      draftChoice={mine.draftChoice ?? null}
                       busy={
                         mine.status !== "choosing" ||
                         busy ||

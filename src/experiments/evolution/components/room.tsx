@@ -6,9 +6,9 @@ import { api, errorMessage } from "@/lib/client";
 import type { Action } from "../engine";
 import type { View } from "../views";
 import { label } from "../locale";
-import { HISTORY_ROUNDS } from "../settings";
+import { HISTORY_ROUNDS, isMemo } from "../settings";
 import { Panels } from "./panels";
-import { EvolutionLanguage, useLanguage } from "./language";
+import { useLanguage } from "./language";
 import { AiRoomAdmission } from "@/components/ai-room-admission";
 import type { AiRun, AiSetup } from "@/lib/ai-console";
 export function EvolutionRoom({
@@ -47,6 +47,11 @@ export function EvolutionRoom({
         clock.current = { now: result.now, at: performance.now() };
         setNow(result.now);
         setView((previous) => {
+          if (
+            isMemo(result.settings) &&
+            result.memoBlock !== previous?.memoBlock
+          )
+            return result;
           const oldest = result.round - HISTORY_ROUNDS;
           if (result.role === "student" && previous?.role === "student")
             return {
@@ -116,6 +121,10 @@ export function EvolutionRoom({
     return () => clearTimeout(timer);
   }, [deadline, v?.now]);
   async function act(a: Action) {
+    if (a.kind === "draft") {
+      await api<{ saved: true }>(url, a);
+      return;
+    }
     if (inAction.current) return;
     inAction.current = true;
     setBusy(true);
@@ -129,9 +138,7 @@ export function EvolutionRoom({
   const href = role === "teacher" ? "/teacher?code=" + code : "/?code=" + code;
   return (
     <>
-      <Header homeHref={role === "teacher" ? "/teacher" : "/"}>
-        <EvolutionLanguage />
-      </Header>
+      <Header homeHref={role === "teacher" ? "/teacher" : "/"} />
       {error && (
         <div role="alert" className="ev ev-error error-message">
           {error}{" "}

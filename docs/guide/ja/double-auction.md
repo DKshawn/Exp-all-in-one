@@ -1,5 +1,7 @@
 # Double Auction
 
+教員のルーム設定やデモの設定では、ヘッダー右上の地球アイコンで日本語・中国語・英語を選べます。詳細設定も同じ言語で表示されます。
+
 [日本語](../ja/double-auction.md) · [中文](../zh-CN/double-auction.md) · [English](../en/double-auction.md)
 
 正式ルームには[独立した AI 学生プログラム](../../../ai-emh/README.md)で入室できます。CDA、Call Market、Posted Offer と旧3商品CDAに対応し、AI は一操作あたり1単位を注文・購入します。

@@ -1,5 +1,7 @@
 # Double Auction
 
+在教师建房页和演示设置页，点击页眉右上角的地球图标选择日文、中文或英文。详细设置会使用同一语言。
+
 [日本語](../ja/double-auction.md) · [中文](../zh-CN/double-auction.md) · [English](../en/double-auction.md)
 
 正式房间可通过[独立 AI 学生程序](../../../ai-emh/README.zh-CN.md)加入。程序支持 CDA、Call Market、Posted Offer 和旧三商品 CDA。AI 每次下单或购买一个单位。

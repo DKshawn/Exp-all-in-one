@@ -15,6 +15,7 @@ import { api, errorMessage, timeLabel } from "@/lib/client";
 import type { RoomSummary } from "@/lib/room-management";
 import { teacherRoomHref } from "@/lib/room-navigation";
 import { EMH_EXPERIMENT_LABELS } from "@/experiments/emh/types";
+import { H5_PROTOCOL } from "@/experiments/evolution/settings";
 import { label } from "@/experiments/evolution/locale";
 import styles from "@/app/teacher/ai/console.module.css";
 
@@ -61,7 +62,7 @@ function roomLabel(room: RoomSummary) {
   if (room.experiment === "emh")
     return `EMH ${EMH_EXPERIMENT_LABELS[room.variant]}`;
   if (room.experiment === "evolution")
-    return `SEG ${label("ja", room.variant)}`;
+    return `SEG ${label("ja", room.variant === H5_PROTOCOL ? "h5Title" : room.variant)}`;
   return "Double Auction";
 }
 

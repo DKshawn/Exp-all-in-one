@@ -1720,12 +1720,9 @@
   display: flex;
   flex-direction: column;
 }
-.study-shell .site-header {
-  height: auto;
-}
 .study-shell .header-inner {
   max-width: none;
-  height: 56px;
+  min-height: 56px;
   padding: 8px 20px;
 }
 .study-shell .brand-mark {
@@ -3243,7 +3240,6 @@
     flex: none;
   }
   .study-shell .header-inner {
-    height: auto;
     min-height: 56px;
     padding: 10px 12px;
   }

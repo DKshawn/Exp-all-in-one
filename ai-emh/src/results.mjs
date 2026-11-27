@@ -7,6 +7,7 @@ const columns = [
   "round",
   "market",
   "group",
+  "block",
   "period",
   "unit",
   "role",

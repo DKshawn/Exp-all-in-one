@@ -63,3 +63,5 @@ After a model chooses to wait, the program checks the student view about every t
 The program validates the model's JSON and refreshes the student view before submitting a decision. It skips a timed-out, invalid, or stale decision without substituting a rule-based robot. OpenAI mode sends these observations to OpenAI and incurs charges according to model and usage.
 
 Run `npm --prefix ai-emh test` for offline simulated tests. The current student interface is not a dedicated stable public API, so verify compatibility after platform updates.
+
+For Stag Hunt v3, use a separate local research room and fill the roster to exactly 150 seats before closing admission. AI seats use the same initial lock, revision eligibility and deadline as other seats. The model receives prior group feedback only; for H5 it sees only the ten neighbors’ prior choices. A slow response is not submitted to a later round. For a model smoke test, set a longer Decision time in the base v3 room, and do not treat the result as human evidence or as validation of short-window throughput.

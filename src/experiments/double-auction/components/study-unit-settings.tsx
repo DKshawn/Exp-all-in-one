@@ -1,4 +1,5 @@
 import { INSTITUTIONS } from "@/experiments/double-auction/lib/study-rules";
+import { useSetupText } from "@/components/experiment-language";
 import {
   DEFAULT_STUDY_INSTITUTIONS,
   MAX_STUDY_UNITS,
@@ -16,15 +17,22 @@ export function StudyUnitFields({
   disabled: boolean;
   institutions?: readonly Institution[];
 }) {
+  const t = useSetupText();
   return (
     <fieldset className="study-unit-settings">
-      <legend>1人あたりの単位数</legend>
+      <legend>
+        {t("1人あたりの単位数", "每人单位数", "Units per participant")}
+      </legend>
       <div className="study-unit-fields">
         {institutions.map((institution) => (
           <label className="field" key={institution}>
             {INSTITUTIONS[institution].short}
             <input
-              aria-label={`${INSTITUTIONS[institution].short}の1人あたりの単位数`}
+              aria-label={t(
+                `${INSTITUTIONS[institution].short}の1人あたりの単位数`,
+                `${INSTITUTIONS[institution].short} 每人单位数`,
+                `${INSTITUTIONS[institution].short} units per participant`,
+              )}
               type="number"
               min={1}
               max={MAX_STUDY_UNITS}

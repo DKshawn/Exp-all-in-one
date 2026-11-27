@@ -10,6 +10,31 @@ const SYSTEM_PROMPT = `You are a student playing one of the Stochastic Evolution
 const SCHEMA = selectionSchema("seg_student_decision");
 const DEMAND_SCALE = 1000;
 
+const MEMO_SYSTEM_PROMPT = `You are a participant in a Stag Hunt research game. Maximize your own points. Choose one private action, with 0 = Stag and 1 = Hare. For the base study, Hare earns 3 and Stag earns 4 times the current Stag share among other group members; estimate this using the provided prior rounds. In the neighbors variant, use only the ten neighbors’ previous choices. Neighbor scores are provisional and not reported. Never assume you can see live choices. Only invited players can revise. Waiting or missing the deadline keeps your previous choice. Return action "choose" with choice 0 or 1, or "wait" with choice null, and a short reason.`;
+
+function isMemo(state) {
+  return state?.settings?.memoProtocol != null;
+}
+
+function memoObservation(state) {
+  const memo = state.current.memo;
+  const { neighborhood } = memo;
+  return {
+    variant: neighborhood ? "neighbors-h5" : "stag-hunt-v3",
+    block: memo.block,
+    round: memo.blockRound,
+    groupSize: memo.groupSize,
+    revisionEligible: memo.eligible,
+    previousChoice: memo.carriedChoice,
+    ...(neighborhood
+      ? { previousNeighborChoices: neighborhood.previous }
+      : {
+          priorPayoff: memo.priorPay,
+          previousGroupTrend: memo.feedback.slice(-20),
+        }),
+  };
+}
+
 function isActive(state) {
   return (
     state?.role === "student" &&
@@ -18,7 +43,8 @@ function isActive(state) {
     state.deadline > state.now &&
     state.current?.status === "choosing" &&
     state.current.round === state.round &&
-    state.current.choice === null
+    state.current.choice === null &&
+    (!isMemo(state) || state.current.memo?.eligible === true)
   );
 }
 
@@ -70,8 +96,17 @@ function observation(state) {
 export const evolutionAdapter = {
   isActive,
   isComplete: (state) => state.phase === "finished",
-  position: (state) => ({ round: state.round, group: state.group }),
-  key: (state) => JSON.stringify([state.round, state.current.position]),
+  position: (state) => ({
+    round: state.round,
+    group: state.group,
+    ...(state.current?.memo && { block: state.current.memo.block }),
+  }),
+  key: (state) =>
+    JSON.stringify([
+      state.round,
+      state.current.position,
+      state.current.memo?.block,
+    ]),
   target: () => null,
   selectedOption: (state, choice) => {
     const parameters = rules(state.settings);
@@ -89,10 +124,13 @@ export const evolutionAdapter = {
   request: (state) => ({
     schema: SCHEMA,
     prompt: {
-      system: SYSTEM_PROMPT,
+      system: isMemo(state) ? MEMO_SYSTEM_PROMPT : SYSTEM_PROMPT,
       observation: {
-        ...observation(state),
-        secondsRemaining: Math.floor((state.deadline - state.now) / 1000),
+        ...(isMemo(state) ? memoObservation(state) : observation(state)),
+        secondsRemaining: Math.max(
+          0,
+          Math.ceil((state.deadline - state.now) / 1000),
+        ),
       },
     },
   }),
@@ -102,7 +140,9 @@ export const evolutionAdapter = {
       original.round !== current.round ||
       original.group !== current.group ||
       original.current.position !== current.current.position ||
-      original.settings.mode !== current.settings.mode
+      original.settings.mode !== current.settings.mode ||
+      original.settings.memoProtocol !== current.settings.memoProtocol ||
+      original.current.memo?.block !== current.current.memo?.block
     )
       return skip("round_changed");
     if (isWait(decision)) return skip("model_wait");

@@ -1,5 +1,6 @@
 "use client";
-import { useSyncExternalStore } from "react";
+import { useExperimentLanguage } from "@/components/experiment-language";
+import type { UiLanguage } from "@/lib/ui-language";
 import type { Language } from "../types";
 const labels = {
   "読み込み中…": ["正在加载…", "Loading…"],
@@ -100,58 +101,9 @@ export function teacherText(
     String(values[key] ?? match),
   );
 }
-const storageKey = "judgment.teacher.language";
-const changeEvent = "judgment-teacher-language";
-let fallback: Language = "ja";
-function getLanguage(): Language {
-  let value: string | null = fallback;
-  try {
-    value = localStorage.getItem(storageKey) ?? fallback;
-  } catch {}
-  return value === "en" || value === "zh" ? value : "ja";
-}
-function subscribe(listener: () => void) {
-  window.addEventListener("storage", listener);
-  window.addEventListener(changeEvent, listener);
-  return () => {
-    window.removeEventListener("storage", listener);
-    window.removeEventListener(changeEvent, listener);
-  };
+export function judgmentLanguage(language: UiLanguage): Language {
+  return language === "zh-CN" ? "zh" : language;
 }
 export function useTeacherLanguage() {
-  const language = useSyncExternalStore(
-    subscribe,
-    getLanguage,
-    () => "ja" as Language,
-  );
-  return [
-    language,
-    (value: Language) => {
-      fallback = value;
-      try {
-        localStorage.setItem(storageKey, value);
-      } catch {}
-      window.dispatchEvent(new Event(changeEvent));
-    },
-  ] as const;
-}
-export function TeacherLanguage({
-  language,
-  onChange,
-}: {
-  language: Language;
-  onChange: (language: Language) => void;
-}) {
-  return (
-    <select
-      className="judgment-language"
-      aria-label="言語 / 语言 / Language"
-      value={language}
-      onChange={(e) => onChange(e.target.value as Language)}
-    >
-      <option value="ja">日本語</option>
-      <option value="zh">中文</option>
-      <option value="en">English</option>
-    </select>
-  );
+  return judgmentLanguage(useExperimentLanguage());
 }

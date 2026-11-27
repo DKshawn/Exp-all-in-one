@@ -2,6 +2,7 @@
 
 import { Check, ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
+import { useSetupText } from "@/components/experiment-language";
 
 /** The same accordion presentation in the creation dialog and room preparation. */
 export function StudySetupStep({
@@ -27,6 +28,7 @@ export function StudySetupStep({
   children: ReactNode;
   footer?: ReactNode;
 }) {
+  const t = useSetupText();
   return (
     <section className={`study-setup-step ${expanded ? "active" : ""}`}>
       <h3>
@@ -48,12 +50,12 @@ export function StudySetupStep({
           </span>
           <span className="study-setup-step-state">
             {expanded
-              ? "設定中"
+              ? t("設定中", "设置中", "Active")
               : complete
-                ? "変更"
+                ? t("変更", "修改", "Edit")
                 : disabled
-                  ? "未確認"
-                  : "開く"}
+                  ? t("未確認", "待确认", "Pending")
+                  : t("開く", "打开", "Open")}
           </span>
           <ChevronDown size={16} />
         </button>

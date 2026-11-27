@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { useSetupText } from "@/components/experiment-language";
+import { studySetupError } from "@/experiments/double-auction/lib/study-setup-text";
 import {
   DEFAULT_ASSIGNMENT_SEED,
   DEFAULT_STAIRCASE_PARAMETERS,
@@ -98,6 +100,11 @@ export function StudyPresetPicker({
     labelledBy: string;
   };
 }) {
+  const t = useSetupText();
+  const presetName =
+    existingPreset?.label && existingPreset.label !== "Default"
+      ? existingPreset.label
+      : t("Default", "默认", "Default");
   const [preset, setPreset] = useState(
     initialGenerator ? "overlap" : "existing",
   );
@@ -251,7 +258,7 @@ export function StudyPresetPicker({
   const content = (
     <>
       <label className="field">
-        供需プリセット
+        {t("供需プリセット", "供需预设", "Supply and demand preset")}
         <select
           value={preset}
           disabled={fieldsBlocked}
@@ -264,8 +271,8 @@ export function StudyPresetPicker({
             changed();
           }}
         >
-          <option value="existing">{existingPreset?.label ?? "Default"}</option>
-          <option value="overlap">カスタム</option>
+          <option value="existing">{presetName}</option>
+          <option value="overlap">{t("カスタム", "自定义", "Custom")}</option>
         </select>
       </label>
       {renderUnitFields?.(fieldsBlocked)}
@@ -284,21 +291,60 @@ export function StudyPresetPicker({
         <>
           <p className="field-help">
             {unitsByInstitution && institutions
-              ? `${INSTITUTIONS[institutions[0]].short}：`
-              : cdaOnly && "CDA："}
-            条件テンプレート：買い手{perSide}人・売り手
-            {perSide}人、各
-            {unitsPerParticipant}単位、片側{units}単位。
-            {cdaOnly && "Call Market・Posted Offerは各自2単位です。"}
-            既定のp=80・K=8・L=4・d=4は検討用の候補です。
+              ? `${INSTITUTIONS[institutions[0]].short}${t("：", "：", ": ")}`
+              : cdaOnly && t("CDA：", "CDA：", "CDA: ")}
+            {t(
+              `条件テンプレート：買い手${perSide}人・売り手${perSide}人、各${unitsPerParticipant}単位、片側${units}単位。`,
+              `条件模板：买卖双方各 ${perSide} 人，每人 ${unitsPerParticipant} 单位，单侧共 ${units} 单位。`,
+              `Template: ${perSide} buyers and ${perSide} sellers, ${unitsPerParticipant} units each and ${units} per side. `,
+            )}
+            {cdaOnly &&
+              t(
+                "Call Market・Posted Offerは各自2単位です。",
+                "Call Market 和 Posted Offer 每人 2 单位。",
+                "Call Market and Posted Offer use 2 units per participant. ",
+              )}
+            {t(
+              "既定のp=80・K=8・L=4・d=4は検討用の候補です。",
+              "默认的 p=80、K=8、L=4、d=4 是供参考的参数。",
+              "The default p=80, K=8, L=4 and d=4 are starting values to try.",
+            )}
           </p>
           <div className="study-generator-fields">
             {(
               [
-                ["p", "均衡価格 p（円）"],
-                ["K", "正の余剰の単位数 K"],
-                ["L", "横向き重なりの長さ L"],
-                ["d", "階段の価格差 d（円）"],
+                [
+                  "p",
+                  t(
+                    "均衡価格 p（円）",
+                    "均衡价 p（日元）",
+                    "Equilibrium price p (¥)",
+                  ),
+                ],
+                [
+                  "K",
+                  t(
+                    "正の余剰の単位数 K",
+                    "正盈余单位数 K",
+                    "Positive-surplus units K",
+                  ),
+                ],
+                [
+                  "L",
+                  t(
+                    "横向き重なりの長さ L",
+                    "水平重叠长度 L",
+                    "Horizontal overlap L",
+                  ),
+                ],
+                [
+                  "d",
+                  t(
+                    "階段の価格差 d（円）",
+                    "阶梯价差 d（日元）",
+                    "Price step d (¥)",
+                  ),
+                ],
               ] as const
             ).map(([key, label]) => (
               <label className="field" key={key}>
@@ -321,7 +367,7 @@ export function StudyPresetPicker({
               </label>
             ))}
             <label className="field">
-              割当シード
+              {t("割当シード", "分配种子", "Assignment seed")}
               <input
                 type="number"
                 min={0}
@@ -337,26 +383,32 @@ export function StudyPresetPicker({
             </label>
           </div>
           <p className="field-help">
-            K・Lは1以上の整数、K＋L≤{units}
-            、d&gt;0。すべての生成値が1〜{MAX_PRICE}
-            円の整数になる条件を指定してください。
+            {t(
+              `K・Lは1以上の整数、K＋L≤${units}、d>0。すべての生成値が1〜${MAX_PRICE}円の整数になる条件を指定してください。`,
+              `K、L 都是正整数，K + L ≤ ${units}，d > 0。生成值必须是 1–${MAX_PRICE} 日元之间的整数。`,
+              `K and L must be positive integers, K + L ≤ ${units}, and d > 0. Generated values must be whole yen between 1 and ${MAX_PRICE}.`,
+            )}
           </p>
         </>
       )}
       {previewError && (
         <p className="error-message study-generator-error" role="alert">
-          {previewError}
+          {studySetupError(t, previewError)}
         </p>
       )}
       {(custom || renderAllocation) && preview && (
         <div className="study-generated-preview">
           <h3>
             {unitsByInstitution && institutions
-              ? `${INSTITUTIONS[institutions[0]].short}：`
-              : cdaOnly && "CDA："}
+              ? `${INSTITUTIONS[institutions[0]].short}${t("：", "：", ": ")}`
+              : cdaOnly && t("CDA：", "CDA：", "CDA: ")}
             {preview.generator
-              ? "カスタムのプレビュー"
-              : `${existingPreset?.label}のプレビュー`}
+              ? t("カスタムのプレビュー", "自定义预览", "Custom preview")
+              : t(
+                  `${presetName}のプレビュー`,
+                  `${presetName}预览`,
+                  `${presetName} preview`,
+                )}
           </h3>
           <StudyConditionPreview
             settings={preview.settings}
@@ -365,12 +417,27 @@ export function StudyPresetPicker({
           />
           {preview.generator && (
             <p className="field-help">
-              第i単位から{perSide}単位間隔で{unitsPerParticipant}
-              単位を同じ役割に配分します。同じ人数・入室順・シードで割当を再現し、
+              {t(
+                `第i単位から${perSide}単位間隔で${unitsPerParticipant}単位を同じ役割に配分します。同じ人数・入室順・シードで割当を再現し、`,
+                `从第 i 个单位起，每隔 ${perSide} 个单位抽取一个，共 ${unitsPerParticipant} 个，分给同一角色。人数、入室顺序和种子相同时分配结果相同。`,
+                `Starting at unit i, assign ${unitsPerParticipant} units to the same role at intervals of ${perSide}. Attendance, join order, and seed reproduce the assignment. `,
+              )}
               {cdaOnly
-                ? "CDAの全期で固定します。"
-                : "全期・全制度で固定します。"}
-              各市場は共通テンプレートから実人数に合わせた条件を使います。
+                ? t(
+                    "CDAの全期で固定します。",
+                    "分配在 CDA 各期保持固定。",
+                    "It stays fixed across all CDA periods. ",
+                  )
+                : t(
+                    "全期・全制度で固定します。",
+                    "分配在所有期和制度中保持固定。",
+                    "It stays fixed across all periods and institutions. ",
+                  )}
+              {t(
+                "各市場は共通テンプレートから実人数に合わせた条件を使います。",
+                "各市场按实际人数从共用模板生成条件。",
+                "Each market uses conditions from the common template sized to its actual attendance.",
+              )}
             </p>
           )}
           {renderAssignments?.(preview)}
@@ -385,8 +452,11 @@ export function StudyPresetPicker({
               .map((i) => (
                 <details className="study-other-conditions" key={i}>
                   <summary className="button secondary small-button disclosure-button">
-                    {INSTITUTIONS[i].short}の条件（各自{unitsByInstitution![i]}
-                    単位）
+                    {t(
+                      `${INSTITUTIONS[i].short}の条件（各自${unitsByInstitution![i]}単位）`,
+                      `${INSTITUTIONS[i].short} 条件（每人 ${unitsByInstitution![i]} 单位）`,
+                      `${INSTITUTIONS[i].short} (${unitsByInstitution![i]} units each)`,
+                    )}
                   </summary>
                   <StudyConditionPreview
                     settings={candidates![i]!}
@@ -397,7 +467,11 @@ export function StudyPresetPicker({
           {candidateOther && (
             <details className="study-other-conditions">
               <summary className="button secondary small-button disclosure-button">
-                Call Market・Posted Offerの条件（各自2単位）
+                {t(
+                  "Call Market・Posted Offerの条件（各自2単位）",
+                  "Call Market 和 Posted Offer（每人 2 单位）",
+                  "Call Market and Posted Offer (2 units each)",
+                )}
               </summary>
               <StudyConditionPreview
                 settings={candidateOther}
@@ -459,14 +533,20 @@ export function StudyPresetPicker({
       {custom && (
         <section
           className="panel teacher-units-panel"
-          aria-label="全単位の数値"
+          aria-label={t("全単位の数値", "各单位数值", "All unit values")}
         >
           {preview ? (
             <StudyUnitValues settings={preview.settings} fixedHeading />
           ) : (
             <>
-              <h2>全単位の数値</h2>
-              <p className="field-help">有効な供需条件を設定してください。</p>
+              <h2>{t("全単位の数値", "各单位数值", "All unit values")}</h2>
+              <p className="field-help">
+                {t(
+                  "有効な供需条件を設定してください。",
+                  "请先设置有效的供需条件。",
+                  "Set valid supply and demand conditions first.",
+                )}
+              </p>
             </>
           )}
         </section>

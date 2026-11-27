@@ -64,6 +64,7 @@ export type AiRecord = {
   student?: string;
   market?: number;
   group?: number;
+  block?: number;
   round?: number;
   period?: string;
   modelDurationMs?: number;

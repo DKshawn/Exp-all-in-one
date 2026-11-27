@@ -17,9 +17,10 @@ import { studySettingsSchema } from "../src/experiments/double-auction/lib/study
 import { generatedStudySettings } from "../src/experiments/double-auction/lib/study-generator";
 import { body, MAX_JSON_BODY_BYTES } from "../src/lib/server/http";
 import {
-  commandSchema,
-  createRoomSchema,
   MAX_STUDY_COMMAND_BODY_BYTES,
+  commandSchema,
+  configSchema,
+  createRoomSchema,
   studyAiAdmissionSchema,
 } from "@/experiments/double-auction/server/validation";
 import { aiAdmissionSchema } from "@/lib/server/ai-admission";
@@ -30,6 +31,10 @@ import {
   saveBundle,
 } from "../src/experiments/double-auction/server/market-store";
 import { AuctionService } from "../src/experiments/double-auction/server/service";
+import {
+  limitsForSeat,
+  schedules,
+} from "../src/experiments/double-auction/server/experiment";
 import { DemoSession } from "../src/experiments/double-auction/lib/demo";
 import type {
   RoomConfig,
@@ -84,6 +89,24 @@ test("9999 participants permit 4999 markets and an even 10000-person template", 
     config(9_999, "manual", 5_000),
   ])
     assert.equal(studyRoomConfigSchema.safeParse(draft).success, false);
+  const legacy = { title: "Legacy classroom", rounds: 1, duration: 180 };
+  assert.equal(
+    configSchema.safeParse({ ...legacy, capacity: 5000 }).success,
+    true,
+  );
+  assert.equal(
+    configSchema.safeParse({ ...legacy, capacity: 5001 }).success,
+    false,
+  );
+  assert.equal(
+    configSchema.safeParse({ ...legacy, capacity: 5002 }).success,
+    false,
+  );
+  const classic = schedules(5000);
+  assert.equal(classic.apple.values.length, 2500);
+  assert.equal(classic.apple.costs.length, 2500);
+  assert.ok(classic.apple.values.includes(limitsForSeat(2499, 5000).apple));
+  assert.ok(classic.apple.costs.includes(limitsForSeat(4999, 5000).apple));
   const request = (markets: number) => ({
     requestId: randomUUID(),
     expectedRound: 0,
@@ -249,7 +272,7 @@ test("local persistence admits only one last participant at 9999, rejects the ne
       "Local-Capacity-Only",
       "",
     );
-    await service.join(teacher.code, "1000000", "1234");
+    const first = await service.join(teacher.code, "1000000", "1234");
     await db.transaction(async (tx) => {
       const before = await lockBundle(tx, teacher.code);
       const room = assemble(before);
@@ -275,6 +298,8 @@ test("local persistence admits only one last participant at 9999, rejects the ne
       (result) => result.status === "rejected",
     ) as PromiseRejectedResult;
     assert.match(rejected.reason.message, /満員/);
+    const reentered = await service.join(teacher.code, "1000000", "1234");
+    assert.notEqual(reentered.token, first.token);
     const send = async (command: Command) => {
       const view = await service.view(teacher.code, teacher.token);
       return service.command(teacher.code, teacher.token, {

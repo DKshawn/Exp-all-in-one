@@ -21,6 +21,12 @@ export function validAmount(value: string) {
 export function canonical(value: string) {
   return reduced(...parts(value));
 }
+export function roundedAmount(value: string) {
+  const [numerator, denominator] = parts(value);
+  const magnitude = numerator < 0n ? -numerator : numerator;
+  const rounded = (2n * magnitude + denominator) / (2n * denominator);
+  return String(numerator < 0n ? -rounded : rounded);
+}
 export function add(a: string, b: string) {
   const [n, d] = parts(a),
     [m, e] = parts(b);

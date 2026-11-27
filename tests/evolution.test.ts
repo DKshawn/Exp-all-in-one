@@ -26,6 +26,29 @@ import { rawRows } from "../src/experiments/evolution/views";
 import { responsesCsv } from "../src/experiments/evolution/export";
 import { EvolutionPractice } from "../src/experiments/evolution/practice";
 
+test("both SEG demos include 5,000 seats and settle a complete round", () => {
+  for (const mode of ["coordination", "demand"] as const) {
+    const demo = new EvolutionPractice(
+      "Capacity",
+      { ...defaults(mode), rounds: 2 },
+      5000,
+      0,
+    );
+    demo.act({ kind: "close" }, 0);
+    demo.act({ kind: "start" }, 1000);
+    assert.equal(Object.keys(demo.game.round!.entries).length, 5000);
+    demo.act({ kind: "choose", round: 1, choice: 0 }, 1500);
+    demo.advanceTo(6800);
+    assert.equal(demo.game.phase, "feedback");
+    assert.equal(
+      Object.values(demo.game.round!.entries).filter(
+        (entry) => entry.status === "settled",
+      ).length,
+      5000,
+    );
+  }
+});
+
 test("demo playback can pause across a phase boundary and resume the remaining feedback time", () => {
   const demo = new EvolutionPractice(
     "Review",
@@ -49,6 +72,141 @@ test("demo playback can pause across a phase boundary and resume the remaining f
   assert.equal(demo.game.phase, "feedback");
   demo.advanceTo(69000);
   assert.equal(demo.game.round?.number, 2);
+});
+
+test("Nash drafts stay private, survive reconnect, and submit with the last saved value at the deadline", async () => {
+  const pg = new PGlite();
+  try {
+    const db = localDatabase(pg);
+    await migrate(db);
+    let at = 100_000;
+    const svc = new EvolutionService(db, async () => at);
+    const { code, token } = await svc.create(
+      "Deadline submission",
+      "room-password",
+      process.env.TEACHER_ACCESS_KEY ?? "",
+      { ...defaults("demand"), seconds: 5, rounds: 3, feedbackSeconds: 3 },
+    );
+    const join = (nickname: string) =>
+      svc.login(code, { role: "student", nickname, pin: "6521" });
+    const first = await join("First");
+    const second = await join("Second");
+    const control = (action?: Action) =>
+      svc.view(code, token, "teacher", action);
+    const draft = (player: string, round: number, choice: number) =>
+      svc.saveDraft(code, player, "student", { kind: "draft", round, choice });
+    const student = async (player: string) => {
+      const view = await svc.view(code, player, "student");
+      assert.equal(view.role, "student");
+      return view;
+    };
+    await control({ kind: "close" });
+    const firstRound = await control({ kind: "start" });
+    assert.equal(firstRound.role, "teacher");
+    at += 1_000;
+    await assert.rejects(draft(token, 1, 300));
+    await assert.rejects(draft(first.token, 1, 333));
+    await draft(first.token, 1, 200);
+    await draft(first.token, 1, 300);
+    await draft(second.token, 1, 100);
+    const other = await student(second.token);
+    assert.equal(other.current?.otherChoice, null);
+    assert.equal(other.current?.draftChoice, 100);
+    const openExport = JSON.parse(await svc.export(code, token, "json"));
+    assert.ok(
+      openExport.rows.every((row: { choice: unknown }) => row.choice === null),
+    );
+    assert.doesNotMatch(JSON.stringify(openExport), /draftChoice/);
+    const reconnected = await join("First");
+    assert.equal((await student(reconnected.token)).current?.draftChoice, 300);
+    await svc.view(code, second.token, "student", {
+      kind: "choose",
+      round: 1,
+      choice: 700,
+    });
+    await assert.rejects(draft(second.token, 1, 600));
+    const paused = await control({
+      kind: "pause",
+      phase: "playing",
+      round: 1,
+      revision: firstRound.revision,
+    });
+    assert.equal(paused.role, "teacher");
+    at += 10_000;
+    assert.equal((await student(reconnected.token)).phase, "playing");
+    await assert.rejects(draft(reconnected.token, 1, 400));
+    const resumed = await control({
+      kind: "resume",
+      phase: "playing",
+      round: 1,
+      revision: paused.revision,
+    });
+    const deadline = resumed.deadline!;
+    at = deadline;
+    await assert.rejects(draft(reconnected.token, 1, 400));
+    const result = await student(reconnected.token);
+    assert.equal(result.phase, "feedback");
+    assert.deepEqual(
+      [
+        result.current?.choice,
+        result.current?.otherChoice,
+        result.current?.pay,
+        result.total,
+      ],
+      [300, 700, "3/10", "3/10"],
+    );
+    assert.equal(result.current?.draftChoice, undefined);
+    at = result.deadline!;
+    const next = await control();
+    assert.equal(next.round, 2);
+    assert.equal(
+      (await student(reconnected.token)).current?.draftChoice,
+      undefined,
+    );
+    await assert.rejects(draft(reconnected.token, 1, 0));
+    await draft(reconnected.token, 2, 0);
+    at = next.deadline!;
+    const unmatched = await student(reconnected.token);
+    assert.equal(unmatched.current?.status, "unmatched");
+    assert.equal(unmatched.current?.choice, 0);
+    assert.equal(unmatched.current?.pay, null);
+    assert.equal((await student(second.token)).current?.status, "timeout");
+    at = unmatched.deadline!;
+    const third = await control();
+    assert.equal(third.role, "teacher");
+    await draft(reconnected.token, 3, 500);
+    assert.equal(
+      (
+        await control({
+          kind: "end",
+          phase: "playing",
+          round: 3,
+          revision: third.revision,
+        })
+      ).phase,
+      "finished",
+    );
+    const exported = JSON.parse(await svc.export(code, token, "json"));
+    const deadlineRows = exported.rows.filter(
+      (row: { submissionSource: string }) =>
+        row.submissionSource === "deadline",
+    );
+    assert.deepEqual(
+      deadlineRows.map((row: { demand: number }) => row.demand),
+      [0.3, 0],
+    );
+    assert.equal(deadlineRows[0].submittedAt, deadline);
+    assert.equal(
+      exported.rows.find(
+        (row: { submissionSource: string }) =>
+          row.submissionSource === "manual",
+      ).demand,
+      0.7,
+    );
+    assert.match(await svc.export(code, token, "csv"), /submissionSource/);
+  } finally {
+    await pg.close();
+  }
 });
 
 test("both payoff models, orientation and exact input boundaries", () => {

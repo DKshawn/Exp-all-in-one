@@ -1,5 +1,7 @@
 # Demo Model
 
+Use the globe icon at the top right to choose the display language on demo selection, setup, and preview pages. Switching languages preserves demo progress and any settings you entered.
+
 The demo list and screens use a yellow theme, with the demo-mode label in plain gold text beside the site name. The label and current round use the same gold (`#F4CB51`) as the Resume button. The blue-purple **DEMOモードを終了** button returns to the corresponding teacher setup, or to teacher experiment selection from the demo list.
 
 [日本語](../ja/demo.md) · [中文](../zh-CN/demo.md) · [English](../en/demo.md)
@@ -8,11 +10,15 @@ The Double Auction student demo uses the same vertically scrolling trading scree
 
 Select the **Stochastic Evolutionary Games** card on `/demo/select`. At `/evolution/demo`, configure the game and select **Create demo** to enter the teacher lobby. The toolbar now offers **View student screen**, even while admission is open. Switch back to the teacher view to close admission and confirm the start. By default you control one seat and five simulated participants choose independently at random. During decisions and feedback, the same toolbar offers **Pause**, **Resume** and **Advance 30 s** in either view. Pause freezes the clock and simulated participants so you can read both payoffs in the student view. Switching views keeps the demo paused. Only teachers can pause a formal session. The language selector in the header affects only your browser. Reloading clears practice; demo downloads contain practice data only. [Rules and data](evolution.md)
 
-New SEG rooms support up to 10,000 rounds. A coordination choice submits on click, and the controls and payoff matrix stay in place while the realized cell is highlighted. Nash demand uses a 0–1 slider with a configurable step (default 0.1), submitted on release or with Enter. Settled pairs see **Waiting for other pairs** while room-wide decisions remain open. **Next round in** counts down once feedback starts for the whole room. The countdown stays in place as the status changes.
+New SEG rooms support up to 10,000 rounds. A coordination choice submits on click, and the controls and payoff matrix stay in place while the realized cell is highlighted. Nash demand uses a 0–1 slider with a configurable step (default 0.1). Each round starts without a selected value. Click or tap the slider track or use the arrow keys to choose, and submit early with Enter or the button. At the cutoff, the last saved value submits automatically. A round without a selection is recorded as a timeout. Settled pairs see **Waiting for other pairs** while room-wide decisions remain open. **Next round in** counts down once feedback starts for the whole room. The countdown stays in place as the status changes.
 
 Sign in at the teacher entry and open **Demo Model** to choose an experiment at `/demo/select`. Opening a demo or screen-size preview directly first takes you to teacher login, then returns you to that page. A student room session grants access only to the classroom experiment. The teacher key is submitted by POST even before JavaScript loads, so it stays out of the URL.
 
 Select **市場実験室** or **戻る** in the demo header to return to the demo experiment list.
+
+Double Auction, EMH, and Stochastic Evolutionary Games demos support up to 5,000 seats, including the seat you control. The Judgement demo previews individual tasks in each browser without seat allocation.
+
+For Stag Hunt v3, enter **Decision time (s)** at creation (default 5, decimals allowed). Feedback lasts 1 second. The demo simulates 149 of the 150 seats. The controls stay at the top in both views. Reloading in the same tab restores the locked settings in the lobby and resets practice progress. See the [evolution game guide](evolution.md).
 
 ## Double Auction
 
@@ -43,11 +49,11 @@ The interface labels prices, dividends, trading balances and scores in yen.
 
 After starting, a five-second countdown appears directly above the personal conditions panel in its trading-screen position, highlighted with an arrow and border. The page scrolls to reveal it if needed. Pausing also freezes the countdown.
 
-[EMH Demo Model](https://exp-all-in-one.vercel.app/emh/demo) offers **実験1（固定配当）** (fixed dividends) and **実験2（抽選配当）** (dividends determined by a draw). Experiment 1 uses the same settings form, validation limits and defaults as the formal experiment. Set initial securities, target size, type ratios and A/B period duration, then choose **デモルームを作成**. It creates one market of 3–12 participants; everyone except you is virtual, with eight virtual participants by default.
+[EMH Demo Model](https://exp-all-in-one.vercel.app/emh/demo) offers **実験1（固定配当）** (fixed dividends) and **実験2（抽選配当）** (dividends determined by a draw). Experiment 1 uses the same settings form, validation limits and defaults as the formal experiment. Set initial securities, target size, type ratios and A/B period duration, then choose **デモルームを作成**. The default is you and eight simulated participants. Changing the demo attendance automatically allocates markets of 3–12 participants.
 
 Saving settings during admission, confirming and locking allocation, and explicitly releasing it before starting follow the formal workflow. Starting does not redraw confirmed types. Rounds, trade-attempt duration and break duration are configurable (defaults: 6 rounds, 30 seconds and 60 seconds). Securities, timing, payouts and efficiency use the shared engine. Practice A/B dividends in yen for types 1–3 are 120/40, 100/60 and 150/30; private classroom dividends are not used.
 
-Experiment 2 uses one market of 3–999 people, with you and 11 virtual participants by default. Configure initial securities, target size, type ratios, the consecutive unsuccessful-attempt limit, insider start round and number per type, state probabilities and dividends. At start, each round’s state is drawn independently from those probabilities and reflected in Clues. The demo always simulates one market. Default practice dividends in yen are 80/110/170, 60/180/100 and 140/120/90, which differ from formal defaults. Virtual participants trade using their own information.
+Experiment 2 also allocates markets automatically, with 3–999 participants per market. The default is you and 11 simulated participants. Configure initial securities, target size, type ratios, the consecutive unsuccessful-attempt limit, insider start round and number per type, state probabilities and dividends. At start, each round’s state is drawn independently from those probabilities and reflected in Clues. All markets share the draws. Use the toolbar to switch the market you are viewing. Default practice dividends in yen are 80/110/170, 60/180/100 and 140/120/90, which differ from formal defaults. Virtual participants trade using their own information.
 
 Both EMH experiments share the formal conditions panel: the buy and sell sides each place the limit and market buttons side by side. The order book lists price and quantity for both teachers and students. Students can see their own resting limits marked in the list and bar chart. Those limits stay active through other quotes, trades and individual timeouts until period end, unless filled, amended or cancelled. Experiment 2 groups state dividends, probabilities, expected dividend and the Clue, highlights the realized state card at round end, and shows trade and personal round records. Teachers can expand or collapse conditions with **実験条件**.
 
@@ -64,6 +70,10 @@ Task cards, selected count/list and randomization settings are shared with forma
 [Judgement Demo Model](https://exp-all-in-one.vercel.app/judgment/demo) previews the student screens after task selection. Circular **i** buttons open task details. The preview does not save answers and pauses time limits. Use the isolated local verification flow to check production timing and answer persistence.
 
 Everyone can quote in EMH. Accepting an opposing price or submitting a crossing quote immediately trades one unit. Students see anonymous trade records and their own resting orders highlighted in the book. In Experiment 1, the score becomes final at the end of B or when the teacher ends the experiment.
+
+## Stag Hunt: Neighbors (H5)
+
+Open the Stochastic Evolutionary Games demo (`/evolution/demo`) and select **Stag Hunt: Neighbors** in the **Game** menu. Your seat and 149 simulated participants are assigned to the ring. Payoff timing is pending.
 
 ---
 

@@ -97,6 +97,7 @@ export function PayoffMatrix({
                                   names[j],
                                   t(position === 0 ? "row" : "column"),
                                 ].join(" / ")}
+                                aria-describedby={`${ruleId}-format`}
                                 required
                                 maxLength={20}
                                 size={Math.max(1, value.length)}
@@ -137,6 +138,11 @@ export function PayoffMatrix({
         </table>
       </div>
       <p id={ruleId}>{t("matrixRule")}</p>
+      {onPayoffChange && (
+        <p id={`${ruleId}-format`} className="field-help">
+          {t("payoffFormat")}
+        </p>
+      )}
     </div>
   );
 }

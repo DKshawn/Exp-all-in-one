@@ -1,5 +1,7 @@
 # Double Auction
 
+Use the globe icon at the top right of room creation and demo setup to choose Japanese, Chinese, or English. The detailed setup uses the same language.
+
 [日本語](../ja/double-auction.md) · [中文](../zh-CN/double-auction.md) · [English](../en/double-auction.md)
 
 The [standalone AI student program](../../../ai-emh/README.en.md) joins formal CDA, Call Market, Posted Offer and legacy three-good CDA rooms. Each AI order or purchase is for one unit.

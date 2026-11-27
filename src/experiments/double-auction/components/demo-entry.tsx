@@ -10,6 +10,8 @@ import { Header, Footer } from "../../../components/shell";
 import { TeacherForm } from "./teacher-form";
 import { DemoSelectionLink } from "@/components/demo-selection-link";
 import { DEMO_TEACHER_HREFS } from "@/lib/demo-navigation";
+import { useExperimentLanguage } from "@/components/experiment-language";
+import { translator } from "@/lib/ui-language";
 
 const DemoRoom = dynamic(() => import("./demo-room"), {
   ssr: false,
@@ -21,6 +23,8 @@ const DemoRoom = dynamic(() => import("./demo-room"), {
 });
 
 export function DemoEntry() {
+  const language = useExperimentLanguage();
+  const t = translator(language);
   const [config, setConfig] = useState<RoomConfig>();
   const [generator, setGenerator] = useState<StudyGeneratorConfig>();
   const [running, setRunning] = useState(false);
@@ -40,14 +44,19 @@ export function DemoEntry() {
     <>
       <Header
         homeHref="/demo"
-        demoLabel="DEMOモード"
+        demoLabel={t("DEMOモード", "演示模式", "Demo mode")}
+        demoExitLabel={t("DEMOモードを終了", "退出演示", "Exit demo")}
         demoExitHref={DEMO_TEACHER_HREFS.institutions}
-        leading={<DemoSelectionLink />}
-      ></Header>
-      <main className="narrow-main teacher-setup-main">
+        leading={<DemoSelectionLink label={t("戻る", "返回", "Back")} />}
+      />
+      <main className="narrow-main teacher-setup-main" lang={language}>
         <h1 className="eyebrow teacher-entry-heading">
           <GraduationCap size={18} />
-          DEMOモード · 教員の実験設定
+          {t(
+            "DEMOモード · 教員の実験設定",
+            "演示模式 · 教师实验设置",
+            "Demo mode · Teacher setup",
+          )}
         </h1>
         <TeacherForm
           status={{ mode: "local", ready: true, keyRequired: false }}

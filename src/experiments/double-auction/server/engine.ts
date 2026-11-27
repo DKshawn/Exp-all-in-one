@@ -336,8 +336,7 @@ export function execute(
     }
   }
   room.receipts.push({ actor: actorId, requestId: request.requestId });
-  // Room size is bounded (max. 36 students, 12 rounds). Retain every receipt so
-  // even a delayed retry from an earlier round cannot execute twice.
+  // Retain every receipt so delayed retries from earlier rounds remain idempotent.
 }
 
 export function toView(

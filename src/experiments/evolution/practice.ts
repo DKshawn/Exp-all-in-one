@@ -4,6 +4,7 @@ import {
   newGame,
   newSeat,
   phaseDeadline,
+  saveDemandDraft,
   teacherAction,
   tick,
   type Action,
@@ -22,7 +23,7 @@ export class EvolutionPractice {
   private keepRound(round: Round | null) {
     if (round && round !== this.game.round) {
       this.archive.push(round);
-      this.history.push(...summaries(this.game, round));
+      this.history.push(...summaries(this.game, round, true));
     }
   }
   private plannedRound = 0;
@@ -44,12 +45,14 @@ export class EvolutionPractice {
   }
   private planBots(round: Round) {
     this.plannedRound = round.number;
-    const window = Math.min(5000, (round.deadline - round.openedAt) / 2);
+    const duration = round.deadline - round.openedAt;
+    const window = Math.max(1, Math.min(5000, Math.floor(duration / 2)));
+    const earliest = Math.min(800, Math.floor((duration - 1) / 2));
     this.pending = Object.entries(round.entries)
       .filter(([id, e]) => id !== this.human && e.status === "choosing")
       .map(([id]) => ({
         id,
-        at: round.openedAt + 800 + randomInt(Math.floor(window)),
+        at: round.openedAt + earliest + randomInt(window),
         choice:
           randomInt(choiceCount(this.game.settings)) *
           choiceStride(this.game.settings),
@@ -108,6 +111,8 @@ export class EvolutionPractice {
     }
     if (action.kind === "choose")
       choose(g, this.human, action.round, action.choice, now);
+    else if (action.kind === "draft")
+      saveDemandDraft(g, g.round, this.human, action.round, action.choice, now);
     else teacherAction(g, action, now);
     if (action.kind === "resume" && pausedAt != null)
       for (const bot of this.pending) bot.at += now - pausedAt;

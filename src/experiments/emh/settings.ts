@@ -1,14 +1,18 @@
 import { z } from "zod";
+import { MAX_ROOM_PARTICIPANTS } from "@/lib/participant-config";
 
 export const MIN_MARKET_SIZE = 3;
 export const MAX_MARKET_SIZE = 12;
 export const MAX_EXP2_MARKET_SIZE = 999;
+export const MAX_EXP2_MARKETS = Math.floor(
+  MAX_ROOM_PARTICIPANTS / MIN_MARKET_SIZE,
+);
 export const exp2OptionsSchema = z
   .object({
     emptyUnitsLimit: z.number().int().min(1).max(100),
     insiderStartRound: z.number().int().min(1).max(7),
     insiderCountPerType: z.number().int().min(0).max(MAX_EXP2_MARKET_SIZE),
-    marketCount: z.number().int().min(1).max(333).nullable(),
+    marketCount: z.number().int().min(1).max(MAX_EXP2_MARKETS).nullable(),
     states: z
       .object({
         prior: z

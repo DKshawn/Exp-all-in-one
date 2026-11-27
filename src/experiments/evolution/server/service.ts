@@ -1,3 +1,4 @@
+import { MAX_ROOM_PARTICIPANTS } from "@/lib/participant-config";
 import { randomInt, randomUUID } from "node:crypto";
 import { claimCode } from "@/lib/server/experiment-registry";
 import {
@@ -22,9 +23,11 @@ import {
   teacherAction,
   phaseDeadline,
   choose,
+  saveDemandDraft,
   tick,
   closeRound,
   type Action,
+  type ParticipantAction,
   type Game,
   type Round,
 } from "../engine";
@@ -44,9 +47,15 @@ import {
   HISTORY_ROUNDS,
   MAX_ROUNDS,
   settingsSchema,
+  isMemo,
+  isNeighborMemo,
+  H5_PROTOCOL,
+  memoAnswerError,
+  MEMO_PARTICIPANTS,
   type Settings,
 } from "../settings";
-import { responsesCsv } from "../export";
+import { exportSettings, responsesCsv } from "../export";
+import { label } from "../locale";
 import {
   gapMs,
   claimAdvance,
@@ -55,7 +64,7 @@ import {
   publish,
   readEntries,
   roundComplete,
-  submitPair,
+  updatePair,
   writeEntries,
 } from "./live";
 
@@ -205,10 +214,17 @@ export class EvolutionService {
     title: string,
     password: string,
     accessKey: string,
-    input: Settings,
+    input: unknown,
   ) {
     assertTeacherAccess(accessKey);
     const parsed = settingsSchema.safeParse(input);
+    if (!parsed.success) {
+      const issue = parsed.error.issues.find(
+        (issue) => issue.path[0] === "memoAnswerSeconds",
+      );
+      const code = issue && memoAnswerError(issue.message);
+      if (code) throw new AuctionError(label("ja", code), 400, code);
+    }
     if (
       !parsed.success ||
       !title.trim() ||
@@ -233,7 +249,10 @@ export class EvolutionService {
         ).join("");
         if (!(await claimCode(tx, code, "evolution"))) continue;
         const now = await this.time(tx);
-        const game: Game = { ...newGame(settings), distributed: true };
+        const game: Game = {
+          ...newGame(settings),
+          ...(isMemo(settings) ? {} : { distributed: true as const }),
+        };
         await tx.query(
           "INSERT INTO evolution_rooms VALUES($1,$2,$3,$4,$5,$6::jsonb)",
           [
@@ -245,7 +264,7 @@ export class EvolutionService {
             JSON.stringify(game),
           ],
         );
-        await publish(tx, game, code, title.trim());
+        if (game.distributed) await publish(tx, game, code, title.trim());
         return { code, token };
       }
       throw new AuctionError("もう一度作成してください。", 503);
@@ -298,6 +317,19 @@ export class EvolutionService {
         } else {
           if (room.game.phase !== "open")
             return new AuctionError("新規入室は締め切られました。", 409);
+          const {
+            rows: [attendance],
+          } = await tx.query<{ count: number }>(
+            "SELECT count(*)::int AS count FROM evolution_players WHERE room=$1",
+            [code],
+          );
+          if (
+            attendance.count >=
+            (isMemo(room.game.settings)
+              ? MEMO_PARTICIPANTS
+              : MAX_ROOM_PARTICIPANTS)
+          )
+            return new AuctionError("このルームは満員です。", 409);
           const id = randomUUID();
           await tx.query(
             "INSERT INTO evolution_players(room,id,nickname,pin_hash,token_hash,joined_at,last_seen) VALUES($1,$2,$3,$4,$5,$6,$6)",
@@ -324,6 +356,18 @@ export class EvolutionService {
     if (error) throw error;
     return { code, token };
   }
+  async saveDraft(
+    code: string,
+    token: string | undefined,
+    role: "teacher" | "student",
+    action: Extract<ParticipantAction, { kind: "draft" }>,
+  ) {
+    if (!token || role !== "student") throw unauthorized();
+    const now = this.time === databaseTime ? null : await this.time(this.db);
+    if (!(await updatePair(this.db, code, token, action, now)))
+      await this.view(code, token, role, action);
+  }
+
   async view(
     code: string,
     token: string | undefined,
@@ -333,15 +377,19 @@ export class EvolutionService {
     before = MAX_ROUNDS + 1,
   ) {
     if (!token) throw unauthorized();
-    if (action && (role === "student") !== (action.kind === "choose"))
+    if (
+      action &&
+      (role === "student") !==
+        (action.kind === "choose" || action.kind === "draft")
+    )
       throw unauthorized();
     if (role === "student") {
       const clock = () =>
         this.time === databaseTime ? null : this.time(this.db);
       const read = async () =>
         pollParticipant(this.db, code, token, await clock(), after, before);
-      if (action?.kind === "choose")
-        await submitPair(this.db, code, token, action, await clock());
+      if (action?.kind === "choose" || action?.kind === "draft")
+        await updatePair(this.db, code, token, action, await clock());
       const live = await read();
       if (live) {
         const v = live.view;
@@ -409,6 +457,7 @@ export class EvolutionService {
         await heartbeat(tx, code, id, now);
         if (entry && entry.seenAt === null && g.phase === "playing") {
           entry.seenAt = now;
+          if (entry.memo) entry.memo.feedbackServedAt = now;
           await save(tx, r);
         }
       }
@@ -416,6 +465,8 @@ export class EvolutionService {
         const old = g.round;
         if (action.kind === "choose")
           choose(g, id, action.round, action.choice, now);
+        else if (action.kind === "draft")
+          saveDemandDraft(g, g.round, id, action.round, action.choice, now);
         else teacherAction(g, action, now);
         if (g.distributed) {
           if (old && old.closedAt === now) await writeEntries(tx, code, old);
@@ -428,9 +479,28 @@ export class EvolutionService {
       }
       const base = baseView(g, code, r.title, now);
       if (role === "teacher") {
+        const bounds = [
+          code,
+          Math.min(base.round, before),
+          HISTORY_ROUNDS,
+          after,
+        ];
+        if (g.round?.memo) {
+          // Archived summaries use the research export schema. Read the actual
+          // entries for the teacher's player counts, including older v3 rooms.
+          const history = await tx.query<{ data: Round }>(
+            "SELECT data FROM evolution_rounds WHERE room=$1 AND number<$2 AND number>=greatest($2-$3,$4+1) ORDER BY number",
+            bounds,
+          );
+          return teacherView(
+            g,
+            base,
+            history.rows.flatMap(({ data }) => summaries(g, data, true)),
+          );
+        }
         const history = await tx.query<{ summary: Summary[] }>(
           "SELECT summary FROM evolution_rounds WHERE room=$1 AND number<$2 AND number>=greatest($2-$3,$4+1) ORDER BY number",
-          [code, Math.min(base.round, before), HISTORY_ROUNDS, after],
+          bounds,
         );
         return teacherView(
           g,
@@ -438,6 +508,7 @@ export class EvolutionService {
           history.rows.flatMap((x) => x.summary),
         );
       }
+      if (isNeighborMemo(g.settings)) return studentView(g, base, id, []);
       const history = await tx.query<{ item: Personal }>(
         "SELECT personal -> $2::text AS item FROM evolution_rounds WHERE room=$1 AND number<$3 AND number>=greatest($3-$4,$5+1) ORDER BY number",
         [code, id, Math.min(base.round, before), HISTORY_ROUNDS, after],
@@ -514,7 +585,14 @@ export class EvolutionService {
     const gapsById = new Map(participants.map((p) => [p.id, p.gaps]));
     async function* chunks() {
       const slider = continuous(g.settings);
-      if (format === "csv") yield responsesCsv([], true, slider);
+      if (format === "csv")
+        yield responsesCsv(
+          [],
+          true,
+          slider,
+          isMemo(g.settings),
+          isNeighborMemo(g.settings),
+        );
       else {
         const info = JSON.stringify({
           version: 1,
@@ -528,7 +606,8 @@ export class EvolutionService {
           pausedAt: g.pausedAt ?? null,
           exportedAt: now,
           phase: g.phase,
-          settings: g.settings,
+          settings: exportSettings(g.settings),
+          ...(isNeighborMemo(g.settings) && { scoringStatus: "pending" }),
           participants,
         });
         yield info.slice(0, -1) + ',"rows":[';
@@ -543,7 +622,17 @@ export class EvolutionService {
               ([a, b]) => a < (round.closedAt ?? now) && b > round.openedAt,
             ),
         }));
-        if (format === "csv") return "\r\n" + responsesCsv(rows, false, slider);
+        if (format === "csv")
+          return (
+            "\r\n" +
+            responsesCsv(
+              rows,
+              false,
+              slider,
+              isMemo(g.settings),
+              isNeighborMemo(g.settings),
+            )
+          );
         const body = (first ? "" : ",") + JSON.stringify(rows).slice(1, -1);
         first = false;
         return body;
@@ -604,6 +693,7 @@ export class EvolutionService {
       title: string;
       created_at: string;
       mode: Settings["mode"];
+      protocol: string | null;
       phase: Game["phase"];
       round: number;
       rounds: number;
@@ -612,6 +702,7 @@ export class EvolutionService {
       count: number;
     }>(
       `SELECT code,title,created_at,game->'settings'->>'mode' AS mode,
+        game->'settings'->>'memoProtocol' AS protocol,
         game->>'phase' AS phase,(game->>'pausedAt' IS NOT NULL) AS paused,
         COALESCE((game->'round'->>'number')::int,0) AS round,
         (game->'settings'->>'rounds')::int AS rounds,
@@ -625,7 +716,7 @@ export class EvolutionService {
       title: r.title,
       createdAt: Number(r.created_at),
       experiment: "evolution",
-      variant: r.mode,
+      variant: r.protocol === H5_PROTOCOL ? H5_PROTOCOL : r.mode,
       phase: r.paused
         ? "paused"
         : r.phase === "playing"
@@ -638,7 +729,8 @@ export class EvolutionService {
       round: r.round,
       totalRounds: r.rounds,
       participantCount: r.count,
-      capacity: 0,
+      capacity:
+        r.protocol === H5_PROTOCOL ? MEMO_PARTICIPANTS : MAX_ROOM_PARTICIPANTS,
       flexibleAdmission: true,
       marketCount: r.groups,
       institutions: [],

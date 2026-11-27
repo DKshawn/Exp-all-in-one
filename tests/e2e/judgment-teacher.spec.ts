@@ -1,10 +1,25 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { enterTeacherPage } from "./helpers/teacher-login";
 import { expectEndButton } from "./helpers/end-experiment";
 import type {
   StudentView,
   TeacherView,
 } from "../../src/experiments/judgment/types";
+
+async function verifyLanguageControlReady(page: Page) {
+  const language = page.getByRole("banner").getByRole("combobox");
+  await expect(async () => {
+    await language.selectOption("en");
+    await expect(
+      page.getByRole("button", { name: "Select all", exact: true }),
+    ).toBeVisible({ timeout: 1500 });
+  }).toPass({ timeout: 15000 });
+  await language.selectOption("ja");
+  await expect(
+    page.getByRole("button", { name: "すべて選択", exact: true }),
+  ).toBeVisible();
+  return language;
+}
 
 test("Judgment task cards, translated details and demo controls stay usable across layouts", async ({
   page,
@@ -13,10 +28,7 @@ test("Judgment task cards, translated details and demo controls stay usable acro
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/judgment/demo");
   await enterTeacherPage(page);
-  const language = page.getByRole("combobox", {
-    name: "言語 / 语言 / Language",
-    exact: true,
-  });
+  const language = await verifyLanguageControlReady(page);
   const start = page.getByRole("button", { name: "デモを開始", exact: true });
   await expect(start).toBeDisabled();
   await page.getByRole("button", { name: "すべて選択", exact: true }).click();
@@ -31,7 +43,7 @@ test("Judgment task cards, translated details and demo controls stay usable acro
     .check();
   await page.getByLabel("選択肢の順番をランダム化", { exact: true }).check();
   for (const [locale, count, close] of [
-    ["zh", "已选 14 项", "关闭"],
+    ["zh-CN", "已选 14 项", "关闭"],
     ["en", "14 tasks selected", "Close"],
     ["ja", "14課題を選択", "閉じる"],
   ]) {
@@ -77,11 +89,20 @@ test("Judgment task cards, translated details and demo controls stay usable acro
   }
   await language.selectOption("en");
   await page.getByRole("button", { name: "Start demo", exact: true }).click();
-  const preview = page.getByRole("dialog", { name: "Demo mode", exact: true });
+  const preview = page.locator(".judgment-preview[open]");
+  await expect(preview).toHaveAccessibleName("Demo mode");
   await expect(preview.locator(".judgment-app")).toHaveAttribute("lang", "en");
   await expect(preview.locator(".student-progress")).toHaveText("1 / 86");
   await preview.getByRole("button", { name: "Skip", exact: true }).click();
   await expect(preview.locator(".student-progress")).toHaveText("2 / 86");
+  const previewLanguage = preview.locator("header .header-language-select");
+  await previewLanguage.selectOption("zh-CN");
+  await expect(preview.locator(".judgment-app")).toHaveAttribute(
+    "lang",
+    "zh-CN",
+  );
+  await expect(preview.locator(".student-progress")).toHaveText("2 / 86");
+  await previewLanguage.selectOption("en");
   await preview
     .getByRole("button", { name: "Previous page", exact: true })
     .click();
@@ -113,6 +134,7 @@ test("Judgment teacher workspace runs a lesson, locks settings, recovers and exp
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/teacher?experiment=judgment");
   await enterTeacherPage(page);
+  await verifyLanguageControlReady(page);
   await page
     .locator('.judgment-study-option input[type="checkbox"]')
     .first()
@@ -191,9 +213,7 @@ test("Judgment teacher workspace runs a lesson, locks settings, recovers and exp
       .locator(".judgment-preview")
       .getByRole("button", { name: "閉じる", exact: true })
       .click();
-    await page
-      .getByRole("combobox", { name: "言語 / 语言 / Language", exact: true })
-      .selectOption("en");
+    await page.getByRole("banner").getByRole("combobox").selectOption("en");
     await page.reload();
     await expect(
       page.getByRole("button", { name: "End experiment", exact: true }),
@@ -204,9 +224,7 @@ test("Judgment teacher workspace runs a lesson, locks settings, recovers and exp
     await expect(
       page.locator(".judgment-randomization input:checked"),
     ).toHaveCount(2);
-    await page
-      .getByRole("combobox", { name: "言語 / 语言 / Language", exact: true })
-      .selectOption("ja");
+    await page.getByRole("banner").getByRole("combobox").selectOption("ja");
     let answered = 0;
     for (let attempt = 0; attempt < 10; attempt++) {
       const state = (await (
@@ -222,6 +240,26 @@ test("Judgment teacher workspace runs a lesson, locks settings, recovers and exp
         if (field.type === "choice") await inputs.first().check();
         else if (field.type === "number")
           await inputs.first().fill(String(field.min ?? 1));
+      }
+      if (answered === 0) {
+        const draftForm = student.locator("#answer-form");
+        const answers = () =>
+          draftForm.evaluate((form) =>
+            Array.from(new FormData(form as HTMLFormElement).entries()),
+          );
+        const draft = await answers();
+        const studentLanguage = student.locator("#language-select");
+        await studentLanguage.selectOption("en");
+        await expect(student.locator(".judgment-app")).toHaveAttribute(
+          "lang",
+          "en",
+        );
+        expect(await answers()).toEqual(draft);
+        await studentLanguage.selectOption("ja");
+        await expect(student.locator(".judgment-app")).toHaveAttribute(
+          "lang",
+          "ja",
+        );
       }
       const submitted = student.waitForResponse(
         (response) =>
