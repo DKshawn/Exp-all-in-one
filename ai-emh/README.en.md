@@ -65,3 +65,9 @@ The program validates the model's JSON and refreshes the student view before sub
 Run `npm --prefix ai-emh test` for offline simulated tests. The current student interface is not a dedicated stable public API, so verify compatibility after platform updates.
 
 For Stag Hunt v3, use a separate local research room and fill the roster to exactly 150 seats before closing admission. AI seats use the same initial lock, revision eligibility and deadline as other seats. The model receives prior group feedback only; for H5 it sees only the ten neighbors’ prior choices. A slow response is not submitted to a later round. For a model smoke test, set a longer Decision time in the base v3 room, and do not treat the result as human evidence or as validation of short-window throughput.
+
+To opt in to a single live OpenAI smoke test, set `EXP_V3_OPENAI_MODEL` to a model you have access to and provide `OPENAI_API_KEY` through the environment. Run the platform Stag Hunt v3 service test. It sends only synthetic prior-round observations, in a 150-seat test room with a 30-second decision window; ordinary tests never call OpenAI. OpenAI calls set `store: false` to opt out of storing the completion for distillation and evals. Do not use a real participant room for this test.
+
+```sh
+npx --no-install tsx --test --test-name-pattern="service stores" tests/evolution-memo-v3.test.ts
+```

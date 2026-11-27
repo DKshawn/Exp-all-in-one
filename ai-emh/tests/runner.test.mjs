@@ -859,6 +859,7 @@ test("OpenAI requests use structured output and bearer authentication", async (t
   assert.equal(auth, "Bearer test-key");
   assert.equal(received.response_format.type, "json_schema");
   assert.equal(received.max_completion_tokens, 2048);
+  assert.equal(received.store, false);
   assert.equal(result.decision.action, "wait");
   await requestModel({
     baseUrl: `${mock.url}/v1`,

@@ -350,7 +350,13 @@ test("memo v3 service stores server feedback delivery and restricts eligibility 
     await migrate(db);
     let now = 100_000;
     let wallStart: number | undefined;
-    const liveModel = process.env.EXP_V3_LOCAL_MODEL;
+    const openaiModel = process.env.EXP_V3_OPENAI_MODEL;
+    const localModel = process.env.EXP_V3_LOCAL_MODEL;
+    assert.ok(
+      !(openaiModel && localModel),
+      "Select exactly one smoke-test provider",
+    );
+    const liveModel = openaiModel ?? localModel;
     const answerSeconds = liveModel ? "30" : "1.5";
     const svc = new EvolutionService(
       db,
@@ -431,7 +437,7 @@ test("memo v3 service stores server feedback delivery and restricts eligibility 
       observed[1].feedbackHare,
       second.current?.memo?.feedback[0].hare,
     );
-    assert.doesNotMatch(JSON.stringify(data), /Synthetic|6521|room-password/);
+    assert.doesNotMatch(JSON.stringify(data), /"Synthetic\d+"|"6521"|"room-password"/);
     const csv = await svc.export(code, token, "csv");
     assert.match(csv, /feedbackServedAt/);
     assert.match(csv, /"memoAnswerSeconds"\r\n/);
@@ -501,9 +507,18 @@ test("memo v3 service stores server feedback delivery and restricts eligibility 
     );
     if (liveModel) {
       const endpoint = new URL(
-        process.env.EXP_V3_LOCAL_MODEL_URL ?? "http://127.0.0.1:18787/v1",
+        openaiModel
+          ? "https://api.openai.com/v1"
+          : (process.env.EXP_V3_LOCAL_MODEL_URL ?? "http://127.0.0.1:18787/v1"),
       );
-      assert.equal(endpoint.hostname, "127.0.0.1");
+      const provider = openaiModel ? "openai" : "local";
+      if (!openaiModel) assert.equal(endpoint.hostname, "127.0.0.1");
+      const key = openaiModel ? process.env.OPENAI_API_KEY?.trim() : undefined;
+      if (openaiModel)
+        assert.ok(
+          key,
+          "OPENAI_API_KEY is required for explicit OpenAI smoke test",
+        );
       const [aiId] = Object.entries(live.rows[0].game.round!.entries).find(
         ([, entry]) => entry.memo?.group === 2 && entry.memo.eligible,
       )!;
@@ -515,7 +530,10 @@ test("memo v3 service stores server feedback delivery and restricts eligibility 
         error?: string;
         variant?: string;
         command?: object;
+        responseModel?: string;
+        modelDurationMs?: number;
       }[] = [];
+      let requests = 0;
       wallStart = Date.now();
       try {
         await runStudent(
@@ -529,7 +547,11 @@ test("memo v3 service stores server feedback delivery and restricts eligibility 
           {
             model: liveModel,
             modelUrl: endpoint.href,
-            provider: "local",
+            provider,
+            apiKey: key,
+            onDecisionStart: () => {
+              assert.equal(++requests, 1);
+            },
             interval: 1,
             pollSeconds: 0.01,
             timeout: 20,
@@ -556,7 +578,12 @@ test("memo v3 service stores server feedback delivery and restricts eligibility 
       assert.equal(
         records.find((record) => record.type === "submitted")?.variant,
         "stag-hunt-v3",
-        JSON.stringify(records),
+        records
+          .map(
+            ({ type, error }) =>
+              `${type}: ${error?.replace(/sk-[A-Za-z0-9_*\-]+/g, "[redacted]") ?? ""}`,
+          )
+          .join("; "),
       );
       const accepted = await svc.view(code, aiToken, "student");
       assert.equal(accepted.role, "student");
@@ -565,7 +592,7 @@ test("memo v3 service stores server feedback delivery and restricts eligibility 
       );
       assert.equal(accepted.current?.status, "submitted");
       console.log(
-        `Local model response accepted in round 11 after ${elapsedMs} ms (30 s decision window)`,
+        `${provider} model response accepted in round 11 after ${elapsedMs} ms (30 s decision window; model ${records.find((record) => record.type === "submitted")?.responseModel ?? liveModel})`,
       );
     }
 

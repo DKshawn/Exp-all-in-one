@@ -196,7 +196,7 @@ export async function requestModel({
         ],
         response_format: schema,
         ...(provider === "openai"
-          ? { max_completion_tokens: maxOutputTokens }
+          ? { max_completion_tokens: maxOutputTokens, store: false }
           : { max_tokens: maxOutputTokens }),
       },
     },
