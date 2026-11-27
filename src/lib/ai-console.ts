@@ -1,3 +1,5 @@
+import { MAX_STUDY_PARTICIPANTS } from "@/experiments/double-auction/lib/study-config";
+
 export const aiExperiments = {
   institutions: "Double Auction",
   emh: "EMH",
@@ -7,6 +9,11 @@ export const aiExperiments = {
 export type AiExperiment = keyof typeof aiExperiments;
 export type AiProvider = "local" | "openai";
 export const AI_ADMISSION_LIMIT = 999;
+export function aiParticipantLimit(experiment: AiExperiment) {
+  return experiment === "institutions"
+    ? MAX_STUDY_PARTICIPANTS
+    : AI_ADMISSION_LIMIT;
+}
 export const AI_ADMISSION_DEFAULTS = {
   count: 40,
   parallel: 8,

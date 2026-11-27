@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
   aiExperiments,
+  aiParticipantLimit,
   aiRunActive,
   isAiExperiment,
   type AiConsoleView,
@@ -18,6 +19,7 @@ import { EMH_EXPERIMENT_LABELS } from "@/experiments/emh/types";
 import { H5_PROTOCOL } from "@/experiments/evolution/settings";
 import { label } from "@/experiments/evolution/locale";
 import styles from "@/app/teacher/ai/console.module.css";
+import { AiTopUpForm } from "./ai-top-up-form";
 
 const route = "/api/teacher/ai";
 const phases: Record<AiPhase, string> = {
@@ -274,7 +276,7 @@ export function AiExperimentConsole({
   const mutation = useRef(false);
   const choice = view.runs.find((run) => run.id === view.selected);
   const canSelectRoom = roomList?.some((room) => room.code === code);
-  const roomBusy = view.runs.some(
+  const roomRun = view.runs.find(
     (run) => run.code === code && aiRunActive(run.phase),
   );
 
@@ -286,7 +288,9 @@ export function AiExperimentConsole({
         setRoomList(
           rooms.filter(
             (room) =>
-              isAiExperiment(room.experiment) && room.phase === "waiting",
+              isAiExperiment(room.experiment) &&
+              room.admissionRemaining !== undefined &&
+              room.admissionRemaining > 0,
           ),
         ),
       )
@@ -367,143 +371,164 @@ export function AiExperimentConsole({
       <div className={styles.overview}>
         <section className={styles.panel} aria-labelledby="ai-setup-title">
           <h2 id="ai-setup-title">参加設定</h2>
-          <form
-            onSubmit={start}
-            className={styles.form}
-            aria-labelledby="ai-setup-title"
-          >
-            <div className="field">
-              <label htmlFor="ai-room">ルーム</label>
-              <select
-                id="ai-room"
-                name="code"
-                required
-                value={canSelectRoom ? code : ""}
-                onChange={(e) => setCode(e.target.value)}
-              >
-                <option value="">
-                  {roomList === null
-                    ? "読み込み中…"
-                    : roomList.length
-                      ? "入室受付中のルームを選ぶ"
-                      : "入室受付中のルームなし"}
+          <div className="field">
+            <label htmlFor="ai-room">ルーム</label>
+            <select
+              id="ai-room"
+              value={canSelectRoom ? code : ""}
+              onChange={(e) => setCode(e.target.value)}
+            >
+              <option value="">
+                {roomList === null
+                  ? "読み込み中…"
+                  : roomList.length
+                    ? "入室受付中のルームを選ぶ"
+                    : "入室受付中のルームなし"}
+              </option>
+              {roomList?.map((room) => (
+                <option value={room.code} key={room.code}>
+                  {room.code} · {roomLabel(room)}
                 </option>
-                {roomList?.map((room) => (
-                  <option value={room.code} key={room.code}>
-                    {room.code} · {roomLabel(room)}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className={styles.fields}>
-              <label className="field">
-                <span>接続先</span>
-                <select
-                  value={provider}
-                  onChange={(e) => switchProvider(e.target.value as AiProvider)}
-                >
-                  <option value="local">ローカル</option>
-                  <option value="openai" disabled={!openaiAvailable}>
-                    OpenAI
-                  </option>
-                </select>
-              </label>
-              <label className="field">
-                <span>AI 人数</span>
-                <input
-                  type="number"
-                  name="count"
-                  required
-                  min="1"
-                  max="999"
-                  defaultValue="40"
-                />
-              </label>
-            </div>
-            <label className="field">
-              <span>モデル名</span>
-              <input
-                name="model"
-                required
-                maxLength={200}
-                value={model}
-                onChange={(e) => setModel(e.target.value)}
-                autoComplete="off"
+              ))}
+            </select>
+          </div>
+          {roomRun ? (
+            roomRun.phase === "ready" &&
+            canSelectRoom && (
+              <AiTopUpForm
+                key={roomRun.id}
+                run={roomRun}
+                max={aiParticipantLimit(roomRun.experiment)}
+                disabled={busy}
+                onUpdate={(next) => {
+                  setRequested(next.id);
+                  setView((current) => ({
+                    ...current,
+                    runs: current.runs.map((run) =>
+                      run.id === next.id ? next : run,
+                    ),
+                  }));
+                }}
               />
-            </label>
-            <details className={styles.advanced}>
-              <summary>詳細設定</summary>
+            )
+          ) : (
+            <form
+              onSubmit={start}
+              className={styles.form}
+              aria-labelledby="ai-setup-title"
+            >
               <div className={styles.fields}>
                 <label className="field">
-                  <span>同時リクエスト</span>
+                  <span>接続先</span>
+                  <select
+                    value={provider}
+                    onChange={(e) =>
+                      switchProvider(e.target.value as AiProvider)
+                    }
+                  >
+                    <option value="local">ローカル</option>
+                    <option value="openai" disabled={!openaiAvailable}>
+                      OpenAI
+                    </option>
+                  </select>
+                </label>
+                <label className="field">
+                  <span>AI 人数</span>
                   <input
                     type="number"
-                    name="parallel"
+                    name="count"
+                    required
                     min="1"
                     max="999"
-                    required
-                    defaultValue="8"
-                  />
-                </label>
-                <label className="field">
-                  <span>決定間隔（秒）</span>
-                  <input
-                    type="number"
-                    name="interval"
-                    min="1"
-                    max="3600"
-                    required
-                    defaultValue="10"
-                  />
-                </label>
-                <label className="field">
-                  <span>応答期限（秒）</span>
-                  <input
-                    type="number"
-                    name="timeout"
-                    min="1"
-                    max="300"
-                    required
-                    defaultValue="60"
-                  />
-                </label>
-                <label className="field">
-                  <span>出力トークン上限</span>
-                  <input
-                    type="number"
-                    name="maxOutputTokens"
-                    min="1"
-                    max="32768"
-                    required
-                    defaultValue="2048"
+                    defaultValue="40"
                   />
                 </label>
               </div>
-            </details>
-            <div className={styles.actions}>
-              <button
-                type="submit"
-                className="button primary"
-                disabled={busy || roomBusy || !canSelectRoom || !model.trim()}
-              >
-                AI を入室させる
-              </button>
-              {roomList?.length === 0 && (
-                <Link
-                  href="/teacher"
-                  className="button secondary"
-                  onNavigate={onNavigate}
+              <label className="field">
+                <span>モデル名</span>
+                <input
+                  name="model"
+                  required
+                  maxLength={200}
+                  value={model}
+                  onChange={(e) => setModel(e.target.value)}
+                  autoComplete="off"
+                />
+              </label>
+              <details className={styles.advanced}>
+                <summary>詳細設定</summary>
+                <div className={styles.fields}>
+                  <label className="field">
+                    <span>同時リクエスト</span>
+                    <input
+                      type="number"
+                      name="parallel"
+                      min="1"
+                      max="999"
+                      required
+                      defaultValue="8"
+                    />
+                  </label>
+                  <label className="field">
+                    <span>決定間隔（秒）</span>
+                    <input
+                      type="number"
+                      name="interval"
+                      min="1"
+                      max="3600"
+                      required
+                      defaultValue="10"
+                    />
+                  </label>
+                  <label className="field">
+                    <span>応答期限（秒）</span>
+                    <input
+                      type="number"
+                      name="timeout"
+                      min="1"
+                      max="300"
+                      required
+                      defaultValue="60"
+                    />
+                  </label>
+                  <label className="field">
+                    <span>出力トークン上限</span>
+                    <input
+                      type="number"
+                      name="maxOutputTokens"
+                      min="1"
+                      max="32768"
+                      required
+                      defaultValue="2048"
+                    />
+                  </label>
+                </div>
+              </details>
+              <div className={styles.actions}>
+                <button
+                  type="submit"
+                  className="button primary"
+                  disabled={busy || !canSelectRoom || !model.trim()}
                 >
-                  ルームを作る
-                </Link>
-              )}
-            </div>
-            {error && (
-              <p role="alert" className={styles.errorText}>
-                {error}
-              </p>
-            )}
-          </form>
+                  AI を入室させる
+                </button>
+                {roomList?.length === 0 && (
+                  <Link
+                    href="/teacher"
+                    className="button secondary"
+                    onNavigate={onNavigate}
+                  >
+                    ルームを作る
+                  </Link>
+                )}
+              </div>
+            </form>
+          )}
+          {error && (
+            <p role="alert" className={styles.errorText}>
+              {error}
+            </p>
+          )}
         </section>
 
         <section className={styles.panel} aria-labelledby="ai-run-title">

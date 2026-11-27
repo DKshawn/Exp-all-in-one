@@ -40,6 +40,8 @@ Screen-size previews allow same-origin embedding only for `/demo` and `/emh/demo
 
 Set `AI_EXPERIMENTS_ENABLED=1` and run `npm run dev -- --hostname 127.0.0.1`. Open the **AI 実験台** dialog from the teacher home or a room with an AI run to see admission and decision records. See the [classroom guide](classroom.md#admit-ai-students) for model connection variables. Run logs and student recovery files are saved under `ai-emh/.local/console/`, which Git ignores.
 
+Topping up keeps the run ID and concurrency pool and appends new identities to the recovery file. If admission stops partway through a top-up, everyone already registered stays in the room.
+
 ## Vercel + Neon
 
 | Environment variable | Purpose                                                                                                          |

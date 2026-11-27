@@ -7,11 +7,13 @@ import {
   aiRunStatus,
   startAiRun,
   stopAiRun,
+  topUpAiRun,
 } from "@/lib/server/ai-console";
 import { body, codeFor, failure, json, NO_STORE } from "@/lib/server/http";
 import { teacherAccessKey } from "@/lib/server/teacher-session";
 import { AuctionError } from "@/lib/server/errors";
 import { aiAdmissionSchema } from "@/lib/server/ai-admission";
+import { MAX_STUDY_PARTICIPANTS } from "@/experiments/double-auction/lib/study-config";
 
 export const runtime = "nodejs";
 
@@ -31,14 +33,21 @@ const input = z.discriminatedUnion("action", [
     })
     .strict(),
   z.object({ action: z.literal("stop"), id: idSchema }).strict(),
+  z
+    .object({
+      action: z.literal("top-up"),
+      id: idSchema,
+      count: z.int().min(1).max(MAX_STUDY_PARTICIPANTS),
+    })
+    .strict(),
 ]);
 
 function authorize(request: NextRequest) {
   const origin = aiConsoleOrigin(request);
-  teacherAccessKey(request);
+  const accessKey = teacherAccessKey(request);
   if (request.headers.get("sec-fetch-site") === "cross-site")
     throw new AuctionError("この送信元からは操作できません。", 403);
-  return origin;
+  return { origin, accessKey };
 }
 
 function runId(value: string | null) {
@@ -74,11 +83,14 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const origin = authorize(request);
+    const { origin, accessKey } = authorize(request);
     const data = await body(request, input);
     if (data.action === "stop") {
       stopAiRun(data.id);
       return json(await aiConsoleView(data.id));
+    }
+    if (data.action === "top-up") {
+      return json(await topUpAiRun(data.id, data.count, accessKey));
     }
     const run = await startAiRun({ ...data, code: codeFor(data.code) }, origin);
     return json(await aiConsoleView(run.id), 201);

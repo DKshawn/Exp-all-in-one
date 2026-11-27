@@ -362,14 +362,10 @@ export async function runStudent(client, config, slots, signal, report) {
   endWaiting("run_stopped");
 }
 
-export function makeManifest(code, count, baseUrl) {
-  const prefix = `A${randomBytes(3).readUIntBE(0, 3).toString(36).padStart(5, "0").slice(-3).toUpperCase()}`;
-  return {
-    version: 1,
-    code,
-    baseUrl,
-    createdAt: new Date().toISOString(),
-    students: Array.from({ length: count }, (_, index) => ({
+function manifestStudents(prefix, start, count) {
+  return Array.from({ length: count - start }, (_, offset) => {
+    const index = start + offset;
+    return {
       // Keep the existing numeric suffixes and reserve letter-prefixed ones for larger runs.
       nickname: `${prefix}${
         index < 999
@@ -377,7 +373,29 @@ export function makeManifest(code, count, baseUrl) {
           : (index - 999 + 10 * 36 ** 2).toString(36).toUpperCase()
       }`,
       pin: String(randomInt(10000)).padStart(4, "0"),
-    })),
+    };
+  });
+}
+
+export function makeManifest(code, count, baseUrl) {
+  const prefix = `A${randomBytes(3).readUIntBE(0, 3).toString(36).padStart(5, "0").slice(-3).toUpperCase()}`;
+  return {
+    version: 1,
+    code,
+    baseUrl,
+    createdAt: new Date().toISOString(),
+    students: manifestStudents(prefix, 0, count),
+  };
+}
+
+export function extendManifest(manifest, count) {
+  const prefix = manifest.students[0].nickname.slice(0, 4);
+  return {
+    ...manifest,
+    students: [
+      ...manifest.students,
+      ...manifestStudents(prefix, manifest.students.length, count),
+    ],
   };
 }
 
@@ -389,7 +407,7 @@ export async function joinStudents(manifest, experiment, signal, onJoin) {
   for (const [index, client] of clients.entries()) {
     signal.throwIfAborted();
     await client.join();
-    onJoin(index + 1);
+    onJoin(index + 1, client);
     if (index === 0) await client.state(signal);
   }
   signal.throwIfAborted();

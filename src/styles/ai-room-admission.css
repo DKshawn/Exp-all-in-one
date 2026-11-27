@@ -68,6 +68,32 @@
   white-space: nowrap;
 }
 
+.ai-top-up {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: end;
+}
+
+.ai-top-up .field {
+  flex: 0 1 9rem;
+  min-inline-size: 0;
+  margin: 0;
+}
+
+.ai-top-up label,
+.ai-top-up .button {
+  white-space: nowrap;
+}
+
+.ai-top-up .button {
+  min-block-size: 2.7rem;
+}
+
+.ai-top-up .error-message {
+  flex-basis: 100%;
+}
+
 .ai-admission-status {
   display: flex;
   flex-wrap: wrap;
@@ -92,6 +118,11 @@
 
 .ai-admission-status-text span {
   color: var(--muted);
+}
+
+.ai-admission-error {
+  flex-basis: 100%;
+  margin: 0;
 }
 
 .ai-admission-status-text strong,

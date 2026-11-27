@@ -23,6 +23,7 @@ import {
   AiRoomAdmission,
   AiRoomAdmissionForm,
 } from "@/components/ai-room-admission";
+import { AiTopUpForm } from "@/components/ai-top-up-form";
 import { aiRunActive, type AiRun, type AiSetup } from "@/lib/ai-console";
 import { studyAdmissionSeatsRemaining } from "@/experiments/double-auction/lib/study-config";
 
@@ -136,23 +137,35 @@ export function Room({
     const capacity = studyAdmissionSeatsRemaining(
       view.study.teacher?.participants.length ?? 0,
     );
-    const aiControls =
+    let aiControls;
+    if (
       teacher &&
       aiConfig &&
       capacity > 0 &&
-      view.study.lobby?.admission?.status === "open" ? (
-        <AiRoomAdmissionForm
-          code={code}
-          config={aiConfig}
-          capacity={capacity}
-          disabled={
-            pending ||
-            !connected ||
-            Boolean(roomAiRun && aiRunActive(roomAiRun.phase))
-          }
-          onStart={setRoomAiRun}
-        />
-      ) : undefined;
+      view.study.lobby?.admission?.status === "open"
+    ) {
+      if (roomAiRun?.phase === "ready") {
+        aiControls = (
+          <AiTopUpForm
+            key={roomAiRun.id}
+            run={roomAiRun}
+            max={roomAiRun.joined + capacity}
+            disabled={pending || !connected}
+            onUpdate={setRoomAiRun}
+          />
+        );
+      } else if (!roomAiRun || !aiRunActive(roomAiRun.phase)) {
+        aiControls = (
+          <AiRoomAdmissionForm
+            code={code}
+            config={aiConfig}
+            capacity={capacity}
+            disabled={pending || !connected}
+            onStart={setRoomAiRun}
+          />
+        );
+      }
+    }
     return (
       <StudyRoom
         view={view}

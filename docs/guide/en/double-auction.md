@@ -14,6 +14,8 @@ In a formal room, **参加リンクをコピー** copies the student entry with 
 
 While admission is open in the local teacher room, select **Include AI participants** in step 3, **入室締切** (Admission deadline). Set the provider, model, and AI count, then select **Admit AI**. AI can use any remaining places. With the default planned attendance of 16, you can still add 40 AI participants. Check progress in the teacher room. [AI experiment console instructions](classroom.md#admit-ai-students)
 
+Once the first AI students have joined, use **AI を補充** in the same **入室締切** panel to raise the target while admission is open.
+
 [Demo Model](https://exp-all-in-one.vercel.app/demo) · [Demo controls](demo.md)
 
 Open the screen-size demo at `/demo/preview`. On narrow screens, choose a size from the dropdown; demo progress is retained.

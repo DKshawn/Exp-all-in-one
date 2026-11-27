@@ -14,6 +14,8 @@ In the formal teacher view, **参加リンクをコピー** copies the student e
 
 From the local teacher page, you can admit AI students to Experiments 1 and 2 and review their decisions and fills. [AI experiment console instructions](classroom.md#admit-ai-students)
 
+While admission is open, add AI students by selecting **AI を補充** in **AI 実験台**. Check attendance before confirming allocation.
+
 AI students make decisions using their own dividends, holdings, and trade history along with public information. In Experiment 2, they also use their own Clue.
 
 The [standalone AI student program](../../../ai-emh/README.en.md) accepts room links and hidden token input, adds `/v1` to local model server roots, and admits a configurable number of students using a local model or OpenAI. It never substitutes rule-based robots for missing model responses. The AI action log also records model request duration and reasons for skipped actions. The default output limit is 2048 tokens per model request. When an AI waits, the program monitors its student market view and requests a new decision after a market change.

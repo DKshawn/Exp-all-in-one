@@ -50,6 +50,7 @@ import {
   isMemo,
   isNeighborMemo,
   H5_PROTOCOL,
+  MEMO_PROTOCOL,
   memoAnswerError,
   MEMO_PARTICIPANTS,
   type Settings,
@@ -686,7 +687,7 @@ export class EvolutionService {
       },
     });
   }
-  async listRooms(key: string): Promise<RoomSummary[]> {
+  async listRooms(key: string, code?: string): Promise<RoomSummary[]> {
     assertTeacherAccess(key);
     const { rows } = await this.db.query<{
       code: string;
@@ -709,32 +710,45 @@ export class EvolutionService {
         (game->'settings'->>'groups')::int AS groups,
         CASE WHEN game->>'distributed'='true' AND game->>'phase'='open'
           THEN (SELECT count(*)::int FROM evolution_players WHERE room=code)
-          ELSE jsonb_array_length(game->'seats') END AS count FROM evolution_rooms`,
+          ELSE jsonb_array_length(game->'seats') END AS count FROM evolution_rooms
+        WHERE ($1::text IS NULL OR code=$1)`,
+      [code ?? null],
     );
-    return rows.map((r) => ({
-      code: r.code,
-      title: r.title,
-      createdAt: Number(r.created_at),
-      experiment: "evolution",
-      variant: r.protocol === H5_PROTOCOL ? H5_PROTOCOL : r.mode,
-      phase: r.paused
-        ? "paused"
-        : r.phase === "playing"
-          ? "running"
-          : r.phase === "feedback"
-            ? "review"
-            : r.phase === "finished"
-              ? "finished"
-              : "waiting",
-      round: r.round,
-      totalRounds: r.rounds,
-      participantCount: r.count,
-      capacity:
-        r.protocol === H5_PROTOCOL ? MEMO_PARTICIPANTS : MAX_ROOM_PARTICIPANTS,
-      flexibleAdmission: true,
-      marketCount: r.groups,
-      institutions: [],
-    }));
+    return rows.map((r) => {
+      const capacity =
+        r.mode === "coordination" &&
+        (r.protocol === H5_PROTOCOL || r.protocol === MEMO_PROTOCOL)
+          ? MEMO_PARTICIPANTS
+          : MAX_ROOM_PARTICIPANTS;
+      return {
+        code: r.code,
+        title: r.title,
+        createdAt: Number(r.created_at),
+        experiment: "evolution",
+        variant: r.protocol === H5_PROTOCOL ? H5_PROTOCOL : r.mode,
+        phase: r.paused
+          ? "paused"
+          : r.phase === "playing"
+            ? "running"
+            : r.phase === "feedback"
+              ? "review"
+              : r.phase === "finished"
+                ? "finished"
+                : "waiting",
+        round: r.round,
+        totalRounds: r.rounds,
+        participantCount: r.count,
+        capacity,
+        ...(r.phase === "open"
+          ? {
+              admissionRemaining: Math.max(0, capacity - r.count),
+            }
+          : {}),
+        flexibleAdmission: true,
+        marketCount: r.groups,
+        institutions: [],
+      };
+    });
   }
   async deleteRoom(code: string, key: string) {
     assertTeacherAccess(key);

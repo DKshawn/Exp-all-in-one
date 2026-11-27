@@ -67,6 +67,8 @@ In a local Double Auction room, select **Include AI participants** in step 3, **
 
 The [AI experiment console](docs/guide/en/classroom.md#admit-ai-students) opens in a dialog on the local teacher home or in a room with an AI run. Use it to admit students powered by a local model or OpenAI into a Double Auction, EMH, or SEG room. View live decision reasons, response times, and submission outcomes, and export a CSV. The [command-line runner](ai-emh/README.en.md) is also available.
 
+While admission is open, **Top up AI** (**AI を補充**) raises the target for the same run and keeps the room and everyone already admitted.
+
 An optional LM Studio fast mode disables extended reasoning; complete fenced JSON blocks are also supported.
 
 Everyone can quote in EMH. Accepting an opposing price or submitting a crossing quote immediately trades one unit. Students see anonymous trade records and their own resting orders highlighted in the book; Experiment 1 profits are marked provisional until period B ends. Holdings, trading balance, and the current round profit appear as three cards in one row in the student’s conditions panel.

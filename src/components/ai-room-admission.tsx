@@ -29,6 +29,11 @@ const labels = {
     "AI 入室未能启动。",
     "AI admission could not start.",
   ],
+  runFailed: [
+    "AI の実行中に問題が発生しました。",
+    "AI 运行过程中出现问题。",
+    "There was a problem with the AI run.",
+  ],
   disconnected: [
     "AI の状況を更新できません。",
     "无法更新 AI 状态。",
@@ -276,6 +281,11 @@ export function AiRoomAdmission({
         initialRoom={code}
         initialRun={run?.id}
       />
+      {run?.error && (
+        <p role="alert" className="error-message ai-admission-error">
+          {language === "ja" ? run.error : text(language, "runFailed")}
+        </p>
+      )}
     </aside>
   );
 }

@@ -9,8 +9,12 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 import type { NextRequest } from "next/server";
+import { service } from "@/experiments/double-auction/server/service";
+import { emhService } from "@/experiments/emh/server/service";
+import { evolutionService } from "@/experiments/evolution/server/service";
 import { checkRoom, type StudentClient } from "../../../ai-emh/src/client.mjs";
 import {
+  extendManifest,
   joinStudents,
   localModelAddress,
   makeManifest,
@@ -20,6 +24,7 @@ import {
 import { resultsCsv } from "../../../ai-emh/src/results.mjs";
 import {
   AI_ADMISSION_DEFAULTS,
+  aiParticipantLimit,
   aiRunActive,
   isAiExperiment,
   type AiAdmission,
@@ -63,6 +68,7 @@ type ActiveRun = {
   run: AiRun;
   controller: AbortController;
   records: AiRecord[];
+  topUp?: (count: number, accessKey: string) => Promise<void>;
 };
 const shared = globalThis as typeof globalThis & {
   aiExperimentRuns?: Map<string, ActiveRun>;
@@ -220,6 +226,24 @@ function modelConnection(provider: AiProvider) {
   return { modelUrl, apiKey: process.env.LOCAL_MODEL_API_KEY };
 }
 
+async function roomAdmissionRemaining(run: AiRun, accessKey: string) {
+  const rooms = {
+    institutions: service,
+    emh: emhService,
+    evolution: evolutionService,
+  };
+  const [room] = await (
+    await rooms[run.experiment]()
+  ).listRooms(accessKey, run.code);
+  if (room?.admissionRemaining === undefined)
+    throw new AuctionError(
+      "入室受付が終了しました。",
+      409,
+      "AI_ADMISSION_CLOSED",
+    );
+  return room.admissionRemaining;
+}
+
 async function execute(
   current: ActiveRun,
   input: Input,
@@ -228,13 +252,15 @@ async function execute(
 ) {
   const { run, controller, records } = current;
   const { signal } = controller;
-  const manifest = makeManifest(input.code, input.count, origin);
+  let manifest = makeManifest(input.code, input.count, origin);
+  let decisionStarted = false;
   const config = {
     ...input,
     ...connection,
     pollSeconds: 1,
     lmstudioFast: false,
     onDecisionStart: () => {
+      decisionStarted = true;
       if (run.phase === "ready") run.phase = "running";
     },
   };
@@ -272,42 +298,140 @@ async function execute(
     );
   }
 
+  const slots = new ModelSlots(input.parallel);
+  const workers: Promise<void>[] = [];
+  let workerFailure: unknown;
+  let failed = false;
+  let admitting = Promise.resolve();
+  function startWorker(client: StudentClient) {
+    workers.push(
+      runStudent(client, config, slots, signal, report).catch(
+        (error: unknown) => {
+          if (!signal.aborted) workerFailure ??= error;
+        },
+      ),
+    );
+  }
+
+  async function admitRemaining(startAsAdmitted: boolean) {
+    const offset = run.joined;
+    return joinStudents(
+      { ...manifest, students: manifest.students.slice(offset) },
+      run.experiment,
+      signal,
+      (joined: number, client: StudentClient) => {
+        const total = offset + joined;
+        run.joined = total;
+        enqueue(() =>
+          appendFile(file(run.id, "admission.txt"), `${total}\n`, {
+            mode: 0o600,
+          }),
+        );
+        if (startAsAdmitted) startWorker(client);
+      },
+    );
+  }
+
+  current.topUp = async (count, accessKey) => {
+    if (count < run.count)
+      throw new AuctionError(
+        `AI の目標人数は ${run.count} 人以上にしてください。`,
+        409,
+      );
+    if (
+      count === run.count &&
+      (run.joined === count || run.phase === "joining")
+    )
+      return;
+    if (run.phase !== "ready")
+      throw new AuctionError(
+        "入室受付中に、現在の AI の入室が終わってから補充してください。",
+        409,
+      );
+    run.phase = "joining";
+    const prepare = (async () => {
+      const remaining = await roomAdmissionRemaining(run, accessKey);
+      signal.throwIfAborted();
+      if (count - run.joined > remaining)
+        throw new AuctionError(
+          `入室できる残り人数は ${remaining} 人です。`,
+          409,
+          "AI_ADMISSION_CAPACITY",
+        );
+      if (count > run.count) {
+        const next = extendManifest(manifest, count);
+        const temporary = file(run.id, "participants.tmp");
+        await writeFile(
+          temporary,
+          JSON.stringify({ ...next, experiment: run.experiment }),
+          { mode: 0o600 },
+        );
+        signal.throwIfAborted();
+        await rename(temporary, file(run.id, "participants.json"));
+        manifest = next;
+        run.count = count;
+        // Recovery counts all events in the log for an interrupted run.
+        await save({ ...run, submitted: 0, decisions: 0 });
+      }
+      run.error = undefined;
+    })();
+    admitting = prepare
+      .then(async () => {
+        try {
+          await admitRemaining(true);
+        } catch (error) {
+          if (!signal.aborted) run.error = message(error, connection.apiKey);
+        }
+      })
+      .catch(() => {
+        // The caller receives preflight errors without stopping the enrolled AI.
+      })
+      .finally(() => {
+        if (!signal.aborted) run.phase = decisionStarted ? "running" : "ready";
+      });
+    try {
+      await prepare;
+    } catch (error) {
+      await admitting;
+      throw error;
+    }
+  };
+
   try {
     await writeFile(
       file(run.id, "participants.json"),
       JSON.stringify({ ...manifest, experiment: run.experiment }),
       { mode: 0o600, flag: "wx" },
     );
-    const clients = await joinStudents(
-      manifest,
-      run.experiment,
-      signal,
-      (joined: number) => {
-        run.joined = joined;
-        enqueue(() =>
-          appendFile(file(run.id, "admission.txt"), `${joined}\n`, {
-            mode: 0o600,
-          }),
-        );
-      },
-    );
+    const clients = await admitRemaining(false);
     signal.throwIfAborted();
     run.phase = "ready";
-    const slots = new ModelSlots(input.parallel);
-    await Promise.allSettled(
-      clients.map((client: StudentClient) =>
-        runStudent(client, config, slots, signal, report),
-      ),
-    ).then((results) => {
-      const failure = results.find((result) => result.status === "rejected");
-      if (failure) throw failure.reason;
-    });
+    clients.forEach(startWorker);
+    let waited = 0;
+    while (waited < workers.length) {
+      const batch = workers.slice(waited);
+      waited = workers.length;
+      await Promise.all(batch);
+      await admitting;
+    }
+    if (workerFailure) throw workerFailure;
   } catch (error) {
-    if (!signal.aborted) run.error = message(error, connection.apiKey);
+    if (!signal.aborted) {
+      failed = true;
+      run.error = message(error, connection.apiKey);
+    }
+    controller.abort();
+    await admitting;
+    await Promise.all(workers);
   } finally {
     await writes;
     if (storageError) run.error = "実行記録を保存できませんでした。";
-    run.phase = run.error ? "failed" : signal.aborted ? "stopped" : "finished";
+    run.phase =
+      failed || storageError
+        ? "failed"
+        : signal.aborted
+          ? "stopped"
+          : "finished";
     try {
       await save(run);
     } catch {
@@ -399,4 +523,14 @@ export function stopAiRun(id: string) {
     throw new AuctionError("この実行は終了しています。", 409);
   current.run.phase = "stopping";
   current.controller.abort();
+}
+
+export async function topUpAiRun(id: string, count: number, accessKey: string) {
+  const current = active.get(id);
+  if (!current?.topUp || current.controller.signal.aborted)
+    throw new AuctionError("補充できる AI 実行が見つかりません。", 409);
+  if (count > aiParticipantLimit(current.run.experiment))
+    throw new AuctionError("AI の目標人数が上限を超えています。", 409);
+  await current.topUp(count, accessKey);
+  return { ...current.run };
 }

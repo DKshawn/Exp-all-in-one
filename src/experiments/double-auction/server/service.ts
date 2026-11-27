@@ -582,7 +582,7 @@ export class AuctionService {
     });
   }
 
-  async listRooms(accessKey: string): Promise<RoomSummary[]> {
+  async listRooms(accessKey: string, code?: string): Promise<RoomSummary[]> {
     assertTeacherAccess(accessKey);
     // Project only management metadata: credentials, names and trading history
     // never leave the database through this list.
@@ -593,11 +593,16 @@ export class AuctionService {
       phase: Room["phase"];
       round: number;
       participant_count: number;
+      registered_count: number;
+      admission_status: string | null;
       markets_finished: boolean;
-    }>(`SELECT r.code, r.state->'config' AS config,
+    }>(
+      `SELECT r.code, r.state->'config' AS config,
         r.state->>'createdAt' AS created_at, r.state->>'phase' AS phase,
         COALESCE(m.round, (r.state->>'round')::int, 0) AS round,
         (SELECT count(*)::int FROM jsonb_array_elements(r.state->'participants') p WHERE p->>'withdrawnAt' IS NULL) AS participant_count,
+        jsonb_array_length(r.state->'participants') AS registered_count,
+        r.state #>> '{study,lobby,admission,status}' AS admission_status,
         COALESCE(m.finished, false) AS markets_finished
       FROM auction_rooms r
       LEFT JOIN LATERAL (
@@ -606,7 +611,10 @@ export class AuctionService {
             (state->>'round')::int = (r.state->'config'->>'rounds')::int) AS finished
         FROM auction_markets WHERE room_code = r.code
       ) m ON true
-      ORDER BY (r.state->>'createdAt')::bigint DESC, r.code`);
+      WHERE ($1::text IS NULL OR r.code = $1)
+      ORDER BY (r.state->>'createdAt')::bigint DESC, r.code`,
+      [code ?? null],
+    );
     return result.rows.map((row) => ({
       experiment: "institutions",
       code: row.code,
@@ -620,6 +628,17 @@ export class AuctionService {
       totalRounds: row.config.rounds,
       participantCount: row.participant_count,
       capacity: row.config.capacity,
+      ...(row.phase === "waiting" &&
+      (row.admission_status === "open" || row.admission_status === null)
+        ? {
+            admissionRemaining: Math.max(
+              0,
+              (row.admission_status === "open"
+                ? MAX_STUDY_PARTICIPANTS
+                : row.config.capacity) - row.registered_count,
+            ),
+          }
+        : {}),
       ...(row.config.studyAdmission === "flexible"
         ? { flexibleAdmission: true }
         : {}),

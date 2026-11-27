@@ -629,7 +629,7 @@ export class EmhService {
     });
     return outcome;
   }
-  async listRooms(accessKey: string): Promise<RoomSummary[]> {
+  async listRooms(accessKey: string, code?: string): Promise<RoomSummary[]> {
     assertTeacherAccess(accessKey);
     const result = await this.db.query<{
       code: string;
@@ -642,11 +642,15 @@ export class EmhService {
       round: number;
       finished: boolean;
       paused: boolean;
-    }>(`SELECT s.code,s.state->>'title' title,s.state->>'createdAt' created_at,s.state->>'status' status,
+    }>(
+      `SELECT s.code,s.state->>'title' title,s.state->>'createdAt' created_at,s.state->>'status' status,
       s.state->>'experiment' AS experiment,
       jsonb_array_length(s.state->'members') count, jsonb_array_length(s.state->'allocation') markets,
       COALESCE(m.round,0) round,COALESCE(m.finished,false) finished,COALESCE(m.paused,false) paused
-      FROM emh_sessions s LEFT JOIN LATERAL (SELECT max((state->>'year')::int) round,bool_and(state->>'status'='completed') finished,bool_or(state->>'pausedAt' IS NOT NULL) paused FROM emh_markets WHERE room_code=s.code) m ON true`);
+      FROM emh_sessions s LEFT JOIN LATERAL (SELECT max((state->>'year')::int) round,bool_and(state->>'status'='completed') finished,bool_or(state->>'pausedAt' IS NOT NULL) paused FROM emh_markets WHERE room_code=s.code) m ON true
+      WHERE ($1::text IS NULL OR s.code=$1)`,
+      [code ?? null],
+    );
     return result.rows.map((r) => ({
       code: r.code,
       title: r.title,
@@ -664,6 +668,9 @@ export class EmhService {
       totalRounds: 6,
       participantCount: r.count,
       capacity: MAX_PARTICIPANTS,
+      ...(r.status === "open"
+        ? { admissionRemaining: Math.max(0, MAX_PARTICIPANTS - r.count) }
+        : {}),
       flexibleAdmission: true,
       marketCount: r.markets,
       institutions: [],

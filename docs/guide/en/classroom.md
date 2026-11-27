@@ -77,6 +77,10 @@ In the Double Auction teacher room, open step 3, **入室締切** (Admission dea
 2. Select the room, provider, model, and count, then click **AI を入室させる**. After everyone joins, use **ルームを開く** to assign roles and start the experiment in the room.
 3. The console shows decision reasons, response times, accepted operations, and confirmed fills. **AI を停止** stops the AI operations. Control the room separately from the teacher room page. Choose a run under **実行履歴**, then select **CSV を保存** to export its records.
 
+After the first AI students have joined, select the room while admission is still open. Enter the **AI target count** and select **Top up AI** (**AI を補充**). Changing the target from 10 to 50 adds exactly 40 AI students using the same model and request concurrency. The room code and all existing human and AI students stay in place. Wait for the count to reach the target before closing admission. The room's remaining seats limit how many AI students you can add.
+
+For an AI-only experiment, use the teacher account to manage the room. A target of 50 AI students produces 50 participants, with the teacher excluded from the count.
+
 Run status and saved records remain visible after refreshing the browser. A server restart interrupts active runs, and their saved records remain available. SEG supports coordination and both discrete and continuous Nash demand. [AI runner guide](../../../ai-emh/README.en.md)
 
 ## 3. Check attendance and run the experiment

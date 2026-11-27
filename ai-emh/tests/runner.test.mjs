@@ -15,6 +15,7 @@ import {
   observation,
 } from "../src/decision.mjs";
 import {
+  extendManifest,
   localModelAddress,
   makeManifest,
   platformAddress,
@@ -35,6 +36,22 @@ test("a 9999-student manifest keeps unique seven-character names", () => {
         /^A[A-Z0-9]{6}$/.test(nickname) && /^\d{4}$/.test(pin),
     ),
   );
+});
+
+test("extending a manifest preserves AI credentials and adds unique seats", () => {
+  const initial = makeManifest("ABC234", 10, "http://127.0.0.1:3100");
+  const expanded = extendManifest(initial, 50);
+  assert.equal(initial.students.length, 10);
+  assert.equal(expanded.students.length, 50);
+  assert.deepEqual(expanded.students.slice(0, 10), initial.students);
+  assert.equal(expanded.createdAt, initial.createdAt);
+  const larger = extendManifest(expanded, 1000);
+  assert.deepEqual(larger.students.slice(0, 50), expanded.students);
+  assert.equal(
+    new Set(larger.students.map(({ nickname }) => nickname)).size,
+    1000,
+  );
+  assert.match(larger.students[999].nickname, /A00$/);
 });
 
 function snapshot() {

@@ -30,6 +30,8 @@ The effective decision duration in seconds is recorded as `settings.memoAnswerSe
 
 From the local teacher page, you can admit AI students to coordination and Nash demand games and review their choices. [AI experiment console instructions](classroom.md#admit-ai-students)
 
+While admission is open, use **AI を補充** in **AI 実験台** to fill the remaining AI places. In Stag Hunt v3 and H5, the 150-seat limit includes human students who have already joined.
+
 ## Run a classroom session
 
 1. At `/teacher`, select **Stochastic Evolutionary Games**. Choose the game, name the room, set the payoffs and enter a room password. Game, payoff and round settings lock on creation. Teachers and students each choose Japanese, Chinese or English in the page header. This preference is saved in their own browser.

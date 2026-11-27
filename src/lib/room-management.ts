@@ -18,6 +18,7 @@ export type RoomSummary = RoomExperiment & {
   totalRounds: number;
   participantCount: number;
   capacity: number;
+  admissionRemaining?: number;
   flexibleAdmission?: boolean;
   marketCount: number;
   institutions: { institution: Institution; periods: number }[];
