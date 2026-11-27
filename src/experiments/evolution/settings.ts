@@ -10,6 +10,8 @@ export const MEMO_ROUNDS = 120;
 export const MEMO_LOCK_ROUNDS = 10;
 export const MEMO_PARTICIPANTS = 150;
 const MEMO_NAMES = ["鹿", "兎"] as const;
+export const H5_PROTOCOL = "stag-hunt-neighbors-h5";
+export const H5_RADIUS = 5;
 export const MEMO_PROTOCOL = "stag-hunt-memo-v3";
 export const MEMO_ORDERS = ["small-first", "large-first"] as const;
 export const MEMO_INITIAL = ["deer", "hare"] as const;
@@ -41,7 +43,7 @@ export const settingsSchema = z
       .object({
         ...common,
         mode: z.literal("coordination"),
-        memoProtocol: z.literal(MEMO_PROTOCOL).optional(),
+        memoProtocol: z.enum([MEMO_PROTOCOL, H5_PROTOCOL]).optional(),
         memoOrder: z.enum(MEMO_ORDERS).optional(),
         memoCounterbalance: z.enum(MEMO_INITIAL).optional(),
         names: z.tuple([name, name]),
@@ -73,12 +75,16 @@ export const settingsSchema = z
     if (s.mode === "coordination") {
       if (
         s.memoProtocol &&
-        (!s.memoOrder ||
-          !s.memoCounterbalance ||
-          s.rounds !== MEMO_ROUNDS * 3 ||
+        (!s.memoCounterbalance ||
+          (s.memoProtocol === H5_PROTOCOL
+            ? s.memoOrder !== undefined ||
+              s.rounds !== MEMO_ROUNDS ||
+              s.groups !== 1
+            : !s.memoOrder ||
+              s.rounds !== MEMO_ROUNDS * 3 ||
+              s.groups !== MEMO_PARTICIPANTS / memoSizes(s.memoOrder)[0]) ||
           s.seconds !== 5 ||
           s.feedbackSeconds !== 1 ||
-          s.groups !== MEMO_PARTICIPANTS / memoSizes(s.memoOrder)[0] ||
           s.names[0] !== MEMO_NAMES[0] ||
           s.names[1] !== MEMO_NAMES[1] ||
           JSON.stringify(s.matrix) !== JSON.stringify(MEMO_MATRIX))
@@ -139,11 +145,16 @@ export const defaults = (mode: Mode): Settings => {
       };
 };
 type Coordination = Extract<Settings, { mode: "coordination" }>;
-type Memo = Coordination & {
+type BaseMemo = Coordination & {
   memoProtocol: typeof MEMO_PROTOCOL;
   memoOrder: (typeof MEMO_ORDERS)[number];
   memoCounterbalance: (typeof MEMO_INITIAL)[number];
 };
+type NeighborMemo = Omit<BaseMemo, "memoProtocol" | "memoOrder"> & {
+  memoProtocol: typeof H5_PROTOCOL;
+  memoOrder?: never;
+};
+type Memo = BaseMemo | NeighborMemo;
 export const MEMO_MATRIX: Coordination["matrix"] = [
   [
     ["4", "4"],
@@ -155,23 +166,47 @@ export const MEMO_MATRIX: Coordination["matrix"] = [
   ],
 ];
 export function isMemo(s: Settings): s is Memo {
-  return s.mode === "coordination" && s.memoProtocol === MEMO_PROTOCOL;
+  return (
+    (s.mode === "coordination" && s.memoProtocol === MEMO_PROTOCOL) ||
+    isNeighborMemo(s)
+  );
+}
+export function isNeighborMemo(s: Settings): s is NeighborMemo {
+  return s.mode === "coordination" && s.memoProtocol === H5_PROTOCOL;
+}
+export function memoBlockSizes(s: Memo) {
+  return isNeighborMemo(s) ? [MEMO_PARTICIPANTS] : memoSizes(s.memoOrder);
+}
+const memoParameters = {
+  mode: "coordination" as const,
+  seconds: 5,
+  feedbackSeconds: 1,
+  matrix: MEMO_MATRIX,
+};
+export function neighborDefaults(
+  initial: Memo["memoCounterbalance"] = "deer",
+): NeighborMemo {
+  return {
+    ...memoParameters,
+    names: [...MEMO_NAMES],
+    memoProtocol: H5_PROTOCOL,
+    memoCounterbalance: initial,
+    rounds: MEMO_ROUNDS,
+    groups: 1,
+  };
 }
 export function memoDefaults(
-  order: Memo["memoOrder"] = "small-first",
+  order: BaseMemo["memoOrder"] = "small-first",
   initial: Memo["memoCounterbalance"] = "deer",
-): Memo {
+): BaseMemo {
   return {
-    mode: "coordination",
+    ...memoParameters,
     names: [...MEMO_NAMES],
     memoProtocol: MEMO_PROTOCOL,
     memoOrder: order,
     memoCounterbalance: initial,
     rounds: MEMO_ROUNDS * 3,
-    seconds: 5,
-    feedbackSeconds: 1,
     groups: MEMO_PARTICIPANTS / memoSizes(order)[0],
-    matrix: MEMO_MATRIX,
   };
 }
 export const choices = (s: Settings) =>

@@ -25,6 +25,7 @@ import {
   continuous,
   HISTORY_ROUNDS,
   isMemo,
+  isNeighborMemo,
   MEMO_PARTICIPANTS,
   type Settings,
 } from "../settings";
@@ -173,6 +174,7 @@ function DemoRoom({
               admissionClosedAt: g.closedAt,
               phase: g.phase,
               settings: g.settings,
+              ...(isNeighborMemo(g.settings) && { scoringStatus: "pending" }),
               participants: g.seats,
               rounds: rounds.flatMap((r) => summaries(g, r)),
               rows,
@@ -185,6 +187,7 @@ function DemoRoom({
             true,
             continuous(g.settings),
             isMemo(g.settings),
+            isNeighborMemo(g.settings),
           );
     const url = URL.createObjectURL(
       new Blob([body], {

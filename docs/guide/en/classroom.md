@@ -24,6 +24,8 @@ Judgement room creation places task cards beside the selection and create contro
 
 In CDA and EMH, switch the order book between the list (一覧) and the bar chart (棒グラフ). Student views mark their own orders and omit other participant identifiers. Each experiment module keeps its own order and settlement rules.
 
+In formal setup or Demo, choose **Stag Hunt: Neighbors** in the Stochastic Evolutionary Games **Game** menu. Room management lists it under Stochastic Evolutionary Games. [Rules and data](evolution.md)
+
 ## 1. Choose an experiment and create a room
 
 Open the teacher entry, enter the administrator-provided **教員用キー**, and click **ログイン**. After authentication, select an experiment or manage saved rooms from the same entry.

@@ -11,6 +11,8 @@ import {
   SETUP_NUMBER_RANGES,
   settingsSchema,
   isMemo,
+  isNeighborMemo,
+  neighborDefaults,
   memoDefaults,
   MEMO_PARTICIPANTS,
   type DemandStep,
@@ -92,7 +94,7 @@ function NumberSetting({
 }
 
 export function useSetupDraft() {
-  const [s, set] = useState(() => defaults("coordination")),
+  const [s, set] = useState<Settings>(() => defaults("coordination")),
     [title, setTitle] = useState(""),
     [n, setN] = useState(6);
   const parsed = settingsSchema.safeParse(s);
@@ -126,6 +128,8 @@ export function SetupForm({
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const demandStepId = useId();
+  const neighbors = isNeighborMemo(s);
+  const defaultRoomTitle = t(neighbors ? "h5Title" : "title");
   const names = displayChoices(lang, s);
   const otherIssues = parsed.success
     ? []
@@ -145,7 +149,7 @@ export function SetupForm({
   async function create(e: FormEvent) {
     e.preventDefault();
     if (!parsed.success) return;
-    const roomTitle = title.trim() || t("title");
+    const roomTitle = title.trim() || defaultRoomTitle;
     if (onDemo) {
       if (draft.validDemo || isMemo(parsed.data))
         onDemo(
@@ -178,7 +182,7 @@ export function SetupForm({
         {t("name")}
         <input
           value={title}
-          placeholder={t("title")}
+          placeholder={defaultRoomTitle}
           maxLength={60}
           onChange={(e) => setTitle(e.target.value)}
         />
@@ -186,13 +190,15 @@ export function SetupForm({
       <label className="field">
         {t("mode")}
         <select
-          value={isMemo(s) ? "memo" : s.mode}
+          name="game"
+          value={neighbors ? "neighbors" : isMemo(s) ? "memo" : s.mode}
           onChange={(e) => {
-            if (e.target.value === "memo") {
-              set(memoDefaults());
+            const game = e.target.value;
+            if (game === "memo" || game === "neighbors") {
+              set(game === "memo" ? memoDefaults() : neighborDefaults());
               return;
             }
-            const next = defaults(e.target.value as Mode);
+            const next = defaults(game as Mode);
             if (isMemo(s)) {
               set(next);
               return;
@@ -208,54 +214,62 @@ export function SetupForm({
         >
           <option value="coordination">{t("coordination")}</option>
           <option value="memo">{t("memo")}</option>
+          <option value="neighbors">{t("h5Title")}</option>
           <option value="demand">{t("demand")}</option>
         </select>
       </label>
       {isMemo(s) ? (
         <>
-          <p>{t("memoSettings")}</p>
+          <p>{t(neighbors ? "h5Settings" : "memoSettings")}</p>
+          {neighbors && <p>{t("h5Pending")}</p>}
           <div className="ev-fields">
-            <label className="field">
-              {t("memoOrder")}
-              <select
-                value={s.memoOrder}
-                onChange={(e) =>
-                  set(
-                    memoDefaults(
-                      e.target.value === "large-first"
-                        ? "large-first"
-                        : "small-first",
-                      s.memoCounterbalance,
-                    ),
-                  )
-                }
-              >
-                <option value="small-first">10 → 30 → 150</option>
-                <option value="large-first">150 → 30 → 10</option>
-              </select>
-            </label>
+            {!neighbors && (
+              <label className="field">
+                {t("memoOrder")}
+                <select
+                  value={s.memoOrder}
+                  onChange={(e) =>
+                    set(
+                      memoDefaults(
+                        e.target.value === "large-first"
+                          ? "large-first"
+                          : "small-first",
+                        s.memoCounterbalance,
+                      ),
+                    )
+                  }
+                >
+                  <option value="small-first">10 → 30 → 150</option>
+                  <option value="large-first">150 → 30 → 10</option>
+                </select>
+              </label>
+            )}
             <label className="field">
               {t("memoInitial")}
               <select
                 value={s.memoCounterbalance}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const initial = e.target.value === "hare" ? "hare" : "deer";
                   set(
-                    memoDefaults(
-                      s.memoOrder,
-                      e.target.value === "hare" ? "hare" : "deer",
-                    ),
-                  )
-                }
+                    neighbors
+                      ? neighborDefaults(initial)
+                      : memoDefaults(s.memoOrder, initial),
+                  );
+                }}
               >
-                <option value="deer">{t("memoDeer")}</option>
-                <option value="hare">{t("memoHare")}</option>
+                <option value="deer">
+                  {neighbors ? names[0] : t("memoDeer")}
+                </option>
+                <option value="hare">
+                  {neighbors ? names[1] : t("memoHare")}
+                </option>
               </select>
             </label>
           </div>
           {onDemo && (
             <>
-              <p>{t("memoRule")}</p>
-              <p>{t("memoRevisionRule")}</p>
+              <p>{t(neighbors ? "h5Description" : "memoRule")}</p>
+              <p>{t(neighbors ? "h5Revision" : "memoRevisionRule")}</p>
             </>
           )}
         </>

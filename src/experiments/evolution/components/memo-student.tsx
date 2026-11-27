@@ -2,10 +2,11 @@
 import { LockKeyhole } from "lucide-react";
 import { useId, type ReactNode } from "react";
 import { displayChoices, label, type Key, type Lang } from "../locale";
-import { MEMO_LOCK_ROUNDS, MEMO_MATRIX } from "../settings";
+import { MEMO_LOCK_ROUNDS, MEMO_MATRIX, isNeighborMemo } from "../settings";
 import { roundedAmount } from "../numbers";
 import type { FeedbackPoint } from "../memo-v3";
 import type { Personal, View } from "../views";
+import { NeighborRing } from "./neighbor-ring";
 
 export function MemoStudent({
   view,
@@ -27,6 +28,7 @@ export function MemoStudent({
   const statusId = useId();
   const names = displayChoices(lang, view.settings);
   const t = (k: Key) => label(lang, k);
+  const neighbors = isNeighborMemo(view.settings);
   const points = memo.feedback;
   const prior = points.at(-1);
   const format = new Intl.NumberFormat(lang, {
@@ -36,7 +38,10 @@ export function MemoStudent({
   let status: string;
   if (mine.status === "interrupted") status = t("interrupted");
   else if (memo.blockRound <= MEMO_LOCK_ROUNDS)
-    status = t("memoForced").replace("{choice}", names[memo.initialChoice]);
+    status = t(neighbors ? "h5Fixed" : "memoForced").replace(
+      "{choice}",
+      names[memo.initialChoice],
+    );
   else if (memo.timedOut) status = t("memoTimeout");
   else if (!memo.eligible) status = t("memoCarry");
   else if (mine.status !== "choosing") status = t("memoSubmitted");
@@ -64,87 +69,107 @@ export function MemoStudent({
             />
           )}
         </div>
-        <table>
-          <caption>{t("memoPayoffTable")}</caption>
-          <thead>
-            <tr>
-              <th scope="col">{t("mine")}</th>
-              {names.map((name) => (
-                <th scope="col" key={name}>
-                  {t("memoOpponent").replace("{choice}", name)}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {MEMO_MATRIX.map((row, i) => (
-              <tr key={names[i]}>
-                <th scope="row">{names[i]}</th>
-                {row.map(([pay], j) => (
-                  <td key={names[j]}>{pay}</td>
+        {!neighbors && (
+          <>
+            <table>
+              <caption>{t("memoPayoffTable")}</caption>
+              <thead>
+                <tr>
+                  <th scope="col">{t("mine")}</th>
+                  {names.map((name) => (
+                    <th scope="col" key={name}>
+                      {t("memoOpponent").replace("{choice}", name)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {MEMO_MATRIX.map((row, i) => (
+                  <tr key={names[i]}>
+                    <th scope="row">{names[i]}</th>
+                    {row.map(([pay], j) => (
+                      <td key={names[j]}>{pay}</td>
+                    ))}
+                  </tr>
                 ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <p>{t("memoRoundPay")}</p>
+              </tbody>
+            </table>
+            <p>{t("memoRoundPay")}</p>
+          </>
+        )}
       </section>
 
-      <section className="panel ev-panel ev-memo-feedback">
-        <div className="ev-memo-feedback-title">
-          <h2>{t("memoResult")}</h2>
-          {memo.blockRound === 1 && <p>{t("memoNew")}</p>}
-        </div>
-        <div className="ev-memo-proportion">
-          <span>{t("memoFeedback")}</span>
-          <strong>
-            {prior ? format.format(prior.hare / prior.size) : "—"}
-          </strong>
-          {prior ? (
-            <progress
-              className="ev-memo-progress"
-              aria-label={t("memoFeedback")}
-              max={prior.size}
-              value={prior.hare}
-            />
-          ) : (
-            <span className="ev-memo-progress" aria-hidden="true" />
-          )}
-        </div>
-        <dl className="ev-memo-payoffs">
-          <div>
-            <dt>{t("mine")}</dt>
-            <dd>{prior ? names[memo.carriedChoice] : "—"}</dd>
-          </div>
-          <div>
-            <dt>{t("pay")}</dt>
-            <dd>
-              {memo.priorPay === null ? "—" : roundedAmount(memo.priorPay)}
-            </dd>
-          </div>
-        </dl>
-        <MemoTrend points={points} lang={lang} format={format} />
-      </section>
+      {neighbors ? (
+        memo.neighborhood && (
+          <NeighborRing
+            neighborhood={memo.neighborhood}
+            carriedChoice={memo.carriedChoice}
+            names={names}
+            lang={lang}
+          />
+        )
+      ) : (
+        <>
+          <section className="panel ev-panel ev-memo-feedback">
+            <div className="ev-memo-feedback-title">
+              <h2>{t("memoResult")}</h2>
+              {memo.blockRound === 1 && <p>{t("memoNew")}</p>}
+            </div>
+            <div className="ev-memo-proportion">
+              <span>{t("memoFeedback")}</span>
+              <strong>
+                {prior ? format.format(prior.hare / prior.size) : "—"}
+              </strong>
+              {prior ? (
+                <progress
+                  className="ev-memo-progress"
+                  aria-label={t("memoFeedback")}
+                  max={prior.size}
+                  value={prior.hare}
+                />
+              ) : (
+                <span className="ev-memo-progress" aria-hidden="true" />
+              )}
+            </div>
+            <dl className="ev-memo-payoffs">
+              <div>
+                <dt>{t("mine")}</dt>
+                <dd>{prior ? names[memo.carriedChoice] : "—"}</dd>
+              </div>
+              <div>
+                <dt>{t("pay")}</dt>
+                <dd>
+                  {memo.priorPay === null ? "—" : roundedAmount(memo.priorPay)}
+                </dd>
+              </div>
+            </dl>
+            <MemoTrend points={points} lang={lang} format={format} />
+          </section>
 
-      <div className="ev-account">
-        <div>
-          <span>{t("group")}</span>
-          <strong>{view.group}</strong>
-        </div>
-        <div>
-          <span>{t("size")}</span>
-          <strong>{memo.groupSize}</strong>
-        </div>
-        <div>
-          <span>{t("sum")}</span>
-          <strong>{roundedAmount(view.total)}</strong>
-        </div>
-      </div>
+          <div className="ev-account">
+            <div>
+              <span>{t("group")}</span>
+              <strong>{view.group}</strong>
+            </div>
+            <div>
+              <span>{t("size")}</span>
+              <strong>{memo.groupSize}</strong>
+            </div>
+            <div>
+              <span>{t("sum")}</span>
+              <strong>
+                {view.total === null ? "—" : roundedAmount(view.total)}
+              </strong>
+            </div>
+          </div>
+        </>
+      )}
       {view.code === "DEMO" && (
         <section className="panel ev-panel">
           <h2>{t("rules")}</h2>
-          <p>{t("memoRule")}</p>
-          <p>{t("memoRevisionRule")}</p>
+          <p>{t(neighbors ? "h5Description" : "memoRule")}</p>
+          <p>{t(neighbors ? "h5Revision" : "memoRevisionRule")}</p>
+          {neighbors && <p>{t("h5Pending")}</p>}
         </section>
       )}
     </>

@@ -71,6 +71,10 @@ Task cards, selected count/list and randomization settings are shared with forma
 
 Everyone can quote in EMH. Accepting an opposing price or submitting a crossing quote immediately trades one unit. Students see anonymous trade records and their own resting orders highlighted in the book. In Experiment 1, the score becomes final at the end of B or when the teacher ends the experiment.
 
+## Stag Hunt: Neighbors (H5)
+
+Open the Stochastic Evolutionary Games demo (`/evolution/demo`) and select **Stag Hunt: Neighbors** in the **Game** menu. Your seat and 149 simulated participants are assigned to the ring. Payoff timing is pending.
+
 ---
 
 [Home](../../../README.en.md) · [Classroom guide](classroom.md) · [Double Auction](double-auction.md) · [EMH asset market experiment](emh.md) · [Judgement under Uncertainty](judgment.md) · [Development, deployment and verification](development.md)

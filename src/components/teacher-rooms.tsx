@@ -11,6 +11,7 @@ import type { ServerStatus } from "@/lib/server/config";
 import type { Phase } from "@/experiments/double-auction/lib/types";
 import { INSTITUTIONS } from "@/experiments/double-auction/lib/study-rules";
 import { EMH_EXPERIMENT_LABELS } from "@/experiments/emh/types";
+import { H5_PROTOCOL } from "@/experiments/evolution/settings";
 import { label } from "@/experiments/evolution/locale";
 import { translator, type UiLanguage } from "@/lib/ui-language";
 import { useExperimentLanguage } from "./experiment-language";
@@ -49,6 +50,7 @@ function experimentGroups(
       name: "SEG",
       variants: {
         coordination: label(language, "coordination"),
+        [H5_PROTOCOL]: label(language, "h5Title"),
         demand: label(language, "demand"),
       },
     },
