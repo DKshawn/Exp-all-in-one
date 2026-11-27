@@ -12,6 +12,8 @@ import {
   choices,
   continuous,
   demandBand,
+  isMemoV3,
+  memoAnswerSeconds,
   MEMO_ROUNDS,
   isNeighborMemo,
   outcome,
@@ -233,6 +235,9 @@ export function rawRows(g: Game, r: Round, code: string) {
               feedbackHistory: r.memo.feedback[e.memo.group],
               feedbackPriorPay: e.memo.priorPay,
             }),
+            ...(isMemoV3(g.settings)
+              ? { memoAnswerSeconds: memoAnswerSeconds(g.settings) }
+              : {}),
           }
         : {}),
       id: s.id,

@@ -18,7 +18,7 @@ Select **市場実験室** or **戻る** in the demo header to return to the dem
 
 Double Auction, EMH, and Stochastic Evolutionary Games demos support up to 5,000 seats, including the seat you control. The Judgement demo previews individual tasks in each browser without seat allocation.
 
-For Stag Hunt v3, see the [evolution game guide](evolution.md). The demo simulates 149 of the 150 seats. The demo controls stay at the top in both teacher and student views.
+For Stag Hunt v3, enter **Decision time (s)** at creation (default 5, decimals allowed). Feedback lasts 1 second. The demo simulates 149 of the 150 seats. The controls stay at the top in both views. Reloading in the same tab restores the locked settings in the lobby and resets practice progress. See the [evolution game guide](evolution.md).
 
 ## Double Auction
 

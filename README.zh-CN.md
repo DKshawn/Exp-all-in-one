@@ -22,7 +22,7 @@ SEG 的正式版和演示版配置页在整数输入框下显示「输入范围�
 
 每个正式房间最多登记 5,000 人。Double Auction、EMH 和随机演化博弈的 Demo 可设置最多 5,000 个席位，包含自己操作的一个席位。Judgement 的 Demo 是个人任务预览。
 
-新建正式房间或演示时可选择「鹿兔研究版 v3」。学生获资格后可一键提交，收益表常显，改选状态与选择按钮同区显示。收益四舍五入为整数显示。详细规则仅在演示版显示。教师按组查看改选和结算统计。原版协调博弈仍为默认，既有房间不变。详见[随机演化博弈指南](docs/guide/zh-CN/evolution.md)。
+新建正式房间或演示时可选择「鹿兔研究版 v3」。教师在建房时手填「作答时间（秒）」，默认 5 秒，支持小数，创建后锁定。反馈固定为 1 秒。获资格的学生一键提交，系统在统一截止时结算。收益表常显，改选状态与选择按钮同区显示。收益四舍五入为整数显示。详细规则仅在演示版显示。教师按组查看改选和结算统计。原版协调博弈仍为默认。详见[随机演化博弈指南](docs/guide/zh-CN/evolution.md)。
 
 ## 开始使用
 
@@ -88,7 +88,7 @@ Judgement 教师页面和 Demo 共用任务卡片、已选列表和操作区，�
 | Double Auction                | 比较 CDA、Call Market、Posted Offer 三种制度，按实际人数分配市场与角色        | [流程与规则](docs/guide/zh-CN/double-auction.md) | [Demo Model](https://exp-all-in-one.vercel.app/demo)           |
 | EMH                           | 两种实验可设置轮数、每轮、单次交易和休息时间；实验2可设置人数、内部信息及分红 | [流程与规则](docs/guide/zh-CN/emh.md)            | [Demo Model](https://exp-all-in-one.vercel.app/emh/demo)       |
 | Judgement under Uncertainty   | 14项判断与认知偏差任务，支持条件分配、任务与选项顺序、计时及日中英显示        | [流程与数据](docs/guide/zh-CN/judgment.md)       | [Demo Model](https://exp-all-in-one.vercel.app/judgment/demo)  |
-| Stochastic Evolutionary Games | 协调或 Nash 需求博弈、鹿兔研究版、鹿兔：邻居对战，以及逐群结果与原始数据导出                    | [规则与数据](docs/guide/zh-CN/evolution.md)      | [Demo Model](https://exp-all-in-one.vercel.app/evolution/demo) |
+| Stochastic Evolutionary Games | 协调或 Nash 需求博弈、鹿兔研究版、鹿兔：邻居对战，以及逐群结果与原始数据导出  | [规则与数据](docs/guide/zh-CN/evolution.md)      | [Demo Model](https://exp-all-in-one.vercel.app/evolution/demo) |
 
 ## 开发与资料
 

@@ -12,9 +12,30 @@ const messages = {
   memoDeer: ["大群は全員が鹿", "大组全鹿", "All stag in large group"],
   memoHare: ["大群は全員が兎", "大组全兔", "All hare in large group"],
   memoSettings: [
-    "150人・120ラウンド×3・6秒（選択5秒＋結果1秒）",
-    "150 人，120 轮 × 3（作答 5 秒 + 反馈 1 秒）",
-    "150 people · 120 rounds × 3 · 5 s choice + 1 s feedback",
+    "150人・120ラウンド×3・結果表示1秒",
+    "150 人，120 轮 × 3，反馈 1 秒",
+    "150 people · 120 rounds × 3 · 1 s feedback",
+  ],
+  memoAnswerTime: ["回答時間（秒）", "作答时间（秒）", "Decision time (s)"],
+  memoAnswerRequired: [
+    "回答時間を入力してください。",
+    "请输入作答时间。",
+    "Enter a decision time.",
+  ],
+  memoAnswerNumber: [
+    "回答時間は秒数を数値で入力してください。",
+    "请用数字输入作答时间（秒）。",
+    "Enter the decision time as a number of seconds.",
+  ],
+  memoAnswerPositive: [
+    "回答時間は0秒より長くしてください。",
+    "作答时间必须大于 0 秒。",
+    "Decision time must be greater than zero.",
+  ],
+  memoAnswerPrecision: [
+    "この回答時間は正確に計時できません。ミリ秒単位で、上限を超えない値を入力してください。",
+    "系统无法准确计时。请输入可用整毫秒表示且在范围内的时长。",
+    "This duration cannot be timed exactly. Enter a whole number of milliseconds within range, expressed in seconds.",
   ],
   memoReady: [
     "参加者150人で締め切れます。",

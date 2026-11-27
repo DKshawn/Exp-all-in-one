@@ -6,9 +6,11 @@ import {
   MEMO_PARTICIPANTS,
   MEMO_ROUNDS,
   isMemo,
+  isMemoV3,
   memoBlockSizes,
   isNeighborMemo,
   H5_RADIUS,
+  memoAnswerMilliseconds,
 } from "./settings";
 import type { Entry, Game } from "./engine";
 
@@ -147,7 +149,11 @@ export function openMemoRound(g: Game, now: number) {
   g.round = {
     number,
     openedAt: now,
-    deadline: now + g.settings.seconds * 1000,
+    deadline:
+      now +
+      (isMemoV3(g.settings)
+        ? memoAnswerMilliseconds(g.settings)
+        : g.settings.seconds * 1000),
     closedAt: null,
     entries,
     memo: { block, blockRound, groupSize, feedback },

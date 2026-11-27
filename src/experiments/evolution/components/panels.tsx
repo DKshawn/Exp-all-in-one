@@ -14,7 +14,9 @@ import {
   DEMAND_STEPS,
   demandLabel,
   isMemo,
+  isMemoV3,
   isNeighborMemo,
+  memoAnswerSeconds,
 } from "../settings";
 import { MemoStudent } from "./memo-student";
 import { MemoResults } from "./memo-results";
@@ -294,8 +296,9 @@ export function Panels({
   const mine = v.role === "student" ? v.current : null,
     names = displayChoices(lang, v.settings);
   const coordination = v.settings.mode === "coordination";
-  const memo = isMemo(v.settings);
-  const neighbors = isNeighborMemo(v.settings);
+  const settings = v.settings;
+  const memo = isMemo(settings);
+  const neighbors = isNeighborMemo(settings);
   const memoStudent = memo && v.role === "student" && !waiting;
   const canChooseMemo = Boolean(
     mine?.memo?.eligible &&
@@ -390,6 +393,11 @@ export function Panels({
                   />
                 )}
               </div>
+              {isMemoV3(settings) && (
+                <p>
+                  {t("memoAnswerTime")} <b>{memoAnswerSeconds(settings)}</b>
+                </p>
+              )}
               <Admission view={v} lang={lang} now={now} busy={busy} act={act} />
               <div className="ev-scroll">
                 <table>

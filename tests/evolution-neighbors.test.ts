@@ -9,7 +9,10 @@ import {
   tick,
   type Round,
 } from "../src/experiments/evolution/engine";
-import { responsesCsv } from "../src/experiments/evolution/export";
+import {
+  exportSettings,
+  responsesCsv,
+} from "../src/experiments/evolution/export";
 import { neighborIndices } from "../src/experiments/evolution/memo-v3";
 import {
   neighborDefaults,
@@ -31,12 +34,14 @@ test("H5 uses a single fixed 150-seat block and the original decision windows", 
     { groups: 5 },
     { rounds: 360 },
     { seconds: 2 },
+    { memoAnswerSeconds: "1.5" },
   ]) {
     assert.equal(
       settingsSchema.safeParse({ ...h5, ...override }).success,
       false,
     );
   }
+  assert.deepEqual(exportSettings(h5), h5);
   assert.deepEqual(
     neighborIndices(0, 150),
     [145, 146, 147, 148, 149, 1, 2, 3, 4, 5],
@@ -167,7 +172,7 @@ test("H5 plays 120 rounds with a stable ring, previous-neighbor-only feedback an
         csv.split("\r\n")[0],
         /"scoringStatus","ringSeat","neighborChoices"/,
       );
-      assert.doesNotMatch(csv, /feedbackHare/);
+      assert.doesNotMatch(csv, /feedbackHare|memoAnswerSeconds/);
     }
     if (round < 120) {
       assert.equal(g.phase, "feedback");

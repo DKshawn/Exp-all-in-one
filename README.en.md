@@ -22,7 +22,7 @@ SEG formal and demo setup show hints such as **Input range: 3–120** below fiel
 
 Formal rooms accept up to 5,000 registrations each. The Double Auction, EMH, and Stochastic Evolutionary Games demos support up to 5,000 seats, including the seat you control. The Judgement demo previews individual tasks.
 
-New formal rooms and demos can opt into Stag Hunt v3. Students submit eligible choices with one click and always see the payoff table. Revision status appears with the choice buttons. Payoffs are displayed as rounded integers. The demo shows the full rules. Teachers see revision and settlement counts by group. The original coordination game remains the default, and existing rooms are unchanged. See the [evolution game guide](docs/guide/en/evolution.md).
+New formal rooms and demos can opt into Stag Hunt v3. Teachers enter the decision time in seconds at creation (default 5, decimals allowed). The setting locks on creation, and feedback lasts 1 second. Eligible students submit with one click, and results are settled at the shared deadline. Students always see the payoff table and their revision status alongside the choices. Payoffs are displayed as rounded integers. The demo shows the full rules. Teachers see revision and settlement counts by group. The classic coordination game remains the default. See the [evolution game guide](docs/guide/en/evolution.md).
 
 ## Get started
 
@@ -88,7 +88,7 @@ Judgement teacher pages and the demo share task cards, the selection list and co
 | Double Auction                | Compare CDA, Call Market, and Posted Offer; allocate markets and roles using actual attendance                                                    | [Flow and rules](docs/guide/en/double-auction.md) | [Demo Model](https://exp-all-in-one.vercel.app/demo)           |
 | EMH                           | Configure round count, round, trade and break durations in both experiments; Experiment 2 also configures participants, information and dividends | [Flow and rules](docs/guide/en/emh.md)            | [Demo Model](https://exp-all-in-one.vercel.app/emh/demo)       |
 | Judgement under Uncertainty   | 14 judgment and cognitive bias tasks, condition assignment, task and option ordering, timing, and Japanese/Chinese/English display                | [Flow and data](docs/guide/en/judgment.md)        | [Demo Model](https://exp-all-in-one.vercel.app/judgment/demo)  |
-| Stochastic Evolutionary Games | Coordination, Nash demand, Stag Hunt v3, and Stag Hunt: Neighbors, with group results and raw exports                                                                 | [Rules and data](docs/guide/en/evolution.md)      | [Demo Model](https://exp-all-in-one.vercel.app/evolution/demo) |
+| Stochastic Evolutionary Games | Coordination, Nash demand, Stag Hunt v3, and Stag Hunt: Neighbors, with group results and raw exports                                             | [Rules and data](docs/guide/en/evolution.md)      | [Demo Model](https://exp-all-in-one.vercel.app/evolution/demo) |
 
 ## Development and materials
 
