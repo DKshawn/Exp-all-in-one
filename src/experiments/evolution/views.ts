@@ -12,6 +12,8 @@ import {
   choices,
   continuous,
   demandBand,
+  isMemo,
+  memoAnswerSeconds,
   MEMO_ROUNDS,
   outcome,
 } from "./settings";
@@ -217,6 +219,9 @@ export function rawRows(g: Game, r: Round, code: string) {
               r.memo.feedback[e.memo.group].at(-1)?.size ?? null,
             feedbackHistory: r.memo.feedback[e.memo.group],
             feedbackPriorPay: e.memo.priorPay,
+            ...(isMemo(g.settings)
+              ? { memoAnswerSeconds: memoAnswerSeconds(g.settings) }
+              : {}),
           }
         : {}),
       id: s.id,

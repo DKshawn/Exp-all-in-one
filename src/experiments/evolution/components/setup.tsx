@@ -1,7 +1,7 @@
 "use client";
 import { useId, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { api, errorMessage } from "@/lib/client";
+import { api, ApiError, errorMessage } from "@/lib/client";
 import { teacherRoomHref } from "@/lib/room-navigation";
 import { MAX_ROOM_PARTICIPANTS } from "@/lib/participant-config";
 import {
@@ -11,7 +11,10 @@ import {
   SETUP_NUMBER_RANGES,
   settingsSchema,
   isMemo,
+  memoAnswerError,
+  memoAnswerSeconds,
   memoDefaults,
+  parseMemoAnswerTime,
   MEMO_PARTICIPANTS,
   type DemandStep,
   type Settings,
@@ -91,6 +94,62 @@ function NumberSetting({
   );
 }
 
+function MemoAnswerSetting({
+  lang,
+  value,
+  onChange,
+}: {
+  lang: Lang;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const id = useId();
+  const errorId = `${id}-error`;
+  const [showError, setShowError] = useState(false);
+  const [badInput, setBadInput] = useState(false);
+  const issue = badInput
+    ? "memoAnswerNumber"
+    : parseMemoAnswerTime(value).error;
+
+  return (
+    <div className="field">
+      <label htmlFor={id}>{label(lang, "memoAnswerTime")}</label>
+      <input
+        id={id}
+        name="memoAnswerSeconds"
+        type="number"
+        inputMode="decimal"
+        step="any"
+        required
+        value={value}
+        aria-invalid={Boolean(showError && issue)}
+        aria-describedby={showError && issue ? errorId : undefined}
+        onChange={(event) => {
+          const field = event.currentTarget;
+          const nextIssue = field.validity.badInput
+            ? "memoAnswerNumber"
+            : parseMemoAnswerTime(field.value).error;
+          field.setCustomValidity(nextIssue ? label(lang, nextIssue) : "");
+          setShowError(false);
+          setBadInput(field.validity.badInput);
+          onChange(field.value);
+        }}
+        onInvalid={(event) => {
+          event.preventDefault();
+          setBadInput(event.currentTarget.validity.badInput);
+          setShowError(true);
+          event.currentTarget.focus();
+        }}
+      />
+      {showError && issue && (
+        <p id={errorId} className="error-message ev-input-error" role="alert">
+          {label(lang, issue)}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function useSetupDraft() {
   const [s, set] = useState(() => defaults("coordination")),
     [title, setTitle] = useState(""),
@@ -130,7 +189,9 @@ export function SetupForm({
   const otherIssues = parsed.success
     ? []
     : parsed.error.issues.filter(
-        (issue) => !numberFields.some((field) => issue.path[0] === field),
+        (issue) =>
+          issue.path[0] !== "memoAnswerSeconds" &&
+          !numberFields.some((field) => issue.path[0] === field),
       );
   const problem =
     otherIssues.length === 0
@@ -161,11 +222,12 @@ export function SetupForm({
       const { code } = await api<{ code: string }>("/api/evolution/rooms", {
         title: roomTitle,
         password,
-        settings: parsed.data,
+        settings: isMemo(s) ? s : parsed.data,
       });
       router.push(teacherRoomHref(code));
     } catch (e) {
-      setError(errorMessage(e));
+      const issue = e instanceof ApiError && memoAnswerError(e.code);
+      setError(issue ? t(issue) : errorMessage(e));
       setBusy(false);
     }
   }
@@ -220,14 +282,15 @@ export function SetupForm({
               <select
                 value={s.memoOrder}
                 onChange={(e) =>
-                  set(
-                    memoDefaults(
+                  set({
+                    ...memoDefaults(
                       e.target.value === "large-first"
                         ? "large-first"
                         : "small-first",
                       s.memoCounterbalance,
                     ),
-                  )
+                    memoAnswerSeconds: s.memoAnswerSeconds,
+                  })
                 }
               >
                 <option value="small-first">10 → 30 → 150</option>
@@ -239,18 +302,24 @@ export function SetupForm({
               <select
                 value={s.memoCounterbalance}
                 onChange={(e) =>
-                  set(
-                    memoDefaults(
+                  set({
+                    ...memoDefaults(
                       s.memoOrder,
                       e.target.value === "hare" ? "hare" : "deer",
                     ),
-                  )
+                    memoAnswerSeconds: s.memoAnswerSeconds,
+                  })
                 }
               >
                 <option value="deer">{t("memoDeer")}</option>
                 <option value="hare">{t("memoHare")}</option>
               </select>
             </label>
+            <MemoAnswerSetting
+              lang={lang}
+              value={memoAnswerSeconds(s)}
+              onChange={(value) => set({ ...s, memoAnswerSeconds: value })}
+            />
           </div>
           {onDemo && (
             <>

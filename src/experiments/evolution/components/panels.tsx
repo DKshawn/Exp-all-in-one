@@ -9,7 +9,13 @@ import type { Action } from "../engine";
 import type { View, Personal } from "../views";
 import { Admission, SessionOverview } from "./session-controls";
 import { PayoffMatrix, PayoffRules, Rules } from "./rules";
-import { continuous, DEMAND_STEPS, demandLabel, isMemo } from "../settings";
+import {
+  continuous,
+  DEMAND_STEPS,
+  demandLabel,
+  isMemo,
+  memoAnswerSeconds,
+} from "../settings";
 import { MemoStudent } from "./memo-student";
 import { MemoResults } from "./memo-results";
 import { DemandDecision } from "./demand-decision";
@@ -288,7 +294,8 @@ export function Panels({
   const mine = v.role === "student" ? v.current : null,
     names = displayChoices(lang, v.settings);
   const coordination = v.settings.mode === "coordination";
-  const memo = isMemo(v.settings);
+  const settings = v.settings;
+  const memo = isMemo(settings);
   const memoStudent = memo && v.role === "student" && !waiting;
   const canChooseMemo = Boolean(
     mine?.memo?.eligible &&
@@ -383,6 +390,11 @@ export function Panels({
                   />
                 )}
               </div>
+              {memo && (
+                <p>
+                  {t("memoAnswerTime")} <b>{memoAnswerSeconds(settings)}</b>
+                </p>
+              )}
               <Admission view={v} lang={lang} now={now} busy={busy} act={act} />
               <div className="ev-scroll">
                 <table>

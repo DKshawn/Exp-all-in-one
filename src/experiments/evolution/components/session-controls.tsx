@@ -11,6 +11,7 @@ import type { Action, RunControl } from "../engine";
 import type { View } from "../views";
 import {
   isMemo,
+  memoAnswerMilliseconds,
   MEMO_LOCK_ROUNDS,
   MEMO_PARTICIPANTS,
   MEMO_ROUNDS,
@@ -35,7 +36,8 @@ export function SessionOverview({
   const [confirm, setConfirm] = useState<RunControl | null>(null);
   const timerLabelId = useId();
   const paused = v.pausedAt !== null;
-  const memo = isMemo(v.settings);
+  const settings = v.settings;
+  const memo = isMemo(settings);
   const memoStudent = memo && v.role === "student";
   const locked =
     memo &&
@@ -59,10 +61,11 @@ export function SessionOverview({
       : waitingForPairs
         ? "decisionCutoff"
         : "timeLeft";
-  const remaining = Math.max(
+  const remainingSeconds = Math.max(
     0,
-    Math.ceil(((v.deadline ?? now) - (v.pausedAt ?? now)) / 1000),
+    ((v.deadline ?? now) - (v.pausedAt ?? now)) / 1000,
   );
+  const remaining = Math.ceil(remainingSeconds);
   const urgent =
     remaining <= 5 &&
     (!memoStudent || (!paused && v.current?.status === "choosing"));
@@ -162,9 +165,11 @@ export function SessionOverview({
                     max={
                       v.phase === "feedback"
                         ? v.settings.feedbackSeconds
-                        : v.settings.seconds
+                        : memo
+                          ? memoAnswerMilliseconds(settings) / 1000
+                          : v.settings.seconds
                     }
-                    value={remaining}
+                    value={memo ? remainingSeconds : remaining}
                   />
                 </div>
               </div>

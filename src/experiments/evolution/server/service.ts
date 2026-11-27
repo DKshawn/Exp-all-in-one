@@ -48,10 +48,12 @@ import {
   MAX_ROUNDS,
   settingsSchema,
   isMemo,
+  memoAnswerError,
   MEMO_PARTICIPANTS,
   type Settings,
 } from "../settings";
-import { responsesCsv } from "../export";
+import { exportSettings, responsesCsv } from "../export";
+import { label } from "../locale";
 import {
   gapMs,
   claimAdvance,
@@ -210,10 +212,17 @@ export class EvolutionService {
     title: string,
     password: string,
     accessKey: string,
-    input: Settings,
+    input: unknown,
   ) {
     assertTeacherAccess(accessKey);
     const parsed = settingsSchema.safeParse(input);
+    if (!parsed.success) {
+      const issue = parsed.error.issues.find(
+        (issue) => issue.path[0] === "memoAnswerSeconds",
+      );
+      const code = issue && memoAnswerError(issue.message);
+      if (code) throw new AuctionError(label("ja", code), 400, code);
+    }
     if (
       !parsed.success ||
       !title.trim() ||
@@ -588,7 +597,7 @@ export class EvolutionService {
           pausedAt: g.pausedAt ?? null,
           exportedAt: now,
           phase: g.phase,
-          settings: g.settings,
+          settings: exportSettings(g.settings),
           participants,
         });
         yield info.slice(0, -1) + ',"rows":[';

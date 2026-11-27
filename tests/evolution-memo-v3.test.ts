@@ -8,6 +8,7 @@ import { EvolutionService } from "../src/experiments/evolution/server/service";
 import {
   defaults,
   isMemo,
+  memoAnswerMilliseconds,
   memoDefaults,
   settingsSchema,
 } from "../src/experiments/evolution/settings";
@@ -78,6 +79,86 @@ test("memo v3 is explicit and the previous settings and timing limits remain unc
     }).success,
     false,
   );
+});
+
+test("memo v3 accepts only durations the millisecond clock can represent exactly", () => {
+  const memo = memoDefaults();
+  for (const [input, expected] of [
+    ["5", 5000],
+    ["7", 7000],
+    ["1.5", 1500],
+    ["0.001", 1],
+    ["15e-1", 1500],
+    ["1.5000", 1500],
+    ["1.001", 1001],
+  ] as const) {
+    const parsed = settingsSchema.parse({ ...memo, memoAnswerSeconds: input });
+    assert.ok(isMemo(parsed));
+    assert.equal(memoAnswerMilliseconds(parsed), expected);
+  }
+  for (const [input, error] of [
+    [undefined, "memoAnswerRequired"],
+    ["", "memoAnswerRequired"],
+    [" ", "memoAnswerRequired"],
+    [null, "memoAnswerNumber"],
+    ["hello", "memoAnswerNumber"],
+    ["0", "memoAnswerPositive"],
+    ["-1.5", "memoAnswerPositive"],
+    ["0.0009", "memoAnswerPrecision"],
+    ["1.500000000000000001", "memoAnswerPrecision"],
+    ["1e309", "memoAnswerPrecision"],
+    ["9999999999999999999", "memoAnswerPrecision"],
+  ] as const) {
+    const result = settingsSchema.safeParse({
+      ...memo,
+      memoAnswerSeconds: input,
+    });
+    assert.equal(result.success, false, String(input));
+    assert.ok(result.error!.issues.some((issue) => issue.message === error));
+  }
+  assert.equal(
+    settingsSchema.safeParse({
+      ...defaults("coordination"),
+      memoAnswerSeconds: "7",
+    }).success,
+    false,
+  );
+  const legacy = newGame(memo);
+  assert.ok(isMemo(legacy.settings));
+  delete legacy.settings.memoAnswerSeconds;
+  legacy.seats = Array.from({ length: 150 }, (_, i) => newSeat(String(i)));
+  closeAdmission(legacy, 0);
+  start(legacy, 0);
+  assert.equal(legacy.round!.deadline, 5000);
+});
+
+test("memo v3 settles at the shared deadline even when everyone submits early", () => {
+  const g = newGame({ ...memoDefaults(), memoAnswerSeconds: "1.5" });
+  g.seats = Array.from({ length: 150 }, (_, i) => newSeat(String(i)));
+  closeAdmission(g, 0);
+  start(g, 0);
+  for (let round = 1; round <= 10; round++) {
+    const deadline = g.round!.deadline;
+    tick(g, deadline);
+    tick(g, deadline + 1000);
+  }
+  const r = g.round!;
+  const eligible = Object.entries(r.entries).filter(
+    ([, entry]) => entry.memo!.eligible,
+  );
+  const [lastId] = eligible.pop()!;
+  for (const [id] of eligible) choose(g, id, 11, 0, r.openedAt + 1);
+  assert.equal(r.entries[lastId].status, "choosing");
+  assert.throws(() => choose(g, lastId, 11, 0, r.deadline));
+  choose(g, lastId, 11, 0, r.deadline - 1);
+  tick(g, r.deadline - 1);
+  assert.equal(g.phase, "playing");
+  assert.equal(r.closedAt, null);
+  assert.equal(r.deadline - r.openedAt, 1500);
+  tick(g, r.deadline);
+  assert.equal(g.phase, "feedback");
+  assert.equal(r.closedAt, r.deadline);
+  assert.equal(phaseDeadline(g), r.deadline + 1000);
 });
 
 for (const [order, initial, expected] of [
@@ -271,7 +352,7 @@ test("memo v3 service stores server feedback delivery and restricts eligibility 
       "Memo v3",
       "room-password",
       process.env.TEACHER_ACCESS_KEY ?? "",
-      memoDefaults(),
+      { ...memoDefaults(), memoAnswerSeconds: "1.5" },
     );
     const player = await svc.login(code, {
       role: "student",
@@ -317,7 +398,7 @@ test("memo v3 service stores server feedback delivery and restricts eligibility 
         choice: 1,
       }),
     );
-    now += 5_000;
+    now += 1_500;
     await control();
     now += 1_000;
     const second = await svc.view(code, player.token, "student");
@@ -325,6 +406,13 @@ test("memo v3 service stores server feedback delivery and restricts eligibility 
     assert.equal(second.current?.memo?.feedback.length, 1);
     const data = JSON.parse(await svc.export(code, token, "json"));
     assert.equal(data.settings.memoProtocol, "stag-hunt-memo-v3");
+    assert.equal(data.settings.memoAnswerSeconds, "1.5");
+    assert.ok(
+      data.rows.every(
+        (row: ReturnType<typeof rawRows>[number]) =>
+          row.memoAnswerSeconds === "1.5",
+      ),
+    );
     assert.equal(data.rows.length, 300);
     const observed = data.rows.filter(
       (r: { feedbackServedAt: number | null }) => r.feedbackServedAt !== null,
@@ -338,6 +426,17 @@ test("memo v3 service stores server feedback delivery and restricts eligibility 
     assert.doesNotMatch(JSON.stringify(data), /Synthetic|6521|room-password/);
     const csv = await svc.export(code, token, "csv");
     assert.match(csv, /feedbackServedAt/);
+    assert.match(csv, /"memoAnswerSeconds"\r\n.*,"1\.5"\r\n/);
+    const reentry = await svc.login(code, {
+      role: "student",
+      nickname: "Demo",
+      pin: "6521",
+    });
+    tokens.set(game.seats[0].id, reentry.token);
+    const reconnected = await svc.view(code, reentry.token, "student");
+    assert.ok(isMemo(reconnected.settings));
+    assert.equal(reconnected.settings.memoAnswerSeconds, "1.5");
+    assert.equal(reconnected.deadline, second.deadline);
     const active = await control();
     assert.equal(active.role, "teacher");
     const archived = active.history.find(
@@ -391,6 +490,7 @@ test("memo v3 service stores server feedback delivery and restricts eligibility 
     await assert.rejects(
       svc.view(code, tokens.get(carryId), "student", action),
     );
+    now = next.deadline! - 1;
     const submitted = await svc.view(
       code,
       tokens.get(submitId),
@@ -402,6 +502,9 @@ test("memo v3 service stores server feedback delivery and restricts eligibility 
     assert.equal(submitted.current?.memo?.feedback.length, 10);
 
     now = next.deadline!;
+    await assert.rejects(
+      svc.view(code, tokens.get(timeoutId), "student", action),
+    );
     const finishedRound = await control();
     assert.equal(finishedRound.role, "teacher");
     const settled = finishedRound.history.find(
@@ -437,6 +540,21 @@ test("memo v3 service stores server feedback delivery and restricts eligibility 
     assert.equal(revisionCsv.split("\r\n").length, 1651);
     for (const id of [submitId, timeoutId, carryId])
       assert.ok(revisionCsv.includes(`"${code}","1","11","${id}"`));
+
+    const legacy = await svc.create(
+      "Legacy Memo v3",
+      "room-password",
+      process.env.TEACHER_ACCESS_KEY ?? "",
+      memoDefaults(),
+    );
+    await db.query(
+      "UPDATE evolution_rooms SET game = game #- '{settings,memoAnswerSeconds}' WHERE code=$1",
+      [legacy.code],
+    );
+    const legacyExport = JSON.parse(
+      await svc.export(legacy.code, legacy.token, "json"),
+    );
+    assert.equal(legacyExport.settings.memoAnswerSeconds, "5");
   } finally {
     await pg.close();
   }

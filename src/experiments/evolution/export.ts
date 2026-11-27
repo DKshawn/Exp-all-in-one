@@ -1,5 +1,13 @@
 import { csv } from "@/experiments/double-auction/lib/csv";
 import type { rawRows } from "./views";
+import { isMemo, memoAnswerSeconds, type Settings } from "./settings";
+
+export function exportSettings(settings: Settings) {
+  return isMemo(settings)
+    ? { ...settings, memoAnswerSeconds: memoAnswerSeconds(settings) }
+    : settings;
+}
+
 type RecordRow = ReturnType<typeof rawRows>[number] & {
   heartbeatGap: boolean | null;
 };
@@ -49,6 +57,7 @@ export function responsesCsv(
           "feedbackGroupSize",
           "feedbackHistory",
           "feedbackPriorPay",
+          "memoAnswerSeconds",
         ]
       : standardFields;
   const values = rows.map((row) =>

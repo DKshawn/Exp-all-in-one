@@ -11,7 +11,7 @@ import {
 import { Header } from "@/components/shell";
 import { DemoSelectionLink } from "@/components/demo-selection-link";
 import { DEMO_TEACHER_HREFS } from "@/lib/demo-navigation";
-import { responsesCsv } from "../export";
+import { exportSettings, responsesCsv } from "../export";
 import { EvolutionPractice, type PracticeAction } from "../practice";
 import {
   baseView,
@@ -26,6 +26,7 @@ import {
   HISTORY_ROUNDS,
   isMemo,
   MEMO_PARTICIPANTS,
+  settingsSchema,
   type Settings,
 } from "../settings";
 import { label, type Lang } from "../locale";
@@ -86,12 +87,61 @@ function DemoToolbar({
   );
 }
 
+const MEMO_DEMO_KEY = "evolution-memo-v3-demo-room";
+
 export function EvolutionDemo() {
   const lang = useLanguage();
   const draft = useSetupDraft();
+  const { set, setTitle } = draft;
   const [room, setRoom] = useState<EvolutionPractice | null>(null);
+  useEffect(() => {
+    // Resume the room configuration after reload; practice rounds restart in the lobby.
+    const frame = requestAnimationFrame(() => {
+      try {
+        const saved = JSON.parse(
+          sessionStorage.getItem(MEMO_DEMO_KEY) ?? "null",
+        );
+        if (typeof saved?.title !== "string") return;
+        const parsed = settingsSchema.safeParse(saved.settings);
+        if (!parsed.success || !isMemo(parsed.data)) return;
+        set(parsed.data);
+        setTitle(saved.title);
+        setRoom(
+          new EvolutionPractice(
+            saved.title,
+            parsed.data,
+            MEMO_PARTICIPANTS,
+            Date.now(),
+          ),
+        );
+      } catch {
+        // The demo remains usable if storage is unavailable.
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [set, setTitle]);
   function create(title: string, s: Settings, n: number) {
+    if (isMemo(s)) {
+      try {
+        sessionStorage.setItem(
+          MEMO_DEMO_KEY,
+          JSON.stringify({ title, settings: s }),
+        );
+      } catch {
+        // The live practice room still uses the chosen configuration.
+      }
+    }
     setRoom(new EvolutionPractice(title, s, n, Date.now()));
+  }
+  function backToSetup() {
+    if (room && isMemo(room.game.settings)) {
+      try {
+        sessionStorage.removeItem(MEMO_DEMO_KEY);
+      } catch {
+        // Storage access is optional in the demo.
+      }
+    }
+    setRoom(null);
   }
   return (
     <div className="demo-theme">
@@ -101,7 +151,7 @@ export function EvolutionDemo() {
         leading={<DemoSelectionLink />}
       />
       {room ? (
-        <DemoRoom demo={room} lang={lang} onSetup={() => setRoom(null)} />
+        <DemoRoom demo={room} lang={lang} onSetup={backToSetup} />
       ) : (
         <main className="teacher-hub-main">
           <SetupForm draft={draft} onDemo={create} />
@@ -172,7 +222,7 @@ function DemoRoom({
               createdAt: demo.createdAt,
               admissionClosedAt: g.closedAt,
               phase: g.phase,
-              settings: g.settings,
+              settings: exportSettings(g.settings),
               participants: g.seats,
               rounds: rounds.flatMap((r) => summaries(g, r)),
               rows,

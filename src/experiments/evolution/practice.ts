@@ -45,12 +45,14 @@ export class EvolutionPractice {
   }
   private planBots(round: Round) {
     this.plannedRound = round.number;
-    const window = Math.min(5000, (round.deadline - round.openedAt) / 2);
+    const duration = round.deadline - round.openedAt;
+    const window = Math.max(1, Math.min(5000, Math.floor(duration / 2)));
+    const earliest = Math.min(800, Math.floor((duration - 1) / 2));
     this.pending = Object.entries(round.entries)
       .filter(([id, e]) => id !== this.human && e.status === "choosing")
       .map(([id]) => ({
         id,
-        at: round.openedAt + 800 + randomInt(Math.floor(window)),
+        at: round.openedAt + earliest + randomInt(window),
         choice:
           randomInt(choiceCount(this.game.settings)) *
           choiceStride(this.game.settings),

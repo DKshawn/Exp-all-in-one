@@ -12,7 +12,11 @@ Each formal room accepts up to 5,000 registrations. **Demo participants** accept
 
 Select Stag Hunt v3 at room creation. Classic coordination remains the default and existing rooms are unchanged. Close formal admission at exactly 150 participants. The same cohort completes three blocks, with group sizes of 10, 30, and 150 in small-first or large-first order. The teacher chooses the order; allocation is shuffled for each block and the student-visible history starts fresh. The research export retains all blocks.
 
-Each block has 120 rounds, with a nominal 5 seconds to decide and 1 second of feedback per round. Browser polls advance phases; measure the actual cadence in the intended setup. For the first 10 rounds, groups are locked to all stag or all hare. In size-10 groups, eight start stag and seven start hare. In size-30 groups, three use the chosen starting choice and two use the other. The single size-150 group uses the chosen starting choice. From round 11, a uniform random 20% of each group (2, 6, or 30 people) may revise each round. Others and eligible timeouts retain their prior choice.
+In both formal rooms and demos, enter **Decision time (s)** when creating the room. It defaults to 5 seconds and accepts positive values such as 7 or 1.5 seconds that can be represented in whole milliseconds. Empty, nonnumeric, nonpositive or unrepresentable values show an error. The setting locks at creation. Formal rooms keep it on reload and re-entry, and older rooms without the setting use 5 seconds. In the same tab, reloading a v3 demo restores its configuration in the lobby and resets practice progress.
+
+Each block has 120 rounds. In formal rooms, the server sets a shared deadline and settles at that deadline even if everyone has already submitted. Feedback has a separate, fixed 1-second duration. Browser polling and network latency can reduce the time the choice buttons are available before the server cutoff.
+
+For the first 10 rounds, groups are locked to all stag or all hare. In size-10 groups, eight start stag and seven start hare. In size-30 groups, three use the chosen starting choice and two use the other. The single size-150 group uses the chosen starting choice. From round 11, a uniform random 20% of each group (2, 6, or 30 people) may revise each round. Others and eligible timeouts retain their prior choice.
 
 Each player has one choice per round. The system scores that choice against each other member of your group. If you chose Hare, you get 3 points against either choice. If you chose Stag, you get 4 against Stag and 0 against Hare. Your score for the round is the average of those points.
 
@@ -20,7 +24,7 @@ In both formal rooms and demos, the choice card combines the revision status, th
 
 The teacher's results show eligible players out of the selected group, actual submissions, timeouts, settled players, strategy shares and total payoffs. Strategy shares appear after settlement.
 
-JSON and CSV include block and group, initial choice, revision eligibility, timeout, carried choice, prior feedback data and the timestamp at which the server prepared the response. This timestamp is not evidence that the participant actually saw the screen. Demo mode simulates the remaining 149 seats. The 2-second ARUE condition, concurrent field load with 150 devices, and real-participant validation are outside this change.
+The effective decision duration in seconds is recorded as `settings.memoAnswerSeconds` in JSON and as `memoAnswerSeconds` on each response row in JSON and CSV. Exports also include block and group, initial choice, revision eligibility, timeout, carried choice, prior feedback data and the timestamp at which the server prepared the response. This timestamp records server preparation. Demo mode simulates the remaining 149 seats.
 
 ## Run a classroom session
 

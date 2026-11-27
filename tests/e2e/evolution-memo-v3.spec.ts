@@ -1,5 +1,6 @@
 import { test, expect, type Page, type TestInfo } from "@playwright/test";
 import { enterTeacherPage, signInTeacher } from "./helpers/teacher-login";
+import { memoDefaults } from "../../src/experiments/evolution/settings";
 
 const labels = {
   en: {
@@ -246,7 +247,7 @@ test("memo v3 demo shows the payoff table, fixed start, and one-click revision",
   ).toBeVisible();
   await mode.selectOption("memo");
   await expect(page.getByText(/120 rounds × 3/)).toBeVisible();
-  await expect(page.getByLabel("Decision time (s)")).toHaveCount(0);
+  await expect(page.getByLabel("Decision time (s)")).toHaveValue("5");
   await expect(
     page.getByText("Only those selected can change their choice"),
   ).toBeVisible();
@@ -438,6 +439,95 @@ test("memo v3 demo shows the payoff table, fixed start, and one-click revision",
   await checkTeacherViewport(page);
 });
 
+test("memo v3 demo validates free-form durations and restores the locked setting", async ({
+  page,
+}) => {
+  await signInTeacher(page.request);
+  await page.goto("/evolution/demo");
+  const language = page.getByRole("banner").getByRole("combobox");
+  await language.selectOption("en");
+  const mode = page.getByRole("combobox", { name: "Game", exact: true });
+  await mode.selectOption("memo");
+  const duration = page.getByRole("spinbutton", { name: "Decision time (s)" });
+  const alert = page.locator(".ev-setup").getByRole("alert");
+  const create = page.getByRole("button", { name: "Create demo" });
+  await expect(duration).toHaveValue("5");
+  for (const [value, error] of [
+    ["", "Enter a decision time."],
+    ["0", "Decision time must be greater than zero."],
+    ["-1.5", "Decision time must be greater than zero."],
+    ["1.500000000000000001", /cannot be timed exactly/],
+    ["1e20", /cannot be timed exactly/],
+  ] as const) {
+    await duration.fill(value);
+    await create.click();
+    await expect(duration).toBeFocused();
+    await expect(duration).toHaveAttribute("aria-invalid", "true");
+    await expect(alert).toHaveText(error);
+  }
+  await duration.fill("");
+  await duration.press("e");
+  await create.click();
+  await expect(alert).toHaveText(
+    "Enter the decision time as a number of seconds.",
+  );
+  await duration.fill("7");
+  await page.getByLabel("Block order").selectOption("large-first");
+  await page.getByLabel("Starting condition allocation").selectOption("hare");
+  await expect(duration).toHaveValue("7");
+  for (const [lang, name] of [
+    ["ja", "回答時間（秒）"],
+    ["zh-CN", "作答时间（秒）"],
+    ["en", "Decision time (s)"],
+  ] as const) {
+    await language.selectOption(lang);
+    const field = page.getByRole("spinbutton", { name });
+    for (const width of [320, 390, 1440]) {
+      await page.setViewportSize({ width, height: 740 });
+      expect(
+        await field.evaluate((input) => {
+          const label = (input as HTMLInputElement).labels![0];
+          return (
+            label.scrollWidth <= label.clientWidth &&
+            document.documentElement.scrollWidth <= innerWidth
+          );
+        }),
+      ).toBe(true);
+    }
+  }
+  await create.click();
+  await expect(
+    page.getByText("Decision time (s) 7", { exact: true }),
+  ).toBeVisible();
+  await expect(duration).toHaveCount(0);
+  await page.reload();
+  await expect(
+    page.getByText("Decision time (s) 7", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Back to setup" }).click();
+  await expect(duration).toHaveValue("7");
+  await duration.fill("1.5");
+  await page.clock.install();
+  await create.click();
+  await expect(
+    page.getByText("Decision time (s) 1.5", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Close admission" }).click();
+  await page.getByRole("button", { name: "Confirm and start" }).click();
+  await expect(page.locator(".timers progress")).toHaveAttribute("max", "1.5");
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("button", { name: /JSON/ }).click(),
+  ]);
+  const stream = await download.createReadStream();
+  const chunks = [];
+  for await (const chunk of stream!) chunks.push(chunk);
+  const output = JSON.parse(Buffer.concat(chunks).toString());
+  expect(output.settings.memoAnswerSeconds).toBe("1.5");
+  expect(output.settings.feedbackSeconds).toBe(1);
+  expect(output.rows[0].deadline - output.rows[0].openedAt).toBe(1500);
+});
+
 test("memo v3 formal teacher and student use normal entries with a 150-seat synthetic roster", async ({
   page,
   browser,
@@ -449,6 +539,26 @@ test("memo v3 formal teacher and student use normal entries with a 150-seat synt
   await page.getByRole("banner").getByRole("combobox").selectOption("en");
   const mode = page.getByRole("combobox", { name: "Game", exact: true });
   await mode.selectOption("memo");
+  await expect(page.getByLabel("Decision time (s)")).toHaveValue("5");
+  for (const [value, code] of [
+    [undefined, "memoAnswerRequired"],
+    ["", "memoAnswerRequired"],
+    ["abc", "memoAnswerNumber"],
+    [0, "memoAnswerNumber"],
+    ["0", "memoAnswerPositive"],
+    ["-1.5", "memoAnswerPositive"],
+    ["1.500000000000000001", "memoAnswerPrecision"],
+  ] as const) {
+    const response = await page.request.post("/api/evolution/rooms", {
+      data: {
+        title: "Invalid",
+        password: "review-password",
+        settings: { ...memoDefaults(), memoAnswerSeconds: value },
+      },
+    });
+    expect(response.status()).toBe(400);
+    expect((await response.json()).code).toBe(code);
+  }
   await mode.selectOption("coordination");
   await expect(
     page.getByRole("table", { name: "Payoff matrix" }),
@@ -541,7 +651,8 @@ test("memo v3 formal teacher and student use normal entries with a 150-seat synt
       `/api/rooms/${code}/evolution/export?format=json`,
     );
     await expect(output).toBeOK();
-    const { rows } = await output.json();
+    const { settings, rows } = await output.json();
+    expect(settings.memoAnswerSeconds).toBe("5");
     const delivered = rows.find(
       (row: {
         round: number;
